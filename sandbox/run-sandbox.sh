@@ -25,6 +25,15 @@
 
 set -euo pipefail
 
+# Git Bash (MSYS) unter Windows uebersetzt Pfad-Argumente wie "/c/Users/..."
+# automatisch, bevor sie an nicht-MSYS-Programme wie docker.exe uebergeben
+# werden. Bei den "-v host:container"-Argumenten hier fuehrt das zu
+# kaputten/vermischten Pfaden (beobachtet: ein Fantom-Verzeichnis wurde im
+# echten Projektordner angelegt). MSYS_NO_PATHCONV=1 schaltet diese
+# Übersetzung ab; auf Linux/macOS ist die Variable wirkungslos, daher hier
+# unbedingt und nicht optional gesetzt.
+export MSYS_NO_PATHCONV=1
+
 NEW_CONTAINER=0
 if [ "${1:-}" = "--new" ]; then
   NEW_CONTAINER=1
