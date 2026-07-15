@@ -29,6 +29,43 @@ Mountet das Projektverzeichnis nach `/work`, plus `/work/.git` zusätzlich
 heraus — siehe Pattern-Doku Schritt 2). Landet in einer interaktiven
 `bash`-Shell im Container.
 
+Der Container heisst `agent-<projektordnername>` und läuft bewusst
+**ohne `--rm`**: nach `exit` bleibt er (gestoppt) erhalten. Ruft man
+`run-sandbox.sh` für dasselbe Projekt erneut auf, wird **derselbe**
+Container wiederverwendet (laufend → Skript steigt per `docker exec` ein,
+gestoppt → `docker start -ai` setzt die Session fort) — praktisch, um eine
+unterbrochene Session weiterzuführen, ohne aus Versehen eine zweite,
+parallele Sandbox fürs gleiche Projekt zu starten.
+
+Zeigt zwei Projekte mit demselben Ordnernamen an unterschiedlichen Orten
+(z.B. `.../kunde-a/backend` und `.../kunde-b/backend`) auf denselben
+Containernamen, bricht das Skript mit einer Fehlermeldung ab, statt
+versehentlich die falsche Session zu öffnen — dann `--new` verwenden oder
+den bestehenden Container vorher `docker rm`en.
+
+Soll bewusst ein **zusätzlicher, frischer** Container neben dem/den
+bestehenden entstehen (der alte bleibt unangetastet stehen), entsteht er
+mit fortlaufender Nummer (`agent-<projekt>-1`, `-2`, ...):
+
+```bash
+./run-sandbox.sh --new /pfad/zum/projekt
+```
+
+Nützliche Befehle für alte/beendete Sessions:
+
+```bash
+docker ps -a --filter name=agent-<projekt>      # Container für dieses Projekt auflisten
+docker logs <name>                                # Terminal-Ausgabe der Session
+docker diff <name>                                # welche Dateien im Container geändert wurden
+docker rm <name>                                  # aufräumen, wenn nicht mehr gebraucht
+```
+
+Aufräumen ist damit ein bewusster, manueller Schritt — keine Automatik.
+Hinweis: Wird das Image (`docker build`) neu gebaut, nutzt ein
+**wiederverwendeter** Container weiterhin den Stand, mit dem er ursprünglich
+erstellt wurde — für ein aktualisiertes Image `--new` verwenden (oder den
+alten Container vorher `docker rm`en).
+
 ## 3. Vor dem Bootstrap: Selbstcheck (Pattern-Doku Schritt 0)
 
 **Vor** dem Aktivieren von `bypassPermissions` innerhalb der Sandbox
