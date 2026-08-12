@@ -18,6 +18,12 @@ Projektspezifisches Setup (z.B. `.venv-backup-tool`, `requirements.txt`)
 macht der Agent selbst beim Start gemäss dem jeweiligen Projekt-`AGENTS.md`
 — dieses Image bleibt bewusst generisch/projektunabhängig.
 
+Läuft als Non-Root-User `agent` (mit passwortlosem `sudo` innerhalb des
+Containers) statt als root: Claude Code verweigert `bypassPermissions`
+(`--dangerously-skip-permissions` bzw. `defaultMode: "bypassPermissions"`)
+für root/sudo-Prozesse. `apt-get`/Paketinstallationen funktionieren über
+`sudo apt-get ...` weiterhin ohne Rückfrage.
+
 ## 2. Sandbox starten
 
 ```bash

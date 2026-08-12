@@ -77,6 +77,15 @@ sollte fehlschlagen/"connection refused" liefern, nicht durchgehen).
 
 ## Schritt 1: `bypassPermissions` NUR user-scoped setzen
 
+**Voraussetzung: Non-Root-User.** Claude Code verweigert `bypassPermissions`
+(egal ob per `--dangerously-skip-permissions`-Flag oder per `defaultMode` in
+`settings.json`) mit der Fehlermeldung "`--dangerously-skip-permissions`
+cannot be used with root/sudo privileges", sobald der Prozess als root läuft.
+Das Sandbox-Image (`Dockerfile`) legt deshalb einen User `agent` an
+(`USER agent`) mit passwortlosem `sudo` für Paketinstallationen — `claude`
+läuft als `agent`, nicht als root. `~/.claude/settings.json` liegt dann unter
+`/home/agent/.claude/settings.json`.
+
 **Falsch** (leakt auf den Host, weil `/work` ein Bind-Mount ist):
 ```
 /work/.claude/settings.json           # NICHT hierhin
