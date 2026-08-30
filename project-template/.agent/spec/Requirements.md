@@ -1,12 +1,14 @@
 # Requirements: <Projektname>
 
-> Für die schrittweise Umsetzung durch einen (Low-Cost-)Implementierungs-
-> Agenten siehe `IMPLEMENTATION_PLAN.md` (im selben `.agent/`-Ordner) –
-> dieses Dokument beschreibt nur die funktionalen Anforderungen, keine
-> Bauanleitung.
+> Dauerhaftes Produktwissen (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
+> Abschnitt "Dateistruktur") – beschreibt nur die funktionalen
+> Anforderungen, keine Bauanleitung und keinen Workflow-Zustand. Für die
+> aktuell laufende Initiative siehe `../state/IMPLEMENTATION_PLAN.md`, für
+> die aktuellen Komponenten/Verantwortlichkeiten siehe `Architecture.md`
+> (im selben Ordner).
 
 > Noch nicht ausgefüllt. Wird gemeinsam mit dem Nutzer interaktiv erarbeitet
-> (siehe `AGENTS.md`, Abschnitt "Vorbereitung") – NICHT vom Agenten allein
+> (siehe `.agent/agents/planner.md`) – NICHT vom Agenten allein
 > vorwegnehmen. Nach jedem geklärten Thema: Requirement ausformulieren,
 > Rückfrage stellen ob es passt, erst dann zum nächsten Thema.
 
