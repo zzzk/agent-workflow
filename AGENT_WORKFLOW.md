@@ -314,3 +314,43 @@ deshalb abbrechen würde:
    spätere Wartung.** Für die Kernfrage "was macht Komponente X" musste
    die ganze Bauhistorie durchsucht werden. → `spec/Architecture.md`
    eingeführt (siehe "Warum diese Trennung" oben).
+
+### Aus einem Ausführungs-Versuch mit gpt-oss:120b unter Claude Code (v2, Struktur stand bereits)
+
+7. **Gute Planung schützt nicht vor einer Ausführung, die ihr eigenes
+   Protokoll ignoriert.** Planner-Output (10 Tasks aus einem Review-Report)
+   war exzellent: klein, in sich geschlossen, mit exakten Zeilen-Referenzen
+   und prüfbaren Akzeptanzkriterien. Trotzdem landete am Ende ein einziger,
+   nicht committeter Diff, der Änderungen aus vier verschiedenen Tasks
+   vermischte – kein Task war je auf `in_progress`/`done` gesetzt,
+   `state/PROGRESS.md` blieb leer. Vermutliche Ursache: der eingesetzte
+   Modell/Harness-Kombination (nicht-Anthropic-Modell unter dem
+   Claude-Code-Agenten-Harness) hat die Sub-Agent-Delegation (das
+   `Task`/`Agent`-Tool, auf Anthropic-Modelle zugeschnitten) nie
+   tatsächlich genutzt, sondern direkt im laufenden Kontext editiert –
+   still, ohne die Verletzung des Protokolls zu erkennen. Eine der so
+   vermischten Änderungen **löschte** dabei bestehende Funktionalität
+   (mtime-Wiederherstellung) ersatzlos, statt sie – wie vom Task verlangt –
+   nur zu verschieben; das fiel erst beim nächsten Testlauf auf.
+   **Konsequenzen:**
+   - Für einen Nicht-Anthropic-Modell-Unterbau (z.B. lokale/offene Modelle)
+     eher einen providerunabhängigen Harness verwenden (z.B. OpenCode statt
+     Claude Code) statt ein auf Claude zugeschnittenes Agenten-Tooling
+     zweckzuentfremden – die Sub-Agent-Delegation ist ein Kernbaustein
+     dieser Methodik, kein optionales Detail.
+   - `agents/orchestrator.md` und `agents/implementer.md` bekamen zusätzlich
+     eine vorangestellte, nicht verhandelbare Regel ("strikt sequentiell,
+     nie parallel") **inklusive eines konkreten Anti-Beispiels** aus diesem
+     Vorfall – abstrakte Regeln allein reichten nicht, ein reales
+     Gegenbeispiel steigert bei schwächeren Modellen nachweislich die
+     Befolgungsrate gegenüber rein abstrakten Anweisungen.
+   - `implementer.md` bekam einen expliziten End-of-Turn-Selbstcheck
+     ("bestätige vor Abgabe: nur dieser eine Task, nichts committet, nichts
+     ersatzlos gelöscht") – eine Checkliste, die aktiv bestätigt werden
+     muss, wird eher beachtet als eine Regel, die nur passiv im Fliesstext
+     steht.
+   - Reine Prosa-Disziplin bleibt ein Kompromiss: wo immer der Harness eine
+     *mechanische* Sequenzierung erzwingen kann (z.B. ein Workflow-/
+     Pipeline-Mechanismus statt eines einzigen durchlaufenden Kontexts),
+     ist das robuster als sich allein auf Instruktionsbefolgung zu
+     verlassen – besonders bei kleineren/lokalen Modellen.

@@ -13,6 +13,29 @@ Tasks im Detail, du prüfst und vermittelst nur.
 > `.agent/tasks/` (die Warteschlange), `.agent/reports/` (Review-Ausgaben),
 > `.agent/history/` (archivierte, abgeschlossene Pläne).
 
+## Nicht verhandelbare Grundregel: strikt sequentiell, nie parallel
+
+- Zu jedem Zeitpunkt ist genau **ein** Task "in Arbeit". Der nächste Task
+  wird nicht einmal geplant, solange der aktuelle nicht vom unabhängigen
+  Tester bestätigt und auf `done` gesetzt ist.
+- Jeder Task geht an einen **frischen Sub-Agenten** (echter Tool-Aufruf,
+  nicht "im Kopf weiterdenken"). Du wartest auf dessen vollständige Antwort,
+  bevor irgendetwas anderes passiert. Merkst du, dass du selbst anfängst,
+  Code für mehr als einen Task in derselben Antwort zu ändern: **STOPP**.
+  Das ist immer falsch, auch wenn es effizient wirkt.
+- **Anti-Beispiel (ist genau so bereits einmal passiert und hat eine
+  unbemerkte Regression verursacht):** Ein Implementer sollte TASK-0001
+  (toten Code entfernen) umsetzen, bemerkte dabei einen zweiten, verwandten
+  Bug (TASK-0003, mtime-Timing) im selben File und "behob ihn gleich mit".
+  Ergebnis: die betroffene Funktionalität wurde nicht korrigiert, sondern
+  versehentlich komplett gelöscht – niemand bemerkte es, weil kein
+  unabhängiger Tester gezielt gegen TASK-0003s eigene Akzeptanzkriterien
+  geprüft hatte (der lief ja nie, TASK-0003 war offiziell noch gar nicht
+  begonnen). Fällt dir während eines Tasks ein weiteres, eigentlich
+  fremdes Problem auf: **nicht anfassen**, nur notieren (siehe
+  `implementer.md`) – der Planner entscheidet, ob/wann daraus ein eigener
+  Task wird.
+
 ## Vorbereitung (einmalig, vor dem ersten Task)
 
 - **Berechtigungen**: Falls du (oder deine Sub-Agents) absehbar wiederholt
@@ -63,7 +86,10 @@ Tasks im Detail, du prüfst und vermittelst nur.
    jeweiligen Tools, im Vordergrund, damit du auf das Ergebnis wartest).
    Auftrag: vollständiger Inhalt der Task-Datei, sonst nichts – siehe
    `.agent/agents/implementer.md` für die Rollen-Definition, die der
-   Sub-Agent selbst lädt/befolgt.
+   Sub-Agent selbst lädt/befolgt. **Ab hier bis Schritt 4 abgeschlossen
+   ist: keine eigene Code-Änderung, kein weiterer Sub-Agent, kein
+   Vorgriff auf den nächsten Task** – auch nicht "nur schon mal
+   vorbereiten".
 4. **Unabhängigen Tester-Sub-Agenten** starten (frischer Kontext, kein
    Weiterreichen der Implementer-Historie). Auftrag: nur die
    Akzeptanzkriterien derselben Task-Datei – siehe

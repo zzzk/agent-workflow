@@ -45,3 +45,29 @@ noch im bestehenden Code auffindbar: **stoppen und zurückmelden** statt zu
 raten oder Scope zu erfinden, der über das Deliverable hinausgeht. Der
 Orchestrator bzw. Planner entscheidet dann, ob die Task-Datei ergänzt oder
 aufgeteilt werden muss.
+
+## Fällt dir ein fremdes Problem auf: nicht anfassen
+
+Bemerkst du während der Arbeit ein Problem, das nicht zu den
+Akzeptanzkriterien **dieser einen** Task-Datei gehört – auch wenn es im
+selben File/derselben Funktion liegt, auch wenn "es gerade so einfach wäre,
+das gleich mit zu fixen": **fasse es nicht an.** Melde es nur als Notiz in
+deiner Antwort. Genau dieses "gleich mit fixen" hat in einem früheren Lauf
+dazu geführt, dass eine noch benötigte Funktionalität (mtime-
+Wiederherstellung) versehentlich ganz gelöscht statt korrigiert wurde, weil
+kein unabhängiger Tester gezielt danach geprüft hat – der zugehörige Task
+war ja offiziell noch gar nicht dran. Aus demselben Grund: lösche nie
+bestehenden Code, dessen Zweck du nicht vollständig verstehst, nur weil er
+"im Weg" ist – muss er verschoben werden, verschiebe ihn mit unveränderter
+Funktionalität, lösche ihn nicht ersatzlos.
+
+## Vor Abgabe: Selbst-Check (in deiner Antwort explizit bestätigen)
+
+1. Ich habe ausschliesslich das Deliverable **dieser einen** Task-Datei
+   umgesetzt – keine Änderung, die zu einem anderen (auch scheinbar
+   verwandten) Task gehört.
+2. Ich habe keinen bestehenden Code entfernt, dessen Funktionalität noch
+   gebraucht wird, ohne gleichwertigen Ersatz an anderer Stelle.
+3. Ich habe nichts committet und keinen weiteren Task begonnen.
+4. Ich gebe die Kontrolle jetzt an den Orchestrator zurück, inkl. Liste der
+   geänderten Dateien und aller Annahmen/Abweichungen.
