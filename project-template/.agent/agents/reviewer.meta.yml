@@ -1,0 +1,11 @@
+role: reviewer
+kind: subagent
+description: Read-only Auditor in drei Modi - MAP (Architektur aus dem Code erfassen), AUDIT (Ist gegen Soll pruefen) und TRIAGE (Rohmaterial aus manuellem Testen auswerten). Schreibt Reports, nie Code.
+model_tier: strong
+
+# Ausnahme: im Modus MAP schreibt der Reviewer spec/Architecture.md, im
+# Modus TRIAGE Reports und verschobene Inbox-Dateien. Produktcode und
+# Tests bleiben in jedem Modus unberuehrt.
+write_access: limited
+path_allows: [".agent/spec/Architecture.md", ".agent/reports/**", ".agent/inbox/**"]
+max_steps: 80

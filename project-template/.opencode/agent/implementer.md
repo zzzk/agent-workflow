@@ -1,3 +1,21 @@
+---
+# GENERIERT von .agent/sync-agents.py - nicht von Hand editieren.
+# Quelle: .agent/agents/implementer.md + implementer.meta.yml
+description: Setzt genau eine Task-Datei um. Aendert niemals Testdateien und committet nichts.
+mode: subagent
+model: anthropic/claude-sonnet-5
+steps: 80
+permission:
+  edit:
+    "*": allow
+    "tests/**": deny
+    "test/**": deny
+    "**/test_*.py": deny
+    "**/*_test.go": deny
+    "**/*.spec.ts": deny
+  bash: allow
+---
+
 # Rolle: Implementer
 
 Du bist ein **Implementer** für dieses Projekt: du setzt **genau eine**

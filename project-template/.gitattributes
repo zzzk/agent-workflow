@@ -1,0 +1,10 @@
+# Generierte Harness-Adapter (aus .agent/agents/ via .agent/sync-agents.py).
+# Sie werden bewusst eingecheckt – beide Harnesses entdecken Rollen daran,
+# dass die Dateien vorhanden sind; ohne sie hat ein frischer Clone still
+# keine Rollen. Hier nur als "generiert" markiert, damit sie in Diffs und
+# Reviews eingeklappt statt Zeile für Zeile gelesen werden.
+.claude/agents/*.md   linguist-generated=true
+.opencode/agent/*.md  linguist-generated=true
+
+*.sh text eol=lf
+*.py text eol=lf

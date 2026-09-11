@@ -3,23 +3,35 @@
 Projektunabhängige Tooling-Sammlung für einen wiederholbaren Ablauf: ein
 Projekt anlegen (oder ein bestehendes übernehmen), Anforderungen und
 Architektur mit Agenten erarbeiten/erfassen, und die Arbeit danach
-selbständig über fünf spezialisierte Agenten-Rollen abarbeiten lassen —
-optional in einer isolierten Sandbox mit voller Handlungsfreiheit.
+selbständig über sechs spezialisierte Agenten-Rollen abarbeiten lassen —
+optional in einer isolierten Sandbox mit voller Handlungsfreiheit, und
+optional mit lokalen Modellen für einzelne Rollen.
+
+> **Zum Einrichten eines Projekts: `USERMANUAL.md`.** Dort steht Schritt
+> für Schritt, welche vier Dateien du anfassen musst (und welche nie),
+> wie du Modelle je Rolle festlegst und wann der Generator laufen muss.
+> Diese README erklärt, *warum* die Struktur so ist.
 
 ## Bestandteile
 
-- **`AGENT_WORKFLOW.md`** – die Methodik selbst: fünf Rollen
-  (Orchestrator, Planner, Implementer, Tester, Reviewer), eine
-  Task-Warteschlange als Übergabe-Format zwischen kontextfreien
-  Sub-Agent-Läufen, sowie Greenfield- und Brownfield-Einstieg.
+- **`USERMANUAL.md`** – das Benutzerhandbuch: Projekt anlegen oder
+  übernehmen, Entscheidungen und ihre Dateien, Modellwahl (auch lokal),
+  Betrieb im Alltag, Fehlerbilder.
+- **`AGENT_WORKFLOW.md`** – die Methodik selbst: sechs Rollen
+  (Orchestrator, Planner, Architekt, Implementer, Tester, Reviewer), ein
+  Baustein-Katalog, aus dem der Orchestrator je nach Ausgangslage einen
+  Modus zusammensetzt (statt einer festen Pipeline), eine
+  Task-Warteschlange als Übergabe-Format zwischen kontextfreien Läufen,
+  sowie Greenfield- und Brownfield-Einstieg.
 - **`sandbox/`** – Docker-Sandbox, in der ein Agent im
   "volle Freiheit"-Modus (`bypassPermissions`) arbeiten kann, ohne
   Host-Risiko (Details/Sicherheitsbegründung:
   `sandbox/SANDBOX_BOOTSTRAP_PATTERN.md`, Build/Start: `sandbox/README.md`).
 - **`project-template/`** – wird 1:1 in jedes neue (oder bestehende)
   Projekt kopiert: `AGENTS.md`/`CLAUDE.md` im Root (Claude Code lädt diese
-  automatisch) plus `.agent/` mit den fünf Rollen-Dateien und leeren
-  Gerüsten für Spec/State/Tasks/Reports/History (siehe Struktur unten).
+  automatisch) plus `.agent/` mit den Rollen-Dateien, dem Generator für die
+  harness-spezifischen Adapter und leeren Gerüsten für
+  Spec/State/Tasks/Reports/History.
 
 ## Struktur von `.agent/` – und warum
 
@@ -27,10 +39,12 @@ optional in einer isolierten Sandbox mit voller Handlungsfreiheit.
 .agent/
   spec/       Requirements.md, Architecture.md   – dauerhaftes Produktwissen
   state/      IMPLEMENTATION_PLAN.md, PROGRESS.md, MEMORY.md – Workflow-Zustand
-  agents/     orchestrator.md, planner.md, implementer.md,
-              tester.md, reviewer.md              – eine Datei pro Rolle
+  agents/     <rolle>.md + <rolle>.meta.yml, _tiers.yml – eine Rolle je Paar
+  sync-agents.py                                 – erzeugt die Harness-Adapter
   tasks/      TASK-####-<slug>.md                 – die planbare Warteschlange
   reports/    <datum>-review.md                   – Reviewer-Ausgaben
+  inbox/      Rohmaterial aus manuellem Testen    – wird per TRIAGE ausgewertet
+  runs/       Logs fremder Harness-Läufe          – Inhalt nicht versioniert
   history/    <datum>-<slug>-plan.md              – archivierte, abgeschlossene Pläne
 ```
 
@@ -39,7 +53,7 @@ Tooling-Artefakte, kein Teil des eigentlichen Produktcodes – deshalb
 gebündelt unter `.agent/` (kein `.gitignore`-Sonderfall, Punkt-Ordner
 werden von Git normal getrackt, das ist reine Übersichtlichkeit). Nur
 `AGENTS.md`/`CLAUDE.md` bleiben im Projekt-Root, weil Claude Code diese
-dort automatisch beim Start lädt.
+dort automatisch beim Start lädt (OpenCode bevorzugt `AGENTS.md`).
 
 Innerhalb von `.agent/` ist die Aufteilung bewusst zweigeteilt:
 
@@ -52,15 +66,40 @@ Innerhalb von `.agent/` ist die Aufteilung bewusst zweigeteilt:
   nur für dieses Workflow-Tooling relevant. `IMPLEMENTATION_PLAN.md` ist
   bewusst auf die **aktuell laufende Initiative** beschränkt (nicht die
   ganze Projekt-Geschichte) und wird nach Abschluss nach `history/`
-  archiviert – siehe `AGENT_WORKFLOW.md`, Abschnitt "Warum diese Trennung",
-  das war ein konkretes Problem im ersten Projekt (History mit einem
-  bestehenden Codebestand zu verwechseln, sobald Requirements/Plan/Progress
-  alle undifferenziert nebeneinanderlagen).
+  archiviert – siehe `AGENT_WORKFLOW.md`, Abschnitt "Warum die Trennung
+  spec/ ↔ state/", das war ein konkretes Problem im ersten Projekt.
 
 Die Gross-/Kleinschreibung der Dateinamen ist ein bewusstes Signal:
 `PascalCase` (spec/) = kuratiertes Referenzdokument, `SCREAMING_SNAKE`
 (state/) = einzelner mutierbarer Zustand, `lowercase` (agents/, tasks/,
 reports/, history/) = viele gleichartige Instanzen.
+
+## Rollen-Dateien und Modellwahl
+
+Die Rollen-Dateien unter `.agent/agents/` sind **harness-neutral**: der
+Body enthält nur die Rolle selbst, kein Frontmatter. Daneben liegt je
+Rolle eine `*.meta.yml` mit der *Absicht* (Modell-Stufe, Schreibrechte,
+Pfad-Grenzen, Schritt-Obergrenze), und `_tiers.yml` bildet die Stufen auf
+konkrete Modelle ab.
+
+```bash
+python3 .agent/sync-agents.py           # Adapter erzeugen/aktualisieren
+python3 .agent/sync-agents.py --check   # nur prüfen (Exit 1 bei Drift)
+```
+
+Daraus entstehen `.claude/agents/*.md` und `.opencode/agent/*.md` –
+**generiert, nie von Hand editieren**. Der Grund für den Umweg: das
+`.md`-Format ist zwischen Harnesses nicht kompatibel (OpenCode liest
+`.claude/agents/` nicht), und Claude-Code-Rollen lösen keine
+`@datei.md`-Imports auf, ein Adapter kann den Body also nicht einbinden.
+
+**Wenn einzelne Rollen auf lokalen Modellen laufen sollen:** das geht nur
+über OpenCode. Claude Code akzeptiert pro Rolle ausschliesslich
+Anthropic-Modelle, und die Umleitung auf einen anderen Anbieter wirkt
+immer für die gesamte Session – ein Mischbetrieb (Planner in der Cloud,
+Implementer lokal) ist dort strukturell nicht möglich. In `_tiers.yml`
+stellt man das um, nicht in den Rollen-Dateien. Details und die
+verifizierte Harness-Matrix: `AGENT_WORKFLOW.md`, Teil D.
 
 ## Ablauf für ein neues (Greenfield) Projekt
 
@@ -70,6 +109,7 @@ mkdir /pfad/zum/neuen-projekt
 cp -r tools/agent-workflow/project-template/. /pfad/zum/neuen-projekt/
 cd /pfad/zum/neuen-projekt
 git init
+python3 .agent/sync-agents.py
 ```
 
 ### 2. Sandbox starten (optional, empfohlen für "volle Freiheit" ohne Rückfragen)
@@ -83,16 +123,12 @@ läuft dann im üblichen, rückfragenden Berechtigungsmodus.
 
 ### 3. Orchestrator starten
 Ab jetzt arbeitet der Agent als Orchestrator (Rolle in
-`.agent/agents/orchestrator.md` definiert, automatisch geladen über
-`AGENTS.md`/`CLAUDE.md`). Da noch keine Requirements vorliegen, fragt der
-Orchestrator zuerst, was gebaut werden soll, und übergibt an den Planner
-(`.agent/agents/planner.md`), der `spec/Requirements.md` interaktiv mit dem
-Nutzer erarbeitet, danach `state/IMPLEMENTATION_PLAN.md` sowie die ersten
-`tasks/*.md` erstellt. Danach läuft die normale Hauptschleife: pro Task ein
-frischer Implementer-Sub-Agent, danach ein frischer, unabhängiger
-Tester-Sub-Agent, Fortschritt in `state/PROGRESS.md` und den Task-Dateien
-selbst. Details: `AGENT_WORKFLOW.md`, Abschnitt "Ablauf: Orchestrator-
-Hauptschleife".
+`.agent/agents/orchestrator.md`, automatisch geladen über
+`AGENTS.md`/`CLAUDE.md`). Da noch keine Requirements vorliegen, fragt er
+zuerst, was gebaut werden soll, und wählt daraus den Modus `FEATURE`:
+Klärung → Plan → Architektur-Gate → pro Task die Schleife aus
+`TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` → abschliessender Review.
+Details: `AGENT_WORKFLOW.md`, Teil C.
 
 ## Ablauf für ein bestehendes (Brownfield) Projekt
 
@@ -101,9 +137,11 @@ Hauptschleife".
 cp -r tools/agent-workflow/project-template/AGENTS.md /pfad/zum/projekt/
 cp -r tools/agent-workflow/project-template/CLAUDE.md /pfad/zum/projekt/
 cp -r tools/agent-workflow/project-template/.agent /pfad/zum/projekt/
+cd /pfad/zum/projekt && python3 .agent/sync-agents.py
 ```
 Produktcode bleibt unangetastet – nur die `.agent/`-Struktur und die
-Root-Dateien kommen dazu.
+Root-Dateien kommen dazu. In `implementer.meta.yml`/`tester.meta.yml` die
+Pfadmuster an die Testablage des Projekts anpassen, dann neu generieren.
 
 ### 2. Requirements erfassen
 Mit dem Orchestrator/Planner `spec/Requirements.md` ausfüllen – falls
@@ -111,21 +149,25 @@ bereits eine funktionale Beschreibung existiert (README, Tickets), daraus
 ableiten und mit dem Nutzer bestätigen statt aus dem Code zu raten.
 
 ### 3. Architektur erfassen (statt Plan-Historie)
-Reviewer im **Map-Modus** laufen lassen: liest den bestehenden Code und
+Baustein `MAP` laufen lassen (Reviewer): liest den bestehenden Code und
 erzeugt `spec/Architecture.md` direkt daraus. Keine Rekonstruktion einer
 Bauhistorie nötig – nur der aktuelle Stand zählt.
 
 ### 4. Erste Initiative: meist ein Review
-Reviewer im **Audit-Modus** prüft den Ist-Zustand gegen die frisch
-erarbeiteten Requirements/Architecture, schreibt einen datierten Report
-unter `.agent/reports/`. Planner wandelt die Findings in Tasks um, danach
-normale Hauptschleife. Details: `AGENT_WORKFLOW.md`, Abschnitte
+Baustein `REVIEW` prüft den Ist-Zustand gegen die frisch erarbeiteten
+Requirements/Architecture und schreibt einen datierten Report unter
+`.agent/reports/`. Der Planner wandelt die Findings in Tasks um, danach
+die normale Task-Schleife. Details: `AGENT_WORKFLOW.md`, Abschnitte
 "Brownfield-Einstieg" und "Review-zu-Fix-Zyklus".
 
 ## Geplante Erweiterungen
 
-Security-Review- und Architektur-Review-Perspektiven laufen aktuell als
-zusätzliche Prüf-Dimensionen innerhalb des Reviewer-Audit-Modus. Bei Bedarf
-eigene, spezialisierte Reviewer-Varianten (z.B. `agents/security-reviewer.md`)
-nach demselben Grundmuster ergänzen: klar abgegrenzte Rolle, eigener
-Kontext, Ergebnis als datierter Report unter `.agent/reports/`.
+- **Pfad-Beschränkung in Claude Code mechanisch erzwingen.** Der Test-
+  Freeze (Implementer darf Testdateien nicht ändern) ist dort aktuell nur
+  eine Regel im System-Prompt plus die Diff-Prüfung des Orchestrators; ein
+  `PreToolUse`-Hook könnte ihn wie in OpenCode hart durchsetzen.
+- **Prüf-Linsen ausbauen.** Sicherheits-, Abhängigkeits- und
+  UI-Perspektiven laufen als Linsen innerhalb des Reviewer-Audit-Modus.
+  Falls eine davon regelmässig eigenständiges Gewicht bekommt, nach
+  demselben Muster eine eigene Rolle ergänzen: Body + `meta.yml`, der
+  Generator erzeugt die Adapter automatisch mit.

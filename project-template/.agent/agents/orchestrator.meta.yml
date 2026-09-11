@@ -1,0 +1,7 @@
+role: orchestrator
+kind: primary
+description: Treibt den Workflow: stellt die Lage fest, waehlt den Modus, ruft Bausteine einzeln auf, wertet deren Verdict aus und pflegt Task-Status und PROGRESS.md. Schreibt selbst keinen Code.
+model_tier: standard
+write_access: full
+path_denies: []
+max_steps: 200

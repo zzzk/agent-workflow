@@ -1,0 +1,7 @@
+role: planner
+kind: subagent
+description: Schaerft eine unklare Anforderung und zerlegt eine Initiative in kleine, in sich geschlossene Task-Dateien unter .agent/tasks/. Implementiert selbst nichts.
+model_tier: strong
+write_access: limited
+path_allows: [".agent/**"]
+max_steps: 60

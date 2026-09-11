@@ -1,0 +1,10 @@
+role: tester
+kind: subagent
+description: Schreibt vor der Implementierung fehlschlagende Tests aus den Akzeptanzkriterien (TEST_FIRST) und verifiziert danach die gesamte Suite (VERIFIKATION). Editiert nie Produktcode.
+model_tier: standard
+write_access: limited
+
+# Spiegelbild zu implementer.path_denies – an die Testablage des Projekts
+# anpassen.
+path_allows: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts", ".agent/tasks/**"]
+max_steps: 60

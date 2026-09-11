@@ -1,0 +1,11 @@
+role: implementer
+kind: subagent
+description: Setzt genau eine Task-Datei um. Aendert niemals Testdateien und committet nichts.
+model_tier: standard
+write_access: full
+
+# Test-Freeze: der Implementer darf Testdateien nicht anfassen.
+# Diese Muster sind projektspezifisch – an die Testablage des Projekts
+# anpassen (z.B. app/src/test/**, spec/**, **/*.test.ts).
+path_denies: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts"]
+max_steps: 80

@@ -1,0 +1,23 @@
+# Zuordnung: model_tier → konkretes Modell, je Harness.
+#
+# Das ist der EINZIGE Ort, an dem steht, welche Rolle auf welchem Modell
+# läuft. Die Rollen-Dateien selbst nennen nur eine Stufe (strong /
+# standard / cheap) und bleiben dadurch harness- und anbieterneutral.
+#
+# Nach jeder Änderung: .agent/sync-agents.py ausführen.
+#
+# Claude Code akzeptiert ausschliesslich Anthropic-Modelle (Aliase oder
+# Claude-IDs) – ein lokales Modell ist dort pro Rolle nicht möglich.
+claude:
+  strong: opus
+  standard: sonnet
+  cheap: haiku
+
+# OpenCode erwartet "provider/model-id". Lokale Provider werden einmal in
+# opencode.json definiert (npm: "@ai-sdk/openai-compatible" + baseURL),
+# danach ist die Provider-ID hier frei verwendbar – z.B. ollama/… oder
+# lmstudio/…, auch gemischt mit Cloud-Modellen.
+opencode:
+  strong: anthropic/claude-opus-5
+  standard: anthropic/claude-sonnet-5
+  cheap: ollama/qwen2.5-coder:14b

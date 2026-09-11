@@ -1,0 +1,7 @@
+role: architect
+kind: subagent
+description: Prueft einen fertigen Plan gegen die bestehende Architektur, bevor Code entsteht, und schreibt bindende Vorgaben in die Task-Dateien. Read-only gegenueber Produktcode und Tests.
+model_tier: strong
+write_access: limited
+path_allows: [".agent/tasks/**"]
+max_steps: 40
