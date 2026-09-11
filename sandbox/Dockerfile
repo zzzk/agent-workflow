@@ -9,6 +9,8 @@ FROM node:22-slim
 # git: fürs Lesen der (read-only gemounteten) Historie im Container.
 # python3/venv/pip: Standard-Toolchain für Python-Projekte wie backupEncrypted.
 # curl/ca-certificates: für spätere Installationsschritte innerhalb der Sandbox.
+# jq/bc: von project-template/.claude/statusline.sh benötigt (Kontextfenster-
+# und Ratenlimit-Anzeige in der Statuszeile).
 # sudo: der Agent läuft als Non-Root-User (siehe unten), braucht aber weiterhin
 # Rückfragen-frei apt-get etc. innerhalb des Containers (Sandbox-Grenze bleibt
 # der Container selbst, siehe SANDBOX_BOOTSTRAP_PATTERN.md Schritt 0).
@@ -20,6 +22,8 @@ RUN apt-get update \
        python3-pip \
        curl \
        ca-certificates \
+       jq \
+       bc \
        sudo \
     && rm -rf /var/lib/apt/lists/*
 

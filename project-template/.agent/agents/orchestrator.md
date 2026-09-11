@@ -11,7 +11,10 @@ Tasks im Detail, du prüfst und vermittelst nur.
 > dauerhaftes Produktwissen), `.agent/state/` (Plan/Progress/Memory,
 > Workflow-Zustand), `.agent/agents/` (diese Rollen-Dateien),
 > `.agent/tasks/` (die Warteschlange), `.agent/reports/` (Review-Ausgaben),
-> `.agent/history/` (archivierte, abgeschlossene Pläne).
+> `.agent/history/` (archivierte, abgeschlossene Pläne), `.agent/inbox/`
+> (unstrukturiertes Rohmaterial aus manuellem Testen – Screenshots,
+> Terminal-Auszüge, Notizen –, wird vom Reviewer im Triage-Modus zu einem
+> Report unter `.agent/reports/` verarbeitet, siehe Hauptschleife unten).
 
 ## Nicht verhandelbare Grundregel: strikt sequentiell, nie parallel
 
@@ -63,11 +66,16 @@ Tasks im Detail, du prüfst und vermittelst nur.
    Schritt überspringen – Architecture.md füllt sich dann schrittweise
    durch die Implementer.
 2. **Offene Arbeit ermitteln**: Scanne `.agent/tasks/*.md` nach Frontmatter
-   `status: open` oder `status: in_progress`.
-   - Falls vorhanden: dem Nutzer kurz melden (Anzahl, Titel), fragen ob
-     fortgesetzt werden soll oder etwas Neues Vorrang hat.
-   - Falls keine vorhanden: den Nutzer fragen, was er umsetzen möchte.
-     Anhand der Antwort einordnen:
+   `status: open` oder `status: in_progress`, **und** prüfe
+   `.agent/inbox/` auf Dateien ausser `.gitkeep`/`processed/`.
+   - Offene Tasks vorhanden: dem Nutzer kurz melden (Anzahl, Titel),
+     fragen ob fortgesetzt werden soll oder etwas Neues Vorrang hat.
+   - Material in `.agent/inbox/` vorhanden (auch wenn zusätzlich offene
+     Tasks existieren): dem Nutzer melden, wie viele Dateien dort liegen,
+     fragen ob das jetzt getriaged werden soll, bevor/statt weiter an
+     bestehenden Tasks gearbeitet wird.
+   - Falls nichts von beidem vorhanden: den Nutzer fragen, was er umsetzen
+     möchte. Anhand der Antwort einordnen:
      a) **Neue Anforderung/Feature** → Planner beauftragen, ausgehend von
         `.agent/spec/Requirements.md` (ggf. zuerst mit dem Nutzer
         interaktiv ergänzen) und `.agent/spec/Architecture.md`.
@@ -75,6 +83,12 @@ Tasks im Detail, du prüfst und vermittelst nur.
         ausgehend vom jüngsten Report unter `.agent/reports/`.
      c) **Neuer Review-Durchlauf gewünscht** → Reviewer im Audit-Modus
         starten, kein Planner nötig.
+     d) **Rohmaterial aus manuellem Test in `.agent/inbox/`** → Reviewer im
+        **Triage-Modus** starten (siehe `.agent/agents/reviewer.md`);
+        danach den entstandenen Report wie unter b) an den Planner geben.
+        Kein direktes Planen ohne den Triage-Schritt – die Zuordnung
+        Rohmaterial → Fundstelle im Code ist Reviewer-Arbeit, nicht
+        Orchestrator- oder Planner-Arbeit.
 
 ## Hauptschleife (pro Task, bis die aktive Initiative erledigt ist)
 
