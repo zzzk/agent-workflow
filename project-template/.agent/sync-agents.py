@@ -17,8 +17,7 @@ Dateien vom aktuellen Stand der Quellen abweichen (fuer CI/Pre-Commit).
 
 Hintergrund: Das .md-Format ist zwischen Harnesses NICHT kompatibel.
 Portabel ist nur der Body; Frontmatter und die mechanische Durchsetzung
-sind harness-spezifisch. Siehe tools/agent-workflow/AGENT_WORKFLOW.md,
-Teil D.
+sind harness-spezifisch. Siehe tools/agent-workflow/HARNESS.md.
 """
 
 import sys
@@ -122,7 +121,7 @@ def claude_adapter(meta, tiers, body):
     # Absicht eine braucht, wird sie hier als Regel in den System-Prompt
     # geschrieben - schwaecher als eine Durchsetzung, aber besser als
     # nichts. Mechanisch abgesichert wird sie zusaetzlich durch die
-    # Diff-Pruefung des Orchestrators (AGENT_WORKFLOW.md, Teil E).
+    # Diff-Pruefung des Orchestrators (AGENT_WORKFLOW.md, Teil D).
     if write_access == "limited" and allows:
         lines.append("> **Schreibrechte:** Du darfst ausschliesslich unter diesen Pfaden")
         lines.append("> schreiben: `{}`. Alles andere liest du nur.".format("`, `".join(allows)))

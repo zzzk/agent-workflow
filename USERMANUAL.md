@@ -10,6 +10,11 @@ praktisch.
 
 ---
 
+> **Andere Fragen, andere Datei:** wie der Workflow funktioniert und warum
+> – `AGENT_WORKFLOW.md` (mit Diagrammen); welcher Harness was kann und wie
+> Rollen auf anderen/lokalen Modellen laufen – `HARNESS.md`; warum eine
+> Regel existiert – `DECISIONS.md`.
+
 ## In 60 Sekunden
 
 Du kopierst `project-template/` in dein Projekt, füllst zwei Dateien aus
@@ -156,10 +161,19 @@ sagt, ob noch eines offen ist. Am Ende steht die fertige
 `Requirements.md` – noch kein Code. Existiert bereits eine Beschreibung
 (README, Tickets), nenne sie: sie wird zum Ausgangsmaterial im Auftrag.
 
-### 5. Berechtigungen
+### 5. Berechtigungen und Git
 
-Muss der Agent bei jedem Dateizugriff einzeln fragen, ist "selbständig
-durchlaufen lassen" nicht möglich. Kläre das **vor** dem ersten Task:
+Zwei Dinge gehören **vor** den ersten Task geklärt, sonst bremsen sie
+jeden Lauf.
+
+**Git**: kein Repo → `git init` plus initialer Commit. Bestehendes Repo →
+der Orchestrator fragt, ob auf dem aktuellen Branch weitergearbeitet oder
+ein eigener Branch für die Initiative angelegt wird. Ohne Repo gibt es
+keine nachvollziehbaren Zwischenstände – ein Commit pro verifiziertem Task
+ist Teil der Methodik.
+
+**Berechtigungen**: Muss der Agent bei jedem Dateizugriff einzeln fragen,
+ist "selbständig durchlaufen lassen" nicht möglich.
 
 - **Claude Code**: `/permissions` bzw. `.claude/settings.json`; der Skill
   `fewer-permission-prompts` erzeugt eine passende Allowlist aus deiner
@@ -323,6 +337,19 @@ wandert nach `.agent/history/<datum>-<slug>-auftrag.md`.
   versioniert; Protokoll für dich, nicht Entscheidungsgrundlage des
   Orchestrators).
 
+### Vom Review zum Fix
+
+Der übliche Zyklus, wenn du den Stand prüfen lässt:
+
+1. `REVIEW` (oder `TRIAGE`) schreibt einen datierten Report unter
+   `.agent/reports/` – Findings, keine Änderungen am Code.
+2. Neuer Auftrag im Modus `FIX`: der Planner macht aus jedem Finding einen
+   Task (weiter unterteilt, falls ein Finding mehrere Dateien betrifft).
+3. Normale Task-Schleife.
+4. Danach ein erneuter `REVIEW` zur Bestätigung – als **neuer**, datierter
+   Report. Alte Reports werden nie überschrieben, damit sich der Zustand
+   über die Zeit nachvollziehen lässt.
+
 ### Wenn ein Limit erreicht wird
 
 Der Orchestrator stoppt sauber, lässt den laufenden Task auf
@@ -354,7 +381,7 @@ Gegenstück: Was **du** pflegst, sind `Requirements.md`, `_tiers.yml`, die
 | Implementer hat Testdateien geändert | Testpfade in `meta.yml` passen nicht zum Projekt | Pfade korrigieren, neu generieren; der Orchestrator fängt es zusätzlich per `git diff` |
 | Fremder Lauf "erfolgreich", aber nichts geändert | Berechtigung still abgelehnt | Log auf `auto-rejecting` prüfen, `--auto` bzw. `permission: allow` setzen |
 | Fehler `unbekannter model_tier '<x>'` | Stufe in einer `meta.yml` hat keinen Eintrag in `_tiers.yml` | Stufe dort ergänzen (oder Tippfehler korrigieren) |
-| Agent plant mehrere Tasks gleichzeitig | Protokollverstoss | Abbrechen; Modell/Harness-Kombination prüfen (siehe `AGENT_WORKFLOW.md`, Lessons Learned Nr. 7) |
+| Agent plant mehrere Tasks gleichzeitig | Protokollverstoss | Abbrechen; Modell/Harness-Kombination prüfen (siehe `DECISIONS.md`, Lehre Nr. 7) |
 | Tests schlagen nach `TEST_FIRST` **nicht** fehl | Verhalten existiert bereits, oder der Test prüft nichts | Der Tester meldet das als `CHANGES_NEEDED` – Task überprüfen, nicht den Test abschwächen |
 | Lokales Modell ruft keine Tools auf | Kontextfenster zu klein | Bei Ollama `num_ctx` auf 16k–32k anheben |
 

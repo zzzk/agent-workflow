@@ -13,7 +13,7 @@
 >   Verantwortung/Schnittstelle ändert (siehe `.agent/agents/implementer.md`).
 > - **Brownfield**: wird einmalig vom Reviewer im **Map-Modus** aus dem
 >   bestehenden Code erzeugt (siehe `.agent/agents/reviewer.md` und
->   `AGENT_WORKFLOW.md`, Abschnitt "Brownfield-Einstieg"), danach wie
+>   `USERMANUAL.md`, Teil 3), danach wie
 >   Greenfield weitergepflegt.
 
 ## Komponentenübersicht

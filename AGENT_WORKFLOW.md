@@ -1,35 +1,137 @@
-# Vorgehen: Rollen-Agenten mit flexibel zusammengesetzten Bausteinen
+# Agent-Workflow: Rollen-Agenten mit zusammengesetzten Bausteinen
 
-Generische, wiederverwendbare Methode, um ein Software-Vorhaben durch
-mehrere spezialisierte Agenten selbständig umsetzen zu lassen, ohne dass
-Qualität oder Kontrollierbarkeit leiden – auch (und gerade) wenn einzelne
-Rollen auf günstigen oder lokalen Modellen mit begrenztem Kontextfenster
-laufen.
+Eine Methode, um ein Software-Vorhaben durch mehrere spezialisierte
+Agenten selbständig umsetzen zu lassen, ohne dass Qualität oder
+Kontrollierbarkeit leiden – auch (und gerade) wenn einzelne Rollen auf
+günstigen oder lokalen Modellen mit begrenztem Kontextfenster laufen.
 
-Ursprünglich entwickelt für das Encrypted-Backup-Tool-Projekt
-(Requirements → Plan → Implementierung), danach in drei Stufen gewachsen:
+**Diese Datei erklärt, wie der Workflow funktioniert.** Daneben:
 
-- **v1** – drei Rollen (Orchestrator/Implementer/Test-Agent), als Prosa
-  innerhalb einer einzigen `AGENTS.md` beschrieben.
-- **v2** – fünf Rollen mit je eigener Datei, eigener Reviewer-Rolle, und
-  Trennung zwischen dauerhaftem Produktwissen (`spec/`) und vergänglichem
-  Workflow-Zustand (`state/`).
-- **v3** – Drei Änderungen, Begründung unter "Warum v3":
-  1. Der feste Ablauf wird durch einen **Baustein-Katalog** ersetzt, aus
-     dem der Orchestrator je nach Ausgangslage einen Modus zusammensetzt.
-  2. Alle Rollen bekommen einen einheitlichen **Rollen-Vertrag** mit
-     maschinell auswertbaren **Verdicts** statt Prosa-Rückmeldung.
-  3. Rolle und **Runtime/Modell** werden entkoppelt: eine Rolle kann in
-     einem anderen Harness und auf einem anderen (auch lokalen) Modell
-     laufen als der Orchestrator.
-- **v3.1** – dieser Stand. Zwei Änderungen, Begründung unter "Warum v3.1":
-  1. Jede Initiative beginnt mit dem Baustein **`AUFTRAGSKLAERUNG`** beim
-     Orchestrator; sein Ergebnis ist die Datei `state/AUFTRAG.md`, aus der
-     der Modus abgeleitet wird – nicht mehr aus Dateizustand plus
-     Gesprächshistorie.
-  2. Das Erarbeiten von Anforderungen wird ein eigener Modus
-     **`REQUIREMENTS`** mit rundenbasierter `KLAERUNG`, statt eines
-     Vorspiels von `FEATURE`.
+| Datei | Beantwortet |
+|---|---|
+| `USERMANUAL.md` | Wie richte ich das ein und bediene es? |
+| `HARNESS.md` | Welcher Harness kann was, wie laufen Rollen auf anderen Modellen? |
+| `DECISIONS.md` | Warum ist es so – und was ist schon schiefgegangen? |
+| `project-template/.agent/agents/*.md` | Was eine Rolle **tatsächlich** tut (normativ) |
+
+> Die Rollen-Dateien sind die Quelle der Wahrheit: sie sind der Text, den
+> der Agent liest. Dieses Dokument erklärt den Zusammenhang und darf
+> deshalb keine Regel in abweichendem Wortlaut wiederholen – im Zweifel
+> gilt die Rollen-Datei.
+
+## Das Prinzip in vier Sätzen
+
+1. **Eine Rolle, ein Auftrag, ein frischer Kontext.** Jeder Schritt geht an
+   einen neu gestarteten Agenten, der nur seine Auftragsdatei kennt – nie
+   die Gesprächshistorie.
+2. **Dateien sind das Protokoll.** Rollen reden nie miteinander; sie
+   schreiben und lesen Dateien unter `.agent/`. Dadurch überlebt der
+   Zustand jeden Abbruch, jeden Modellwechsel und jeden Harness.
+3. **Der Orchestrator vermittelt, urteilt aber nicht selbst.** Er klärt den
+   Auftrag mit dem Nutzer, wählt die Bausteine, prüft Ergebnisse an Git und
+   Dateien – und schreibt selbst keinen Code.
+4. **Es gibt keine feste Pipeline.** Aus dem geklärten Auftrag ergibt sich
+   ein Modus, und ein Modus ist nur eine Reihenfolge von Bausteinen.
+
+---
+
+## Überblick in drei Bildern
+
+### Bild 1 – Wer redet mit wem (und wer nicht)
+
+```mermaid
+flowchart TB
+    U(["Nutzer"])
+    O["ORCHESTRATOR<br/>klärt den Auftrag, wählt den Modus,<br/>startet Bausteine, prüft Ergebnisse"]
+    U <-->|"Auftrag klären, Rückfragen beantworten"| O
+
+    O ==>|"genau ein Baustein,<br/>dann warten"| P["Planner<br/>klärt, zerlegt"]
+    O ==> A["Architekt<br/>prüft den Plan"]
+    O ==> I["Implementer<br/>setzt einen Task um"]
+    O ==> T["Tester<br/>schreibt, führt aus"]
+    O ==> R["Reviewer<br/>auditiert, kartiert"]
+
+    P & A & I & T & R -.-> O
+
+    F[("<b>.agent/</b><br/>state/AUFTRAG.md<br/>spec/Requirements.md<br/>spec/Architecture.md<br/>tasks/TASK-0001-...md<br/>reports/, PROGRESS.md")]
+
+    P & A & I & T & R <--> F
+    O <--> F
+```
+
+Dicke Pfeile: der Orchestrator startet eine Rolle. Gestrichelt: ihr
+Verdict kommt zurück. Dünn: Lesen und Schreiben von Dateien.
+
+Die Pfeile **zwischen** den Rollen fehlen nicht aus Platzgründen: es gibt
+sie nicht. Implementer und Tester erfahren nichts voneinander ausser dem,
+was in der Task-Datei steht. Genau das macht den Tester unabhängig – er
+prüft gegen die Akzeptanzkriterien statt gegen die Absicht des
+Implementers.
+
+### Bild 2 – Eine Initiative von vorn bis hinten
+
+```mermaid
+flowchart TD
+    S(["Session-Start"]) --> L["Lage feststellen<br/>offene Tasks? Inbox-Material?<br/>unterbrochener Auftrag?"]
+    L --> K["AUFTRAGSKLAERUNG<br/>Orchestrator im Dialog mit dem Nutzer"]
+    K --> AU["state/AUFTRAG.md<br/>Anliegen - Umfang - Erfolgskriterium"]
+    AU --> M{"Modus<br/>ergibt sich aus dem Auftrag"}
+
+    M -->|"Anforderungen erarbeiten"| RQ["REQUIREMENTS<br/>KLAERUNG je Thema,<br/>bis nichts mehr offen ist"]
+    M -->|"neues Feature"| FE["FEATURE<br/>KLAERUNG - PLAN - ARCHITEKTUR_GATE"]
+    M -->|"Report abarbeiten"| FI["FIX<br/>PLAN"]
+    M -->|"manuell getestet"| MT["MANUELLER-TEST<br/>TRIAGE"]
+    M -->|"nur prüfen"| AD["AUDIT<br/>REVIEW"]
+    M -->|"1-2 Dateien"| EA["EINZELAUFTRAG<br/>Task vom Orchestrator"]
+    M -->|"fremder Code, keine Doku"| BO["BOOTSTRAP<br/>MAP"]
+
+    FE --> TL["Task-Schleife<br/>je Task, siehe Bild 3"]
+    FI --> TL
+    MT --> FI
+    EA --> TL
+    TL --> RV["REVIEW<br/>datierter Report"]
+
+    RQ --> EN
+    AD --> EN
+    BO --> K
+    RV --> EN(["Abschluss: AUFTRAG.md und Plan<br/>nach history/ archiviert"])
+```
+
+Zwei Dinge, die das Bild zeigt und die leicht übersehen werden: die
+Auftragsklärung steht **vor** der Modus-Wahl (nicht umgekehrt), und
+`REQUIREMENTS` endet ohne eine Zeile Code – die Umsetzung ist ein eigener,
+neu zu klärender Auftrag.
+
+### Bild 3 – Die Task-Schleife mit Test-Freeze
+
+```mermaid
+sequenceDiagram
+    participant O as Orchestrator
+    participant T as Tester
+    participant I as Implementer
+    participant G as Git und Dateien
+
+    O->>G: Task-Status auf in_progress
+    O->>T: TEST_FIRST - nur die Akzeptanzkriterien
+    T->>G: Tests, die fehlschlagen MÜSSEN, plus Commit
+    T-->>O: PASS, Freeze-Commit-Hash
+    O->>I: UMSETZUNG - die vollständige Task-Datei
+    I->>G: Code-Änderung, Testdateien unberührt
+    I-->>O: PASS, Selbstcheck bestätigt
+    O->>G: git diff FREEZE..HEAD -- tests/ muss leer sein
+    O->>T: VERIFIKATION - die gesamte Suite
+    T-->>O: PASS oder CHANGES_NEEDED
+    Note over O,I: CHANGES_NEEDED: zurück an UMSETZUNG.<br/>Kein neuer Task, solange dieser nicht grün ist.
+    O->>G: Status done, PROGRESS.md, Commit
+```
+
+Der Tester kennt beim Schreiben der Tests **nur** die Akzeptanzkriterien,
+nicht die spätere Implementierung – und der Implementer darf die Tests
+danach nicht mehr anfassen. Das ist strikt stärker als "unabhängiger
+Tester im Anschluss": wer den fertigen Code vor sich hat, prüft unbewusst
+gegen die Implementierung statt gegen die Spezifikation.
+
+---
 
 ## Wann anwenden
 
@@ -41,7 +143,7 @@ Ursprünglich entwickelt für das Encrypted-Backup-Tool-Projekt
   Aufgaben am Stück).
 - Gilt sowohl für **Greenfield** (neues Projekt, Requirements + Plan werden
   von Null erarbeitet) als auch für **Brownfield** (bestehender Code ohne
-  – oder mit veralteter – Doku; siehe "Brownfield-Einstieg" unten).
+  – oder mit veralteter – Doku; Einstieg dafür: `USERMANUAL.md`, Teil 3).
 
 ---
 
@@ -67,7 +169,7 @@ ein Report, o.ä.) tatsächlich braucht.
    `.agent/tasks/TASK-*.md`-Dateien (Baustein `PLAN`). Braucht mehr
    Kontext/Fähigkeit als die Ausführungsrollen – hier lohnt das stärkste
    verfügbare Modell.
-3. **Architekt** (`architect.md`) – *neu in v3.* Read-only Gutachter, der
+3. **Architekt** (`architect.md`) – Read-only Gutachter, der
    den **Plan** gegen `spec/Architecture.md` prüft, **bevor** Code
    entsteht: passt das Vorhaben in eine bestehende Abstraktion oder
    braucht es wirklich eine neue? Werden Schichtgrenzen verletzt? Kommt
@@ -120,8 +222,8 @@ Anti-Beispiel aus einem realen Vorfall statt abstrakter Regel.>
 <Exaktes Ausgabeformat: Verdict-Zeile zuerst, dann die Pflichtangaben.>
 ```
 
-Der Body enthält **kein** Frontmatter – er ist harness-neutral (siehe
-Teil D). Die harness-spezifischen Felder liegen daneben in
+Der Body enthält **kein** Frontmatter – er ist harness-neutral
+(siehe `HARNESS.md`). Die harness-spezifischen Felder liegen daneben in
 `<rolle>.meta.yml`.
 
 ### Verdicts: das gemeinsame Rückgabe-Vokabular
@@ -148,7 +250,7 @@ Begründung sind selbst ein Fehler und gehen an dieselbe Rolle zurück.
 
 Ein **Baustein** ist ein Aufruf genau einer Rolle mit genau einem Auftrag.
 Bausteine sind unabhängig voneinander definiert; ein Modus (Teil C) ist
-nur eine Reihenfolge daraus. Das ersetzt den festen Ablauf aus v1/v2:
+nur eine Reihenfolge daraus. Es gibt bewusst **keine feste Pipeline**:
 nicht jede Arbeit ist "Anforderung bis Auslieferung", und Bausteine, die
 nichts zu tun hätten, werden gar nicht erst gestartet.
 
@@ -235,8 +337,7 @@ Rollen-Dateien klein und die Aktivierungsentscheidung mechanisch.
 
 Der Orchestrator ermittelt zu Beginn jeder Session die Ausgangslage, klärt
 den Auftrag und leitet daraus den Modus ab. Ein Modus ist nichts weiter
-als eine Reihenfolge von Bausteinen – nicht mehr die eine feste Pipeline
-aus v1/v2.
+als eine Reihenfolge von Bausteinen.
 
 Jede Initiative beginnt mit `AUFTRAGSKLAERUNG`; der Modus ist das Ergebnis
 dieses Bausteins und steht in `state/AUFTRAG.md`. Ein Auftrag ergibt genau
@@ -311,7 +412,7 @@ Aufruf, nicht "im Kontext weiterdenken"); der Orchestrator wartet auf die
 vollständige Rückmeldung, bevor irgendetwas anderes passiert.
 
 Begründung und der reale Vorfall, der zu dieser Regel führte: siehe
-Lessons Learned Nr. 7.
+`DECISIONS.md`, Lehre Nr. 7.
 
 ### Start jeder Session
 
@@ -338,7 +439,7 @@ Lessons Learned Nr. 7.
 1. Nächsten Task ermitteln: `status: open`, alle Einträge in `depends_on`
    bereits `done`. Bei mehreren wählbaren Tasks: niedrigste ID zuerst.
 2. Status auf `in_progress` setzen.
-3. `TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` (siehe Test-Freeze unten).
+3. `TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` (Test-Freeze: Teil D).
 4. Bei `CHANGES_NEEDED` aus der Verifikation: erneut `UMSETZUNG` für
    denselben Task, mit den fehlgeschlagenen Tests/Fehlermeldungen als
    zusätzlichem Kontext. Zurück zu `VERIFIKATION`. **Kein neuer Task
@@ -358,164 +459,7 @@ Review-Runden bezahlbar und den Kontext klein genug für kleine Modelle.
 
 ---
 
-## Teil D – Runtime und Modell pro Rolle
-
-Der Kern von v3: **eine Rolle ist nicht an den Harness gebunden, in dem
-der Orchestrator läuft.** Das ist die Voraussetzung dafür, teure Denkarbeit
-(Planner, Architekt, Reviewer) und billige Fliessarbeit (Implementer,
-Tester) auf unterschiedlichen – auch lokalen – Modellen laufen zu lassen.
-
-### Verifizierte Harness-Eigenschaften (Stand 2026-09-11)
-
-Diese Fakten altern; vor grösseren Umbauten neu prüfen.
-
-| Eigenschaft | Claude Code | OpenCode |
-|---|---|---|
-| Rollen-Dateien | `.claude/agents/*.md`, `name:` im Frontmatter | `.opencode/{agent,agents}/**/*.md`, **Dateiname = Agent-Name** |
-| Modell pro Rolle | `model:` – **nur Anthropic** (Aliase oder Claude-IDs) | `model: provider/model-id`, **frei** |
-| Lokales Modell pro Rolle | **nicht möglich** – Umleitung (`ANTHROPIC_BASE_URL`, Bedrock, Vertex) ist immer session-global | **ja** – Provider einmal in `opencode.json` (`@ai-sdk/openai-compatible` + `baseURL`), dann z.B. `model: ollama/<modell>` |
-| Mischbetrieb (Rolle A Cloud, Rolle B lokal) | nein | ja, explizit vorgesehen |
-| Werkzeug-Beschränkung | `tools:` / `disallowedTools:` (Listen) – **mechanisch erzwungen** | `permission:` (Map, `allow`/`ask`/`deny`) – **mechanisch erzwungen** |
-| Pfad-Granularität | **nicht ausdrückbar** – nur über einen `PreToolUse`-Hook nachbaubar | **direkt**: `edit: { "*": allow, "tests/**": deny }`; letzte passende Regel gewinnt |
-| Frischer Kontext je Aufruf | garantiert | garantiert (eigene Child-Session) |
-| Schritt-Obergrenze | `maxTurns:` | `steps:` |
-| Liest `AGENTS.md` | ja (via `CLAUDE.md`-Import) | ja, bevorzugt; `CLAUDE.md` nur als Fallback |
-| Liest die Rollen-Dateien des anderen | – | **nein**, `.claude/agents/` wird nicht gescannt |
-
-Weitere Claude-Code-Frontmatter-Felder: `permissionMode`, `memory`,
-`background`, `skills`, `mcpServers`, `hooks`, `isolation: worktree`.
-Weitere OpenCode-Felder: `mode: primary|subagent|all`, `variant`,
-`temperature`, `top_p`, `disable`, `hidden`, `color`, `options`
-(`tools:` ist dort zugunsten von `permission:` veraltet).
-
-**Konsequenz:** Wer Rollen auf lokalen Modellen fahren will, kann das mit
-Claude Code allein nicht – nicht als Einschränkung der Konfiguration,
-sondern strukturell. Das bestätigt die bereits in v2 notierte Vermutung
-(Lessons Learned Nr. 7) in schärferer Form.
-
-### Eine Quelle, zwei Adapter
-
-Das Dateiformat ist **nicht** harness-übergreifend kompatibel. Portabel ist
-nur der Body; Frontmatter und Durchsetzung sind harness-spezifisch. Der
-Body von Claude-Code-Rollen löst ausserdem **keine `@datei.md`-Imports**
-auf (anders als `CLAUDE.md`-Memory) – ein Adapter kann den neutralen Body
-also nicht importieren, er muss ihn enthalten.
-
-Deshalb: neutrale Quelle plus generierte Adapter.
-
-```
-.agent/agents/implementer.md         # Quelle: reiner Rollen-Body, kein Frontmatter
-.agent/agents/implementer.meta.yml   # Absicht, nicht Harness-Syntax
-   role: implementer
-   kind: subagent                    # subagent | primary
-   description: ...                  # beide Harnesses brauchen sie
-   model_tier: standard              # strong | standard | cheap
-   write_access: full                # none | limited | full
-   path_denies: ["tests/**"]         # bei full: Ausnahmen
-   path_allows: []                   # bei limited: die einzigen erlaubten Pfade
-   max_steps: 80
-
-.agent/agents/_tiers.yml             # Stufe → konkretes Modell, je Harness
-.agent/sync-agents.py                # Generator (abhängigkeitsfrei, Python 3)
-
-→ generiert (nie von Hand editieren):
-.claude/agents/implementer.md        # name/description/model/maxTurns/tools
-.opencode/agent/implementer.md       # description/mode/model/steps/permission
-```
-
-`meta.yml` beschreibt **Absicht** (`write_access: full`, `path_denies`),
-nicht Harness-Syntax. `_tiers.yml` ist der **einzige** Ort, an dem steht,
-welche Stufe auf welchem konkreten Modell landet – dort stellt man eine
-Rolle auf ein lokales Modell um, nicht in der Rollen-Datei. Ein dritter
-Harness ist ein neues Generator-Template, keine Überarbeitung sämtlicher
-Rollen-Dateien.
-
-```bash
-python3 .agent/sync-agents.py           # Adapter neu erzeugen
-python3 .agent/sync-agents.py --check   # nur prüfen (Exit 1 bei Drift, für CI)
-```
-
-Was der Generator **nicht** heilen kann: Claude Code kennt keine
-pfadbeschränkten Schreibrechte. Wo die Absicht eine braucht (Implementer
-darf `tests/**` nicht anfassen), schreibt der Generator die Regel dort als
-Text in den System-Prompt und verlässt sich zusätzlich auf die
-Diff-Prüfung des Orchestrators (Teil E). In OpenCode wird dieselbe Absicht
-zu einer echten `permission`-Regel.
-
-### Aufruf einer Rolle in einem fremden Harness
-
-Die Task-Datei entscheidet, wer ausführt:
-
-```yaml
-runtime: opencode              # subagent | opencode
-model: ollama/<modell>         # optional, überschreibt meta.yml
-```
-
-Der Orchestrator ruft den fremden Harness als **Unterprozess** auf und
-wartet auf dessen Ende:
-
-```bash
-timeout 900 opencode run \
-  --agent implementer --dir . --auto \
-  "Setze .agent/tasks/TASK-0007-<slug>.md um." \
-  > .agent/runs/TASK-0007-umsetzung.log 2>&1
-```
-
-**Nicht** über zwei unabhängig pollende Schleifen. Der Grund ist nicht
-Bequemlichkeit: zwei Prozesse, die dieselbe Task-Datei lesen und schreiben,
-brauchen ein Lock-Protokoll, einen Heartbeat gegen hängengebliebene Läufe
-und eine Regel, wer bei Uneinigkeit entscheidet – alles Protokoll, das per
-Konvention eingehalten werden müsste. Der Unterprozess-Aufruf macht
-dasselbe mechanisch: nur einer schreibt, Abbruch per `timeout`, kein
-zweiter Entscheider.
-
-Bekannte Eigenschaften von `opencode run` (Stand 2026-09-11), die den
-Aufruf prägen:
-
-- Relevante Flags: `--agent`, `--model provider/model`, `--dir` (nicht
-  `--cwd`), `--format default|json`, `--session`/`--continue`, `--auto`.
-- **Kein Timeout-Flag** – Gesamtlaufzeit von aussen begrenzen (`timeout`)
-  oder im Server-Modus per `POST /session/:id/abort`.
-- **Exit-Code ist kein dokumentierter Vertrag** – als Zusatzsignal
-  brauchbar, nicht als alleinige Grundlage.
-- `--format json` liefert undokumentierte Roh-Events und kann enden, bevor
-  das finale Event geschrieben ist (offener Bug) – nicht auf das letzte
-  Event als Abschlussmarker bauen.
-- **Ohne `--auto` werden Berechtigungsanfragen headless nicht abgefragt,
-  sondern still abgelehnt** (Warnzeile auf stderr), der Lauf geht weiter.
-  Ergebnis wäre ein "erfolgreicher" Lauf, der nichts geschrieben hat. Das
-  Log deshalb immer auf `auto-rejecting` prüfen.
-
-Für viele Aufrufe hintereinander gibt es alternativ den Server-Modus
-(`opencode serve`, Default `127.0.0.1:4096`, `POST /session` +
-`POST /session/:id/message`, OpenAPI unter `/doc`, JS/TS-SDK
-`@opencode-ai/sdk`). Achtung: dort führen `ask`-Berechtigungen zu einer
-hängenden Session, weil es keine Oberfläche für die Rückfrage gibt –
-Berechtigungen müssen vorab auf `allow` stehen oder über die
-Permission-API beantwortet werden.
-
-### Die Wahrheit steht in den Dateien, nicht im Log
-
-Entscheidend, und der Grund, warum die obigen Schwächen nicht durchschlagen:
-**der Orchestrator zieht sein Urteil nie aus der Ausgabe des
-Unterprozesses.** Er prüft nach jedem fremden Lauf denselben Satz Quellen
-wie bei einem eigenen:
-
-```bash
-git diff --name-only          # wurde etwas geändert – und nur, was `files:` erlaubt?
-git status --porcelain        # unerwartete/ungetrackte Artefakte?
-grep -l auto-rejecting .agent/runs/TASK-0007-*.log   # still an einer Berechtigung gescheitert?
-```
-
-plus die Task-Datei selbst (hat die Rolle ihren Abschnitt gefüllt?). Das
-Log ist Protokoll für den Menschen, nicht Entscheidungsgrundlage für die
-Maschine. Damit ist der Handoff harness-unabhängig: **die Task-Datei ist
-das Protokoll zwischen den Runtimes**, genau wie sie es schon zwischen
-frischen Sub-Agenten war.
-
----
-
-## Teil E – Mechanische Härtung
+## Teil D – Mechanische Härtung
 
 Leitsatz: **Eine Prosa-Regel ist die letzte Wahl, nicht die erste.** Wo der
 Harness oder ein Kommando dieselbe Zusage erzwingen kann, wird sie so
@@ -525,7 +469,7 @@ der Unterschied zwischen "hält" und "hält meistens".
 | Zusage | Mechanisch durch | Prosa nur als Ergänzung |
 |---|---|---|
 | Reviewer/Architekt ändern nichts | `tools:`-Allowlist bzw. `permission: { edit: deny }` | "du editierst nie" |
-| Implementer fasst keine Tests an | OpenCode `edit: { "tests/**": deny }`; Claude Code `PreToolUse`-Hook; zusätzlich Diff-Prüfung (unten) | "du editierst nie Testcode" |
+| Implementer fasst keine Tests an | OpenCode `edit: { "tests/**": deny }`; Claude Code `PreToolUse`-Hook; zusätzlich Diff-Prüfung durch den Orchestrator | "du editierst nie Testcode" |
 | Frischer Kontext je Baustein | eigener Agenten-/Session-Aufruf | "lies nicht die Historie" |
 | Kein Endlos-Lauf | `max_steps` / `steps` / `maxTurns`, `timeout` um den Unterprozess | – |
 | Baustein nur wenn nötig | `git diff --name-only`-Bedingung | – |
@@ -563,7 +507,7 @@ weggelassen wird sie nie.
 
 ---
 
-## Teil F – Dateistruktur (pro Projekt)
+## Teil E – Dateistruktur (pro Projekt)
 
 ```
 AGENTS.md                        # Projekt-Root, @-importiert agents/orchestrator.md
@@ -630,7 +574,9 @@ zwischen Runtimes. Sie muss deshalb **vollständig in sich geschlossen**
 sein.
 
 ```markdown
+
 ---
+
 id: TASK-0023
 title: <kurzer, imperativer Titel>
 status: open            # open | in_progress | done | failed | blocked
@@ -642,6 +588,7 @@ files: [pfad/zur/datei.py]
 runtime: subagent       # subagent | opencode   – wer führt aus
 model:                  # optional; überschreibt den model_tier der Rolle
 test_first: true        # false nur mit Begründung im Kontext-Abschnitt
+
 ---
 
 ## Deliverable
@@ -682,234 +629,12 @@ Freeze-Commit-Hash>
 
 ---
 
-## Teil G – Vorbereitung, Einstieg, Betrieb
+## Weiterführend
 
-### Vorbereitung (einmalig, vor dem ersten Task)
-
-- **Berechtigungen im Voraus klären statt pro Aktion nachfragen.** Wenn
-  bei praktisch jedem Dateizugriff einzeln um Erlaubnis gefragt wird, ist
-  "selbständig durchlaufen lassen" nicht möglich. Vor dem ersten Task
-  einmal explizit klären, in welchem Modus gearbeitet wird (Auto-Accept
-  bzw. Allowlist, siehe Skill `fewer-permission-prompts`). Sub-Agenten
-  erben denselben Modus. Bei fremden Runtimes zusätzlich beachten, dass
-  eine ausbleibende Genehmigung dort still zur Ablehnung führen kann
-  (siehe Teil D).
-- **Lokales Git für nachvollziehbare Zwischenstände.** Kein Repo:
-  `git init` + initialer Commit. Bestehendes Repo: nachfragen, ob auf dem
-  aktuellen Branch weitergearbeitet oder ein eigener Branch für die
-  Initiative angelegt wird.
-- **Sandbox-Kontext prüfen.** Läuft die Session in der Agent-Sandbox
-  (`tools/agent-workflow/sandbox/`), ist `.git` in der Regel read-only
-  gemountet – kein `git commit`/`push` von dort. Stattdessen den fertigen,
-  getesteten Diff vorbereiten und in `state/PROGRESS.md` vermerken:
-  "bereit zum Commit: <Commit-Message-Entwurf>". Die Sandbox gewinnt an
-  Bedeutung, sobald Rollen auf lokalen Modellen mit Auto-Approve laufen.
-
-### Brownfield-Einstieg
-
-Für ein bestehendes Projekt ohne (oder mit veralteter) `.agent/`-Struktur:
-keine historische Plan-Rekonstruktion nötig.
-
-1. `project-template/` in das bestehende Repo kopieren (nur die
-   `.agent/`-Struktur + Root `AGENTS.md`/`CLAUDE.md`, Produktcode bleibt
-   unverändert), Adapter generieren.
-2. Baustein `MAP` laufen lassen: erzeugt `spec/Architecture.md` direkt aus
-   dem Code – keine Bauhistorie nötig.
-3. `spec/Requirements.md` füllen – als eigener Auftrag im Modus
-   `REQUIREMENTS`. Falls eine funktionale Beschreibung bereits anderswo
-   existiert (README, Ticket-System), gehört sie als Ausgangsmaterial in
-   `state/AUFTRAG.md`: daraus ableiten und bestätigen lassen, statt aus dem
-   Code zu raten.
-4. Ab hier normaler Betrieb. Die erste Initiative ist häufig ein `AUDIT`,
-   um den Ist-Zustand gegen die frisch erarbeiteten Requirements zu prüfen.
-
-### Review-zu-Fix-Zyklus
-
-1. `REVIEW` (oder `TRIAGE`) schreibt einen datierten Report unter
-   `reports/` – Findings, keine Änderungen am Code.
-2. `PLAN` liest den Report und erzeugt einen Task pro Finding (weiter
-   unterteilt, falls ein Finding mehrere Dateien/Module betrifft).
-3. Normale Task-Schleife.
-4. Nach Abschluss aller Fix-Tasks: erneuter `REVIEW`-Durchlauf (neuer,
-   datierter Report) zur Bestätigung – alte Reports bleiben erhalten (kein
-   Überschreiben), damit sich der Zustand über Zeit nachvollziehen lässt.
-
-### Umgang mit Nutzungs-/Rate-Limits
-
-1. Sauber stoppen – keinen Task "halb" hinterlassen. Ist eine Rolle mitten
-   im Task, dessen Status als `in_progress` (nicht `done`) belassen.
-2. Reset-Zeitpunkt (Statuszeile der Umgebung) in `state/PROGRESS.md`
-   notieren.
-3. Falls `ScheduleWakeup` o.ä. verfügbar: Wakeup auf den Reset-Zeitpunkt,
-   Prompt "Lies `.agent/tasks/` und mache als Orchestrator weiter."
-4. Sonst: stoppen, Nutzer informieren, bei welchem Task pausiert wurde –
-   dank der Task-Dateien geht kein Fortschritt verloren.
-
----
-
-## Warum v3.1
-
-v3 hat den festen Ablauf durch Bausteine ersetzt – aber der **Einstieg**
-blieb der alte. Drei Löcher, die erst im Betrieb sichtbar wurden:
-
-1. **Es gab keinen Schritt "was ist überhaupt der Auftrag".** Der Modus
-   wurde aus dem Dateizustand plus einer Chat-Antwort gewählt. War
-   `Requirements.md` leer, landete man in `FEATURE` – auch wenn der Nutzer
-   gar keine Umsetzung wollte, sondern nur einen Review oder überhaupt
-   erst die Anforderungen. `AUDIT` gab es zwar, aber der Einstiegspfad
-   führte nicht dorthin.
-2. **Alles vor `PLAN` lebte nur in der Gesprächshistorie.** Das
-   widerspricht dem Kernprinzip aus Teil A ("eine Rolle liest nie die
-   volle Gesprächshistorie"): der Planner bekam das Anliegen als Prosa
-   gereicht, und bei einem Sessionabbruch war es weg. Mit
-   `state/AUFTRAG.md` gilt dieselbe Regel jetzt auch für den Einstieg –
-   der Auftrag ist ein Artefakt, kein Chatverlauf.
-3. **"Requirements interaktiv erarbeiten" war unmöglich, stand aber als
-   Versprechen in der Vorlage.** `Requirements.md` kündigte eine
-   thematisch fortschreitende Klärung an, `planner.md` beschrieb eine
-   einmalige Fragerunde mit anschliessendem `BLOCKED` – und der Planner
-   ist als Subagent strukturell weder gesprächsfähig noch erinnerungsfähig.
-   Der Modus `REQUIREMENTS` löst das nicht, indem die Rolle interaktiv
-   gemacht wird (das kann sie nicht), sondern indem der Zustand in
-   `AUFTRAG.md` liegt und der Orchestrator die Runden taktet.
-
-## Warum v3
-
-v2 war als Struktur richtig, hatte aber drei Schwächen, die erst im
-Betrieb sichtbar wurden:
-
-1. **Der Ablauf war implizit eine Pipeline.** Beschrieben war eine
-   Hauptschleife für "Anforderung → Tasks → Umsetzung", mit Review als
-   Anhängsel. Tatsächlich anfallende Arbeit sieht oft anders aus: ein
-   einzelner Bugfix, ein reines Audit, das Auswerten manueller Tests. Der
-   Baustein-Katalog (Teil B) macht die Zusammensetzung explizit, statt
-   jeden Sonderfall als Abweichung von der einen Schleife zu behandeln.
-2. **Rückmeldungen waren Prosa.** Der Orchestrator musste interpretieren,
-   ob eine Rolle zufrieden war – eine Fehlerquelle genau bei den kleinen
-   Modellen, für die die Methodik gedacht ist. Verdicts (Teil A) machen
-   die Verzweigung greppbar.
-3. **Rolle und Modell waren faktisch gekoppelt.** v2 empfahl zwar "für den
-   Planner ein stärkeres Modell", ohne Mechanismus dafür. Teil D trennt
-   die neutrale Rollen-Definition von der harness-spezifischen Zuordnung
-   und beschreibt den Aufruf fremder Runtimes.
-
-Zusätzlich neu: die **Architekt**-Rolle (prüft den Plan, bevor Code
-entsteht – bis dahin prüfte nur der Reviewer, also erst hinterher), der
-**Test-Freeze** (Teil E) und das explizite Überspringen von Bausteinen mit
-protokollierter Begründung.
-
-Die Anregung zu Architekt-Rolle, Verdict-Vokabular, einheitlicher
-Rollen-Gliederung, Test-Freeze und mechanischer Baustein-Auswahl stammt aus
-einem Feature-Workflow-Template eines Kollegen (fixe Phasen-Pipeline für
-Android/OpenSpec). Übernommen wurden die Rollen-Verträge und die
-mechanischen Ideen; die feste Phasenfolge bewusst nicht.
-
-### Warum die Trennung spec/ ↔ state/ (aus v2, weiterhin gültig)
-
-1. **`IMPLEMENTATION_PLAN.md` als Dauer-Rückgrat funktioniert nur
-   Greenfield.** Der Plan ist naturgemäss temporal (Schritt 0, 1, 2, ...)
-   und damit fürs *aktuelle* Verständnis eines bestehenden Systems
-   ungeeignet – ein neuer (insb. kleiner/lokaler) Agent müsste die ganze
-   Baugeschichte lesen, nur um zu erfahren, welche Datei heute wofür
-   zuständig ist. `spec/Architecture.md` beantwortet genau das als
-   lebendige Momentaufnahme. `state/IMPLEMENTATION_PLAN.md` trägt dadurch
-   nur noch die *aktuell laufende* Initiative und wird danach archiviert.
-2. **Rollen nur als Prosa in `AGENTS.md` verwischen Zuständigkeiten**,
-   sobald mehr als "bauen" ansteht. Jede Rolle hat eine eigene Datei, und
-   ein **Task** (nicht ein Plan-Schritt) ist die einheitliche
-   Ausführungseinheit – egal ob er aus einer Anforderung oder einem
-   Review-Finding stammt.
-
----
-
-## Lessons Learned
-
-### Aus Projekt 1: Encrypted-Backup-Tool (v1, abgeschlossen)
-
-1. **Berechtigungen waren der grösste Bremsklotz für "selbständig
-   durchlaufen lassen".** Deshalb fester Vorbereitungs-Schritt (Teil G):
-   Berechtigungsumfang vor dem ersten Task klären, Sub-Agenten erben
-   denselben Modus.
-2. **Ohne Versionskontrolle gab es keine nachvollziehbaren
-   Zwischenstände.** Deshalb: lokales Git-Repo vor dem ersten Task, ein
-   Commit pro vollständig verifiziertem Task.
-3. **Tests hatten keine eigene Doku und waren dadurch schwer zu
-   überblicken.** `tests/README.md` (wie ausführen) und
-   `tests/TEST_OVERVIEW.md` (was wird geprüft, thematisch) bleiben
-   Pflichtbestandteil, spätestens nach der letzten Initiative aktualisiert.
-
-### Aus dem Review-Durchlauf nach Projekt 1 (→ v2)
-
-4. **Ein als "done" markierter Schritt war es nicht immer wirklich.** Ein
-   nachträgliches Review deckte auf: zwei Schritte fehlten komplett im
-   Fortschritts-Log obwohl umgesetzt, ein anderer war als "done" markiert
-   obwohl die zugehörigen Tests gar nicht existierten (Exclude-Scan), und
-   ein sicherheitsrelevantes Akzeptanzkriterium (Chunk-Reihenfolge über
-   AEAD Associated Data) war weder implementiert noch getestet. Ursache:
-   kein unabhängiger Prüf-Durchlauf *nach* Abschluss aller Schritte, nur
-   der Test-Agent pro Einzelschritt (der naturgemäss nur den je aktuellen
-   Schritt kennt, nicht das Gesamtbild). Deshalb die Reviewer-Rolle als
-   Pflicht-Bestandteil.
-5. **Doku und CLI liefen auseinander, ohne dass es auffiel.** `README.md`
-   dokumentierte Befehle/Flags, die die CLI gar nicht kannte. Das
-   zugehörige Akzeptanzkriterium ("jede in der Doku erwähnte Option
-   existiert in der CLI") wurde nie automatisiert geprüft. Lehre:
-   Akzeptanzkriterien, die Doku-Code-Konsistenz verlangen, brauchen einen
-   Test, der das tatsächlich vergleicht – nicht nur eine manuelle
-   Behauptung im Fortschritts-Log.
-6. **Ein einzelnes, ewig wachsendes `IMPLEMENTATION_PLAN.md` behindert
-   spätere Wartung.** Für die Kernfrage "was macht Komponente X" musste
-   die ganze Bauhistorie durchsucht werden. → `spec/Architecture.md`.
-
-### Aus einem Ausführungs-Versuch mit gpt-oss:120b unter Claude Code (v2)
-
-7. **Gute Planung schützt nicht vor einer Ausführung, die ihr eigenes
-   Protokoll ignoriert.** Planner-Output (10 Tasks aus einem Review-Report)
-   war exzellent: klein, in sich geschlossen, mit exakten Zeilen-Referenzen
-   und prüfbaren Akzeptanzkriterien. Trotzdem landete am Ende ein einziger,
-   nicht committeter Diff, der Änderungen aus vier verschiedenen Tasks
-   vermischte – kein Task war je auf `in_progress`/`done` gesetzt,
-   `state/PROGRESS.md` blieb leer. Vermutliche Ursache: die eingesetzte
-   Modell/Harness-Kombination (nicht-Anthropic-Modell unter dem
-   Claude-Code-Agenten-Harness) hat die Sub-Agent-Delegation (auf
-   Anthropic-Modelle zugeschnitten) nie tatsächlich genutzt, sondern direkt
-   im laufenden Kontext editiert – still, ohne die Verletzung des
-   Protokolls zu erkennen. Eine der so vermischten Änderungen **löschte**
-   dabei bestehende Funktionalität (mtime-Wiederherstellung) ersatzlos,
-   statt sie – wie vom Task verlangt – nur zu verschieben; das fiel erst
-   beim nächsten Testlauf auf.
-   **Konsequenzen (in v3 vollständig umgesetzt):**
-   - Für einen Nicht-Anthropic-Unterbau einen providerunabhängigen Harness
-     verwenden statt ein auf Claude zugeschnittenes Tooling
-     zweckzuentfremden. In v3 verifiziert und schärfer: Claude Code kann
-     eine **einzelne** Rolle strukturell nicht auf ein fremdes/lokales
-     Modell routen (Teil D) – für dieses Ziel ist es nicht suboptimal,
-     sondern ungeeignet.
-   - Die Regel "strikt sequentiell, nie parallel" steht mit konkretem
-     Anti-Beispiel in `orchestrator.md` und `implementer.md`. Ein reales
-     Gegenbeispiel steigert bei schwächeren Modellen die Befolgungsrate
-     spürbar gegenüber rein abstrakten Anweisungen.
-   - `implementer.md` hat einen End-of-Turn-Selbstcheck, der aktiv
-     bestätigt werden muss ("nur dieser eine Task, nichts committet, nichts
-     ersatzlos gelöscht").
-   - **Wo der Harness mechanisch erzwingen kann, wird nicht auf
-     Instruktionsbefolgung vertraut** – aus dieser Erkenntnis ist Teil E
-     (Mechanische Härtung) entstanden: Werkzeug-Allowlists, Pfad-Denies,
-     Schritt-Obergrenzen, Diff-basierte Prüfung statt Selbstauskunft.
-
-### Aus dem Betrieb von v3 (→ v3.1)
-
-8. **Ein Versprechen, das die Rollenarchitektur nicht einlösen kann, fällt
-   erst im Betrieb auf.** Die Requirements-Vorlage kündigte an, die
-   Anforderungen würden "gemeinsam mit dem Nutzer interaktiv erarbeitet
-   (siehe `planner.md`)" – der Planner läuft aber als Subagent: ein Prompt
-   rein, eine Antwort raus, kein Nutzerkontakt, kein Gedächtnis zwischen
-   zwei Aufrufen. Der Versuch endete entweder damit, dass der Orchestrator
-   die Klärung stillschweigend selbst übernahm (Rollenbruch, und niemand
-   sah es), oder in `BLOCKED`-Ping-Pong, bei dem jede Runde den Kontext der
-   vorherigen verlor. Lehre, allgemein: **prüfe jede "interaktive" Zusage
-   gegen die Runtime der Rolle, die sie einlösen soll.** Wo ein
-   kontextfreier Subagent beteiligt ist, muss der Zustand in einer Datei
-   liegen und die Runden vom Orchestrator getaktet werden – die Rolle
-   selbst wird nicht gesprächsfähig. Daraus entstanden `AUFTRAGSKLAERUNG`,
-   `state/AUFTRAG.md` und der Modus `REQUIREMENTS` (v3.1).
+- **Rollen auf anderen Modellen oder in einem anderen Harness laufen
+  lassen** – die verifizierte Harness-Matrix, der Generator
+  (`sync-agents.py`), `meta.yml`/`_tiers.yml` und der Aufruf eines fremden
+  Harness als Unterprozess: `HARNESS.md`.
+- **Einrichten, Arbeit anstossen, Fehlerbilder**: `USERMANUAL.md`.
+- **Warum eine Regel existiert und was sie verhindert**: `DECISIONS.md` –
+  dort steht zu jeder harten Regel der Vorfall, aus dem sie entstanden ist.

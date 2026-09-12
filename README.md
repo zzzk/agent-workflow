@@ -17,12 +17,19 @@ optional mit lokalen Modellen für einzelne Rollen.
 - **`USERMANUAL.md`** – das Benutzerhandbuch: Projekt anlegen oder
   übernehmen, Entscheidungen und ihre Dateien, Modellwahl (auch lokal),
   Betrieb im Alltag, Fehlerbilder.
-- **`AGENT_WORKFLOW.md`** – die Methodik selbst: sechs Rollen
-  (Orchestrator, Planner, Architekt, Implementer, Tester, Reviewer), ein
-  Baustein-Katalog, aus dem der Orchestrator je nach geklärtem Auftrag
-  einen Modus zusammensetzt (statt einer festen Pipeline), eine
-  Task-Warteschlange als Übergabe-Format zwischen kontextfreien Läufen,
-  sowie Greenfield- und Brownfield-Einstieg.
+- **`AGENT_WORKFLOW.md`** – die Methodik: drei Diagramme als Überblick,
+  dann sechs Rollen (Orchestrator, Planner, Architekt, Implementer,
+  Tester, Reviewer), der Baustein-Katalog, aus dem der Orchestrator je
+  nach geklärtem Auftrag einen Modus zusammensetzt (statt einer festen
+  Pipeline), und die Task-Warteschlange als Übergabe-Format zwischen
+  kontextfreien Läufen. **Hier anfangen, wenn du verstehen oder erklären
+  willst.**
+- **`HARNESS.md`** – Referenz: was Claude Code und OpenCode je können, der
+  Generator für die Rollen-Adapter, und wie eine Rolle in einem fremden
+  Harness oder auf einem lokalen Modell läuft.
+- **`DECISIONS.md`** – warum es so ist: zu jeder harten Regel der reale
+  Vorfall, aus dem sie entstanden ist, plus die Entwicklungsstufen v1–v3.1
+  mit ihren Begründungen.
 - **`sandbox/`** – Docker-Sandbox, in der ein Agent im
   "volle Freiheit"-Modus (`bypassPermissions`) arbeiten kann, ohne
   Host-Risiko (Details/Sicherheitsbegründung:
@@ -70,8 +77,9 @@ Innerhalb von `.agent/` ist die Aufteilung bewusst zweigeteilt:
   einer Initiative entsteht, und die Quelle, aus der der Modus abgeleitet
   wird. `IMPLEMENTATION_PLAN.md` ist bewusst auf die **aktuell laufende
   Initiative** beschränkt (nicht die ganze Projekt-Geschichte); beide
-  werden nach Abschluss nach `history/` archiviert – siehe `AGENT_WORKFLOW.md`, Abschnitt "Warum die Trennung
-  spec/ ↔ state/", das war ein konkretes Problem im ersten Projekt.
+  werden nach Abschluss nach `history/` archiviert – siehe `DECISIONS.md`,
+  Abschnitt "Warum die Trennung spec/ ↔ state/": das war ein konkretes
+  Problem im ersten Projekt.
 
 Die Gross-/Kleinschreibung der Dateinamen ist ein bewusstes Signal:
 `PascalCase` (spec/) = kuratiertes Referenzdokument, `SCREAMING_SNAKE`
@@ -103,7 +111,7 @@ Anthropic-Modelle, und die Umleitung auf einen anderen Anbieter wirkt
 immer für die gesamte Session – ein Mischbetrieb (Planner in der Cloud,
 Implementer lokal) ist dort strukturell nicht möglich. In `_tiers.yml`
 stellt man das um, nicht in den Rollen-Dateien. Details und die
-verifizierte Harness-Matrix: `AGENT_WORKFLOW.md`, Teil D.
+verifizierte Harness-Matrix: `HARNESS.md`.
 
 ## Ablauf für ein neues (Greenfield) Projekt
 
@@ -166,8 +174,7 @@ statt aus dem Code zu raten.
 Baustein `REVIEW` prüft den Ist-Zustand gegen die frisch erarbeiteten
 Requirements/Architecture und schreibt einen datierten Report unter
 `.agent/reports/`. Der Planner wandelt die Findings in Tasks um, danach
-die normale Task-Schleife. Details: `AGENT_WORKFLOW.md`, Abschnitte
-"Brownfield-Einstieg" und "Review-zu-Fix-Zyklus".
+die normale Task-Schleife. Details: `USERMANUAL.md`, Teil 3 und Teil 5.
 
 ## Geplante Erweiterungen
 
