@@ -13,10 +13,31 @@ cd tools/agent-workflow/sandbox
 docker build -t agent-sandbox:latest .
 ```
 
-Enthält: Node 22 (für die `claude` CLI), Python 3 + venv/pip, git, curl.
-Projektspezifisches Setup (z.B. `.venv-backup-tool`, `requirements.txt`)
-macht der Agent selbst beim Start gemäss dem jeweiligen Projekt-`AGENTS.md`
-— dieses Image bleibt bewusst generisch/projektunabhängig.
+Enthält: Node 22 (für die `claude` CLI), Python 3 + venv/pip, JDK 25
+(Eclipse Temurin) + Maven 3.9, git, curl, jq/bc (für die Statuszeile), sudo.
+
+Bewusst **ein gemeinsames Polyglott-Image** statt mehrerer abgeleiteter:
+Layer werden von allen Containern geteilt, der Platz wird also einmal
+bezahlt und nicht je Container; zur Laufzeit kostet die Grösse nichts, weil
+Layer gemountet statt kopiert werden — ein ungenutztes JDK belegt weder RAM
+noch CPU und verlängert den Container-Start nicht.
+
+Java-/Maven-Versionen sind als `ARG` gepinnt und beim Build überschreibbar:
+
+```bash
+docker build --build-arg TEMURIN_MAJOR=21 -t agent-sandbox:latest .
+```
+
+Zwei Details, falls das jemand anpasst: Das JDK kommt aus dem
+Adoptium-Repo, weil Debian bookworm per apt nur JDK 17 liefert. Maven kommt
+als Apache-Tarball (checksum-verifiziert) statt per `apt install maven`,
+weil das Debian-Paket `default-jre-headless` nachzieht und damit ein
+zweites, älteres JDK neben Temurin installieren würde.
+
+Projektspezifisches Setup darüber hinaus (z.B. `.venv-backup-tool`,
+`requirements.txt`, `npx playwright install --with-deps`) macht der Agent
+selbst beim Start gemäss dem jeweiligen Projekt-`AGENTS.md` — dieses Image
+bleibt ansonsten generisch/projektunabhängig.
 
 Läuft als Non-Root-User `agent` (mit passwortlosem `sudo` innerhalb des
 Containers) statt als root: Claude Code verweigert `bypassPermissions`
@@ -71,6 +92,28 @@ Hinweis: Wird das Image (`docker build`) neu gebaut, nutzt ein
 **wiederverwendeter** Container weiterhin den Stand, mit dem er ursprünglich
 erstellt wurde — für ein aktualisiertes Image `--new` verwenden (oder den
 alten Container vorher `docker rm`en).
+
+## Dienste auf dem Host erreichen (Ollama, Postgres, …)
+
+Im Container ist `localhost` der **Container selbst**. Dienste, die auf dem
+Host laufen, erreicht man unter dem DNS-Namen `host.docker.internal`, den
+Docker Desktop (macOS/Windows) automatisch anlegt:
+
+```bash
+curl http://host.docker.internal:11434/api/version     # Ollama auf dem Host
+# jdbc:postgresql://host.docker.internal:5432/…        # Postgres auf dem Host
+```
+
+Das gilt auch für Dienste, die auf dem Host nur an `127.0.0.1` lauschen
+(z.B. Ollama per Default) — Docker Desktop proxyt das. Ein Flag beim
+Container-Start ist dafür **nicht** nötig; `--add-host=host.docker.internal:host-gateway`
+braucht nur, wer native Docker Engine unter Linux fährt.
+
+In der Sandbox zeigt die Anwendungskonfiguration also auf
+`host.docker.internal` statt auf `localhost`. Was **nicht** geht: eine
+Docker-Compose-Stack aus der Sandbox heraus *starten* — im Container gibt
+es bewusst keinen Docker-Socket (siehe Selbstcheck unten). Auf eine vom
+Host gestartete Stack *zugreifen* geht dagegen wie oben beschrieben.
 
 ## 3. Vor dem Bootstrap: Selbstcheck (Pattern-Doku Schritt 0)
 
