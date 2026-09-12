@@ -10,10 +10,11 @@ Projekt kopiert/geklont wird (z.B. auf einen anderen Rechner).
 Wiederverwendbare Methodik liegt (ausserhalb dieses Repos) unter
 `tools/agent-workflow/AGENT_WORKFLOW.md`: sechs Rollen (Orchestrator,
 Planner, Architekt, Implementer, Tester, Reviewer, je eigene Datei unter
-`.agent/agents/`), die der Orchestrator je nach Ausgangslage zu einem
-**Modus** zusammensetzt – es gibt keine feste Pipeline. Arbeit wird in
-kleine, unabhängig testbare Tasks unter `.agent/tasks/` zerlegt (1–2
-Dateien je Task); Tests entstehen **vor** der Implementierung und sind
+`.agent/agents/`), die der Orchestrator je nach geklärtem Auftrag zu einem
+**Modus** zusammensetzt – es gibt keine feste Pipeline. Jede Initiative
+beginnt mit der **Auftragsklärung** (`.agent/state/AUFTRAG.md`): erst der
+Auftrag, dann der Modus. Arbeit wird in kleine, unabhängig testbare Tasks
+unter `.agent/tasks/` zerlegt (1–2 Dateien je Task); Tests entstehen **vor** der Implementierung und sind
 danach eingefroren.
 
 Implementer und Tester kommunizieren nie direkt; die Task-Datei trägt den

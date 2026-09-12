@@ -19,8 +19,8 @@ optional mit lokalen Modellen für einzelne Rollen.
   Betrieb im Alltag, Fehlerbilder.
 - **`AGENT_WORKFLOW.md`** – die Methodik selbst: sechs Rollen
   (Orchestrator, Planner, Architekt, Implementer, Tester, Reviewer), ein
-  Baustein-Katalog, aus dem der Orchestrator je nach Ausgangslage einen
-  Modus zusammensetzt (statt einer festen Pipeline), eine
+  Baustein-Katalog, aus dem der Orchestrator je nach geklärtem Auftrag
+  einen Modus zusammensetzt (statt einer festen Pipeline), eine
   Task-Warteschlange als Übergabe-Format zwischen kontextfreien Läufen,
   sowie Greenfield- und Brownfield-Einstieg.
 - **`sandbox/`** – Docker-Sandbox, in der ein Agent im
@@ -38,14 +38,15 @@ optional mit lokalen Modellen für einzelne Rollen.
 ```
 .agent/
   spec/       Requirements.md, Architecture.md   – dauerhaftes Produktwissen
-  state/      IMPLEMENTATION_PLAN.md, PROGRESS.md, MEMORY.md – Workflow-Zustand
+  state/      AUFTRAG.md, IMPLEMENTATION_PLAN.md, PROGRESS.md, MEMORY.md
+                                                 – Workflow-Zustand
   agents/     <rolle>.md + <rolle>.meta.yml, _tiers.yml – eine Rolle je Paar
   sync-agents.py                                 – erzeugt die Harness-Adapter
   tasks/      TASK-####-<slug>.md                 – die planbare Warteschlange
   reports/    <datum>-review.md                   – Reviewer-Ausgaben
   inbox/      Rohmaterial aus manuellem Testen    – wird per TRIAGE ausgewertet
   runs/       Logs fremder Harness-Läufe          – Inhalt nicht versioniert
-  history/    <datum>-<slug>-plan.md              – archivierte, abgeschlossene Pläne
+  history/    <datum>-<slug>-auftrag.md, -plan.md – abgeschlossen, archiviert
 ```
 
 Requirements/Plan/Progress/Memory/Reports/Tasks/Agenten sind
@@ -63,10 +64,13 @@ Innerhalb von `.agent/` ist die Aufteilung bewusst zweigeteilt:
   was) wird laufend aktuell gehalten, ist aber immer eine Momentaufnahme,
   keine Historie.
 - **`state/`** beschreibt *den aktuellen Arbeitsstand an der Software* –
-  nur für dieses Workflow-Tooling relevant. `IMPLEMENTATION_PLAN.md` ist
-  bewusst auf die **aktuell laufende Initiative** beschränkt (nicht die
-  ganze Projekt-Geschichte) und wird nach Abschluss nach `history/`
-  archiviert – siehe `AGENT_WORKFLOW.md`, Abschnitt "Warum die Trennung
+  nur für dieses Workflow-Tooling relevant. `AUFTRAG.md` hält das
+  Teilstück fest, das der Nutzer gerade braucht (Anliegen, Umfang,
+  Erfolgskriterium, Klärungsprotokoll) – es ist die erste Datei, die in
+  einer Initiative entsteht, und die Quelle, aus der der Modus abgeleitet
+  wird. `IMPLEMENTATION_PLAN.md` ist bewusst auf die **aktuell laufende
+  Initiative** beschränkt (nicht die ganze Projekt-Geschichte); beide
+  werden nach Abschluss nach `history/` archiviert – siehe `AGENT_WORKFLOW.md`, Abschnitt "Warum die Trennung
   spec/ ↔ state/", das war ein konkretes Problem im ersten Projekt.
 
 Die Gross-/Kleinschreibung der Dateinamen ist ein bewusstes Signal:
@@ -124,11 +128,14 @@ läuft dann im üblichen, rückfragenden Berechtigungsmodus.
 ### 3. Orchestrator starten
 Ab jetzt arbeitet der Agent als Orchestrator (Rolle in
 `.agent/agents/orchestrator.md`, automatisch geladen über
-`AGENTS.md`/`CLAUDE.md`). Da noch keine Requirements vorliegen, fragt er
-zuerst, was gebaut werden soll, und wählt daraus den Modus `FEATURE`:
-Klärung → Plan → Architektur-Gate → pro Task die Schleife aus
-`TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` → abschliessender Review.
-Details: `AGENT_WORKFLOW.md`, Teil C.
+`AGENTS.md`/`CLAUDE.md`). Sein erster Baustein ist immer die
+**Auftragsklärung**: was ansteht, in welchem Umfang, woran man den
+Abschluss erkennt – festgehalten in `.agent/state/AUFTRAG.md`, woraus sich
+der Modus ergibt. Bei einem leeren Projekt ist das meist `REQUIREMENTS`
+(Anforderungen Thema für Thema erarbeiten, Ergebnis `Requirements.md`),
+danach als eigener Auftrag `FEATURE`: Klärung → Plan → Architektur-Gate →
+pro Task die Schleife aus `TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` →
+abschliessender Review. Details: `AGENT_WORKFLOW.md`, Teil C.
 
 ## Ablauf für ein bestehendes (Brownfield) Projekt
 
@@ -143,15 +150,17 @@ Produktcode bleibt unangetastet – nur die `.agent/`-Struktur und die
 Root-Dateien kommen dazu. In `implementer.meta.yml`/`tester.meta.yml` die
 Pfadmuster an die Testablage des Projekts anpassen, dann neu generieren.
 
-### 2. Requirements erfassen
-Mit dem Orchestrator/Planner `spec/Requirements.md` ausfüllen – falls
-bereits eine funktionale Beschreibung existiert (README, Tickets), daraus
-ableiten und mit dem Nutzer bestätigen statt aus dem Code zu raten.
-
-### 3. Architektur erfassen (statt Plan-Historie)
+### 2. Architektur erfassen (statt Plan-Historie)
 Baustein `MAP` laufen lassen (Reviewer): liest den bestehenden Code und
 erzeugt `spec/Architecture.md` direkt daraus. Keine Rekonstruktion einer
 Bauhistorie nötig – nur der aktuelle Stand zählt.
+
+### 3. Requirements erfassen
+Eigener Auftrag im Modus `REQUIREMENTS`: der Orchestrator klärt Thema für
+Thema mit dem Nutzer, der Planner formuliert `spec/Requirements.md` daraus
+aus. Falls bereits eine funktionale Beschreibung existiert (README,
+Tickets), wird sie zum Ausgangsmaterial – ableiten und bestätigen lassen
+statt aus dem Code zu raten.
 
 ### 4. Erste Initiative: meist ein Review
 Baustein `REVIEW` prüft den Ist-Zustand gegen die frisch erarbeiteten

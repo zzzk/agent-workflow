@@ -14,7 +14,7 @@ Ursprünglich entwickelt für das Encrypted-Backup-Tool-Projekt
 - **v2** – fünf Rollen mit je eigener Datei, eigener Reviewer-Rolle, und
   Trennung zwischen dauerhaftem Produktwissen (`spec/`) und vergänglichem
   Workflow-Zustand (`state/`).
-- **v3** – dieser Stand. Drei Änderungen, Begründung unter "Warum v3":
+- **v3** – Drei Änderungen, Begründung unter "Warum v3":
   1. Der feste Ablauf wird durch einen **Baustein-Katalog** ersetzt, aus
      dem der Orchestrator je nach Ausgangslage einen Modus zusammensetzt.
   2. Alle Rollen bekommen einen einheitlichen **Rollen-Vertrag** mit
@@ -22,6 +22,14 @@ Ursprünglich entwickelt für das Encrypted-Backup-Tool-Projekt
   3. Rolle und **Runtime/Modell** werden entkoppelt: eine Rolle kann in
      einem anderen Harness und auf einem anderen (auch lokalen) Modell
      laufen als der Orchestrator.
+- **v3.1** – dieser Stand. Zwei Änderungen, Begründung unter "Warum v3.1":
+  1. Jede Initiative beginnt mit dem Baustein **`AUFTRAGSKLAERUNG`** beim
+     Orchestrator; sein Ergebnis ist die Datei `state/AUFTRAG.md`, aus der
+     der Modus abgeleitet wird – nicht mehr aus Dateizustand plus
+     Gesprächshistorie.
+  2. Das Erarbeiten von Anforderungen wird ein eigener Modus
+     **`REQUIREMENTS`** mit rundenbasierter `KLAERUNG`, statt eines
+     Vorspiels von `FEATURE`.
 
 ## Wann anwenden
 
@@ -45,13 +53,16 @@ bisherige Gesprächshistorie – nur das, was ihre Auftragsdatei (ein Task,
 ein Report, o.ä.) tatsächlich braucht.
 
 1. **Orchestrator** (`orchestrator.md`) – dünne Schleife, kein grosses
-   Kontextfenster nötig. Ermittelt die Ausgangslage, wählt den passenden
-   **Modus** (Teil C), ruft die Bausteine in der dafür festgelegten
-   Reihenfolge auf, wertet deren **Verdict** aus, pflegt Task-Status und
-   `state/PROGRESS.md`, committet. Schreibt selbst keinen Code und plant
-   selbst keine Schritte.
+   Kontextfenster nötig. Ermittelt die Ausgangslage, **klärt den Auftrag
+   mit dem Nutzer** (Baustein `AUFTRAGSKLAERUNG` → `state/AUFTRAG.md`),
+   leitet daraus den **Modus** ab (Teil C), ruft die Bausteine in der
+   dafür festgelegten Reihenfolge auf, wertet deren **Verdict** aus,
+   pflegt Task-Status und `state/PROGRESS.md`, committet. Schreibt selbst
+   keinen Code und plant selbst keine Schritte. Er ist die **einzige**
+   Rolle mit Nutzerkontakt.
 2. **Planner** (`planner.md`) – die "Denkarbeit": schärft eine unklare
-   Anforderung (Baustein `KLAERUNG`) und zerlegt eine Quelle (neue
+   Anforderung (Baustein `KLAERUNG`, rundenbasiert über das
+   Klärungsprotokoll in `state/AUFTRAG.md`) und zerlegt eine Quelle (neue
    Anforderung oder Findings aus einem Report) in kleine, unabhängige
    `.agent/tasks/TASK-*.md`-Dateien (Baustein `PLAN`). Braucht mehr
    Kontext/Fähigkeit als die Ausführungsrollen – hier lohnt das stärkste
@@ -143,8 +154,9 @@ nichts zu tun hätten, werden gar nicht erst gestartet.
 
 | Baustein | Rolle | Aktivierung | Input | Ergebnis |
 |---|---|---|---|---|
+| `AUFTRAGSKLAERUNG` | Orchestrator | **immer**, als erster Baustein jeder Initiative | Nutzer-Anliegen, Lage im Repo | `state/AUFTRAG.md` + der daraus abgeleitete Modus |
 | `MAP` | Reviewer (Map) | `spec/Architecture.md` fehlt/leer, aber Code existiert | vorhandener Code | `spec/Architecture.md` |
-| `KLAERUNG` | Planner (Klärung) | Anforderung unklar oder `spec/Requirements.md` lückenhaft | Nutzer-Anliegen, `spec/` | geschärfte Anforderung oder `BLOCKED` + Fragen |
+| `KLAERUNG` | Planner (Klärung) | Anforderung unklar oder `spec/Requirements.md` lückenhaft | `state/AUFTRAG.md`, `spec/` | Fragerunde im Klärungsprotokoll **oder** ausformulierte Anforderung in `Requirements.md` |
 | `PLAN` | Planner | immer, ausser bei Einzelauftrag | Anforderung oder Report | `tasks/TASK-*.md` (+ ggf. `state/IMPLEMENTATION_PLAN.md`) |
 | `ARCHITEKTUR_GATE` | Architekt | Plan führt neue Komponente/Schnittstelle/Abhängigkeit ein | Task-Set, `spec/Architecture.md` | Verdict + Vorgaben für Implementer |
 | `TEST_FIRST` | Tester | pro Task, sofern nicht abgewählt | nur Akzeptanzkriterien des Tasks | fehlschlagende Tests + Commit (Freeze-Grenze) |
@@ -152,6 +164,35 @@ nichts zu tun hätten, werden gar nicht erst gestartet.
 | `VERIFIKATION` | Tester | pro Task, nach `UMSETZUNG` | Akzeptanzkriterien + Testlauf | Verdict + Test-Notizen in der Task-Datei |
 | `REVIEW` | Reviewer (Audit) | nach Abschluss einer Initiative, oder auf Wunsch | `spec/`, Code, Testlauf | `reports/<datum>-review.md` |
 | `TRIAGE` | Reviewer (Triage) | `.agent/inbox/` enthält Material | Inbox-Rohmaterial + Code | `reports/<datum>-triage.md` |
+
+### Auftragsklärung: der einzige Baustein mit Nutzerkontakt
+
+Alle Rollen ausser dem Orchestrator sind Subagenten: einmal gestartet,
+eine Rückmeldung, danach weg – sie können den Nutzer weder fragen noch auf
+eine Antwort warten. Deshalb liegt das Klären des Auftrags beim
+Orchestrator, und sein Ergebnis ist eine **Datei** (`state/AUFTRAG.md`)
+statt eines Gesprächsverlaufs:
+
+- Der Modus wird aus dem geklärten Auftrag abgeleitet, nicht aus dem
+  Dateizustand plus einer Chat-Antwort. "Requirements sind leer" heisst
+  eben nicht automatisch "bau ein Feature".
+- Nachfolgende Rollen lesen den Auftrag, statt ihn als Prosa gereicht zu
+  bekommen – konsistent mit "eine Rolle liest nie die Gesprächshistorie".
+- Eine unterbrochene Session (Rate-Limit, Absturz, anderer Rechner) kann
+  den Auftrag wieder aufnehmen, weil er auf der Platte steht.
+
+Der Baustein ist ein **Filter, kein Interview**: gefragt wird nur, wenn
+der Modus nicht eindeutig ableitbar ist, ein prüfbares Erfolgskriterium
+fehlt, der Umfang offen ist oder der Auftrag etwas Bestehendem
+widerspricht – dann höchstens fünf Fragen, jede mit Default-Vorschlag.
+Fachlich entworfen wird hier nicht; das ist Sache von `KLAERUNG`.
+
+Die beiden Klärungen sind bewusst getrennt:
+
+| Baustein | Rolle | Klärt | Ergebnis |
+|---|---|---|---|
+| `AUFTRAGSKLAERUNG` | Orchestrator (im Dialog) | *Was für Arbeit, welcher Umfang?* | `state/AUFTRAG.md` + Modus |
+| `KLAERUNG` | Planner (Subagent, je Runde ein Aufruf) | *Ist diese Anforderung planbar?* | Fragen bzw. Anforderung in `spec/Requirements.md` |
 
 ### Aktivierung: mechanisch, wo es geht
 
@@ -192,15 +233,27 @@ Rollen-Dateien klein und die Aktivierungsentscheidung mechanisch.
 
 ## Teil C – Modi: Bausteine zusammensetzen
 
-Der Orchestrator ermittelt zu Beginn jeder Session die Ausgangslage und
-wählt danach den Modus. Ein Modus ist nichts weiter als eine Reihenfolge
-von Bausteinen – nicht mehr die eine feste Pipeline aus v1/v2.
+Der Orchestrator ermittelt zu Beginn jeder Session die Ausgangslage, klärt
+den Auftrag und leitet daraus den Modus ab. Ein Modus ist nichts weiter
+als eine Reihenfolge von Bausteinen – nicht mehr die eine feste Pipeline
+aus v1/v2.
+
+Jede Initiative beginnt mit `AUFTRAGSKLAERUNG`; der Modus ist das Ergebnis
+dieses Bausteins und steht in `state/AUFTRAG.md`. Ein Auftrag ergibt genau
+einen Modus – fällt unterwegs etwas an, das einen anderen bräuchte, wird
+das ein eigener Auftrag, kein Anhängsel.
 
 ```
 BOOTSTRAP (Brownfield, erstmalig)
-  MAP → KLAERUNG(Requirements) → weiter mit AUDIT oder FEATURE
+  MAP → danach neue AUFTRAGSKLAERUNG (meist REQUIREMENTS oder AUDIT)
 
-FEATURE (neue Anforderung)
+REQUIREMENTS (Anforderungen erarbeiten – Deliverable ist spec/Requirements.md)
+  je Thema: KLAERUNG(a: Fragerunde) → Nutzer antwortet (Orchestrator)
+          → KLAERUNG(b: Ausformulierung)
+  bis der Planner "keine offenen Themen" meldet
+  (kein PLAN, keine Tasks, kein Code – die Umsetzung ist ein neuer Auftrag)
+
+FEATURE (neue Anforderung umsetzen)
   KLAERUNG → PLAN → ARCHITEKTUR_GATE
            → [ TEST_FIRST → UMSETZUNG → VERIFIKATION ] pro Task
            → REVIEW
@@ -223,6 +276,31 @@ EINZELAUFTRAG (kleine, klar umrissene Änderung)
    Akzeptanzkriterien hat – sonst ist es ein FIX oder FEATURE.)
 ```
 
+### Die Klärungsschleife des Modus `REQUIREMENTS`
+
+Der Planner kann den Nutzer nicht fragen und erinnert sich zwischen zwei
+Aufrufen an nichts. Trotzdem ist ein mehrrundiges, thematisch geordnetes
+Erarbeiten von Anforderungen möglich – weil der Orchestrator das Gespräch
+führt und der **Zustand in der Datei liegt**, nicht im Kontext eines
+Agenten:
+
+1. `KLAERUNG` (a): Planner wählt **ein** Thema und schreibt höchstens
+   sieben Fragen – je mit Begründung und Default-Vorschlag – als neue
+   Runde ins Klärungsprotokoll von `state/AUFTRAG.md`.
+2. Der Orchestrator stellt sie dem Nutzer wörtlich und trägt die Antworten
+   in dieselbe Runde ein.
+3. `KLAERUNG` (b): ein **frischer** Planner liest das Protokoll,
+   formuliert das Thema in `spec/Requirements.md` aus und meldet als
+   letzte Zeile `nächstes Thema: <…>` oder `keine offenen Themen`.
+4. Der Orchestrator verzweigt daran: weitere Runde oder fertig. Nach fünf
+   Runden ohne Abschluss stoppt er und fragt den Nutzer – eine Klärung,
+   die nicht konvergiert, ist ein zu gross geschnittener Auftrag.
+
+Dasselbe Muster trägt überall dort, wo ein kontextfreier Subagent etwas
+"Interaktives" beitragen soll: nicht die Rolle interaktiv machen, sondern
+den Zustand aus dem Agenten in eine Datei verlagern und den Orchestrator
+die Runden takten lassen.
+
 ### Nicht verhandelbare Grundregel: strikt sequentiell, nie parallel
 
 Unabhängig vom Modus gilt: Zu jedem Zeitpunkt ist genau **ein** Baustein
@@ -237,19 +315,23 @@ Lessons Learned Nr. 7.
 
 ### Start jeder Session
 
-1. **Bootstrap-Check**: `spec/Architecture.md` fehlt/leer, aber Code
-   existiert? → Modus `BOOTSTRAP`.
-2. **Offene Arbeit ermitteln** – mechanisch, nicht aus dem Gedächtnis:
-   `.agent/tasks/*.md` nach `status: open`/`in_progress` scannen, **und**
-   `.agent/inbox/` auf Material prüfen.
+1. **Lage ermitteln** – mechanisch, nicht aus dem Gedächtnis:
+   `spec/Architecture.md` (leer, aber Code vorhanden?), `.agent/tasks/*.md`
+   nach `status: open`/`in_progress`, `.agent/inbox/` auf Material,
+   `state/AUFTRAG.md` auf einen unterbrochenen Lauf.
    - Offene Tasks → dem Nutzer melden (Anzahl, Titel), fragen ob
      fortgesetzt werden soll oder etwas Neues Vorrang hat.
    - Material in der Inbox (auch zusätzlich zu offenen Tasks) → melden,
      fragen ob jetzt triagiert werden soll.
-   - Nichts von beidem → den Nutzer fragen, was er umsetzen möchte, und
-     die Antwort einem Modus zuordnen.
-3. Modus wählen, Bausteine der Reihe nach abarbeiten, nach jedem Baustein
-   das Verdict auswerten.
+   - Gefülltes `AUFTRAG.md` mit unerledigter Arbeit → dort weitermachen
+     statt neu zu klären.
+2. **`AUFTRAGSKLAERUNG`** – immer, auch wenn der Nutzer schon gesagt hat,
+   was er will. Ergebnis: `state/AUFTRAG.md`.
+3. **Modus ableiten** aus `state/AUFTRAG.md`, Bausteine der Reihe nach
+   abarbeiten, nach jedem Baustein das Verdict auswerten.
+4. **Abschluss**: `state/AUFTRAG.md` (und, falls befüllt,
+   `state/IMPLEMENTATION_PLAN.md`) nach `history/` archivieren und auf die
+   leere Vorlage zurücksetzen.
 
 ### Task-Schleife im Detail
 
@@ -495,6 +577,8 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
                                  # lebendig gehalten, keine Historie
 
   state/                         # veränderlicher Workflow-Zustand (SCREAMING_SNAKE)
+    AUFTRAG.md                   # NUR das aktuell geklärte Anliegen samt
+                                 # Klärungsprotokoll; leer, wenn nichts läuft
     IMPLEMENTATION_PLAN.md       # NUR die aktiv laufende Initiative; leer,
                                  # wenn gerade nichts läuft
     PROGRESS.md                  # Append-only chronologisches Log
@@ -524,7 +608,8 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
   runs/                          # Logs fremder Harness-Läufe (nicht committen)
     TASK-0007-umsetzung.log
 
-  history/                       # Archiv abgeschlossener Pläne
+  history/                       # Archiv abgeschlossener Aufträge/Pläne
+    2026-08-15-initial-build-auftrag.md
     2026-08-15-initial-build-plan.md
 
 .claude/agents/                  # generierte Adapter – nicht von Hand editieren
@@ -549,7 +634,7 @@ sein.
 id: TASK-0023
 title: <kurzer, imperativer Titel>
 status: open            # open | in_progress | done | failed | blocked
-source: plan-step       # plan-step | review-finding | triage-finding | direct
+source: plan-step       # plan-step | review-finding | triage-finding | auftrag
 source_ref: state/IMPLEMENTATION_PLAN.md#schritt-6
 depends_on: []          # andere Task-IDs, die vorher done sein müssen
 files: [pfad/zur/datei.py]
@@ -628,11 +713,13 @@ keine historische Plan-Rekonstruktion nötig.
 1. `project-template/` in das bestehende Repo kopieren (nur die
    `.agent/`-Struktur + Root `AGENTS.md`/`CLAUDE.md`, Produktcode bleibt
    unverändert), Adapter generieren.
-2. `spec/Requirements.md` ausfüllen – falls eine funktionale Beschreibung
-   bereits anderswo existiert (README, Ticket-System), daraus ableiten und
-   mit dem Nutzer bestätigen statt aus dem Code zu raten.
-3. Baustein `MAP` laufen lassen: erzeugt `spec/Architecture.md` direkt aus
+2. Baustein `MAP` laufen lassen: erzeugt `spec/Architecture.md` direkt aus
    dem Code – keine Bauhistorie nötig.
+3. `spec/Requirements.md` füllen – als eigener Auftrag im Modus
+   `REQUIREMENTS`. Falls eine funktionale Beschreibung bereits anderswo
+   existiert (README, Ticket-System), gehört sie als Ausgangsmaterial in
+   `state/AUFTRAG.md`: daraus ableiten und bestätigen lassen, statt aus dem
+   Code zu raten.
 4. Ab hier normaler Betrieb. Die erste Initiative ist häufig ein `AUDIT`,
    um den Ist-Zustand gegen die frisch erarbeiteten Requirements zu prüfen.
 
@@ -659,6 +746,32 @@ keine historische Plan-Rekonstruktion nötig.
    dank der Task-Dateien geht kein Fortschritt verloren.
 
 ---
+
+## Warum v3.1
+
+v3 hat den festen Ablauf durch Bausteine ersetzt – aber der **Einstieg**
+blieb der alte. Drei Löcher, die erst im Betrieb sichtbar wurden:
+
+1. **Es gab keinen Schritt "was ist überhaupt der Auftrag".** Der Modus
+   wurde aus dem Dateizustand plus einer Chat-Antwort gewählt. War
+   `Requirements.md` leer, landete man in `FEATURE` – auch wenn der Nutzer
+   gar keine Umsetzung wollte, sondern nur einen Review oder überhaupt
+   erst die Anforderungen. `AUDIT` gab es zwar, aber der Einstiegspfad
+   führte nicht dorthin.
+2. **Alles vor `PLAN` lebte nur in der Gesprächshistorie.** Das
+   widerspricht dem Kernprinzip aus Teil A ("eine Rolle liest nie die
+   volle Gesprächshistorie"): der Planner bekam das Anliegen als Prosa
+   gereicht, und bei einem Sessionabbruch war es weg. Mit
+   `state/AUFTRAG.md` gilt dieselbe Regel jetzt auch für den Einstieg –
+   der Auftrag ist ein Artefakt, kein Chatverlauf.
+3. **"Requirements interaktiv erarbeiten" war unmöglich, stand aber als
+   Versprechen in der Vorlage.** `Requirements.md` kündigte eine
+   thematisch fortschreitende Klärung an, `planner.md` beschrieb eine
+   einmalige Fragerunde mit anschliessendem `BLOCKED` – und der Planner
+   ist als Subagent strukturell weder gesprächsfähig noch erinnerungsfähig.
+   Der Modus `REQUIREMENTS` löst das nicht, indem die Rolle interaktiv
+   gemacht wird (das kann sie nicht), sondern indem der Zustand in
+   `AUFTRAG.md` liegt und der Orchestrator die Runden taktet.
 
 ## Warum v3
 
@@ -783,3 +896,20 @@ mechanischen Ideen; die feste Phasenfolge bewusst nicht.
      Instruktionsbefolgung vertraut** – aus dieser Erkenntnis ist Teil E
      (Mechanische Härtung) entstanden: Werkzeug-Allowlists, Pfad-Denies,
      Schritt-Obergrenzen, Diff-basierte Prüfung statt Selbstauskunft.
+
+### Aus dem Betrieb von v3 (→ v3.1)
+
+8. **Ein Versprechen, das die Rollenarchitektur nicht einlösen kann, fällt
+   erst im Betrieb auf.** Die Requirements-Vorlage kündigte an, die
+   Anforderungen würden "gemeinsam mit dem Nutzer interaktiv erarbeitet
+   (siehe `planner.md`)" – der Planner läuft aber als Subagent: ein Prompt
+   rein, eine Antwort raus, kein Nutzerkontakt, kein Gedächtnis zwischen
+   zwei Aufrufen. Der Versuch endete entweder damit, dass der Orchestrator
+   die Klärung stillschweigend selbst übernahm (Rollenbruch, und niemand
+   sah es), oder in `BLOCKED`-Ping-Pong, bei dem jede Runde den Kontext der
+   vorherigen verlor. Lehre, allgemein: **prüfe jede "interaktive" Zusage
+   gegen die Runtime der Rolle, die sie einlösen soll.** Wo ein
+   kontextfreier Subagent beteiligt ist, muss der Zustand in einer Datei
+   liegen und die Runden vom Orchestrator getaktet werden – die Rolle
+   selbst wird nicht gesprächsfähig. Daraus entstanden `AUFTRAGSKLAERUNG`,
+   `state/AUFTRAG.md` und der Modus `REQUIREMENTS` (v3.1).

@@ -147,10 +147,14 @@ Modell vorher laden: `ollama pull qwen2.5-coder:14b`.
 ### 4. Requirements
 
 `.agent/spec/Requirements.md` beschreibt, was das Produkt können soll. Du
-musst es nicht vorab perfekt ausfüllen: der Planner erarbeitet es im
-Baustein `KLAERUNG` mit dir – er stellt höchstens sieben Fragen, jede mit
-Begründung und einem Vorschlag, den du nur bestätigen musst. Existiert
-bereits eine Beschreibung (README, Tickets), gib sie ihm als Ausgangspunkt.
+musst es nicht vorab ausfüllen: sag dem Orchestrator, dass du die
+Anforderungen erarbeiten willst – das wird ein eigener Auftrag im Modus
+`REQUIREMENTS`. Er klärt dann Thema für Thema mit dir: je Runde höchstens
+sieben Fragen, jede mit Begründung und einem Vorschlag, den du nur
+bestätigen musst; danach formuliert der Planner das geklärte Thema aus und
+sagt, ob noch eines offen ist. Am Ende steht die fertige
+`Requirements.md` – noch kein Code. Existiert bereits eine Beschreibung
+(README, Tickets), nenne sie: sie wird zum Ausgangsmaterial im Auftrag.
 
 ### 5. Berechtigungen
 
@@ -189,8 +193,10 @@ git init
 4. **Erster Commit**: `git add -A && git commit -m "Agent-Workflow eingerichtet"`
 5. **Agent starten**: `claude` im Projektordner. Er lädt über
    `CLAUDE.md` → `AGENTS.md` die Orchestrator-Rolle.
-6. **Sagen, was du willst.** Da noch keine Requirements existieren, wählt
-   er den Modus `FEATURE` und startet mit der Klärung.
+6. **Sagen, was du willst.** Er klärt zuerst den Auftrag mit dir und hält
+   ihn in `.agent/state/AUFTRAG.md` fest. Bei einem leeren Projekt ist der
+   erste Auftrag meist `REQUIREMENTS` (Anforderungen erarbeiten), danach
+   als zweiter Auftrag `FEATURE` (umsetzen).
 
 Den Baustein `MAP` brauchst du hier nicht – `Architecture.md` füllt sich
 schrittweise durch die Implementer.
@@ -216,11 +222,12 @@ cp /pfad/zu/tools/agent-workflow/project-template/.gitattributes .   # falls noc
 1. **Testpfade setzen** – hier kein Raten: schau nach, wo die Tests
    tatsächlich liegen, und trage genau das ein.
 2. **Modelle prüfen**, dann `python3 .agent/sync-agents.py`.
-3. **Requirements erfassen**: aus README/Tickets ableiten und bestätigen
-   lassen – nicht aus dem Code raten.
-4. **Baustein `MAP` laufen lassen**: der Reviewer liest den bestehenden
+3. **Baustein `MAP` laufen lassen**: der Reviewer liest den bestehenden
    Code und schreibt `.agent/spec/Architecture.md` daraus. Das ist der
    Bootstrap-Schritt; ohne ihn planen alle nachfolgenden Rollen blind.
+4. **Requirements erfassen**: Auftrag im Modus `REQUIREMENTS`, aus
+   README/Tickets abgeleitet und von dir bestätigt – nicht aus dem Code
+   geraten.
 5. **Erste Initiative ist meist ein `AUDIT`** – der Ist-Zustand gegen die
    frisch erfassten Requirements. Aus dem Report macht der Planner Tasks.
 
@@ -273,12 +280,17 @@ eingeklappt werden. **Editiere sie nie von Hand** – der nächste Lauf
 
 ### Arbeit anstossen
 
-Du sagst dem Orchestrator, was ansteht; er ordnet es einem Modus zu. Du
-musst die Modi nicht auswendig können – es hilft nur zu wissen, was
-passieren wird:
+Du sagst dem Orchestrator, was ansteht. Sein **erster** Schritt ist immer
+die Auftragsklärung: er hält in `.agent/state/AUFTRAG.md` fest, was du
+willst, was dazugehört (und was nicht) und woran man erkennt, dass es
+erledigt ist. Nur wenn das nicht eindeutig ist, fragt er nach – höchstens
+fünf Fragen mit Vorschlägen zum Bestätigen; bei "änder in Datei X das Y"
+fragt er gar nicht. Aus diesem Auftrag ergibt sich der Modus. Du musst die
+Modi nicht auswendig können – es hilft nur zu wissen, was passieren wird:
 
 | Du sagst … | Modus | Was läuft |
 |---|---|---|
+| "Lass uns die Anforderungen erarbeiten" | `REQUIREMENTS` | Klärung Thema für Thema → `spec/Requirements.md`, kein Code |
 | "Bau Feature X" | `FEATURE` | Klärung → Plan → Architektur-Gate → Task-Schleife → Review |
 | "Behebe die Findings aus dem Report" | `FIX` | Plan → Task-Schleife → Review |
 | "Prüf mal den Stand" | `AUDIT` | nur Reviewer, keine Änderung |
@@ -293,8 +305,15 @@ Triage-Modus jedes Fundstück mit einer Codestelle und macht daraus einen
 Report; verarbeitetes Material wandert nach `.agent/inbox/processed/<datum>/`.
 Du musst nichts vorformulieren – genau dafür ist die Inbox da.
 
+Das Ergebnis eines Auftrags ist immer genau ein Modus. Willst du danach
+etwas anderes – z.B. die frisch erarbeiteten Requirements umsetzen – ist
+das ein **neuer** Auftrag, und die Klärung beginnt von vorn. Der alte
+wandert nach `.agent/history/<datum>-<slug>-auftrag.md`.
+
 ### Was du im Verlauf liest
 
+- `.agent/state/AUFTRAG.md` – was gerade geklärt wurde und läuft,
+  inklusive der gestellten Fragen und deiner Antworten.
 - `.agent/state/PROGRESS.md` – chronologisch, was passiert ist, inklusive
   übersprungener Bausteine samt Begründung.
 - `.agent/tasks/TASK-*.md` – Status, Akzeptanzkriterien, Test-Notizen.

@@ -2,8 +2,9 @@
 id: TASK-0000
 title: <kurzer, imperativer Titel>
 status: open              # open | in_progress | done | failed | blocked
-source: plan-step         # plan-step | review-finding | triage-finding | direct
-source_ref: <state/IMPLEMENTATION_PLAN.md#initiative-<slug> oder reports/<datum>-review.md#<finding>>
+source: plan-step         # plan-step | review-finding | triage-finding | auftrag
+source_ref: <state/IMPLEMENTATION_PLAN.md#initiative-<slug>, reports/<datum>-review.md#<finding>
+                          # oder state/AUFTRAG.md bei einem EINZELAUFTRAG>
 depends_on: []            # andere Task-IDs, die vorher done sein müssen
 files: []                 # Dateien, die dieser Task berühren darf – so eng wie möglich,
                           # der Orchestrator prüft den Diff dagegen

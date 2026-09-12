@@ -12,13 +12,15 @@
 > Implementer, Tester) sind in `.agent/agents/*.md` beschrieben, nicht hier.
 
 > Noch keine Initiative aktiv. Wird vom Planner befüllt, sobald der
-> Orchestrator eine neue Initiative mit dem Nutzer geklärt hat.
+> Orchestrator den Auftrag geklärt hat (`AUFTRAG.md`) und den Baustein
+> `PLAN` startet.
 
 ## Initiative: <Titel>
 
 - **Ziel**: <ein bis zwei Sätze, was am Ende dieser Initiative anders ist>
 - **Ausgangslage**: <Requirements-Abschnitt(e) bzw. Report, aus dem diese
-  Initiative entstanden ist>
+  Initiative entstanden ist – plus der Auftrag aus `AUFTRAG.md`, dessen
+  Umfang hier nicht überschritten wird>
 
 ## Tasks dieser Initiative
 
