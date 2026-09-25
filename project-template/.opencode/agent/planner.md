@@ -2,7 +2,7 @@
 # GENERIERT von .agent/sync-agents.py - nicht von Hand editieren.
 # Quelle: .agent/agents/planner.md + planner.meta.yml
 description: Schaerft eine unklare Anforderung und zerlegt eine Initiative in kleine, in sich geschlossene Task-Dateien unter .agent/tasks/. Implementiert selbst nichts.
-mode: subagent
+mode: all
 model: anthropic/claude-opus-5
 steps: 60
 permission:

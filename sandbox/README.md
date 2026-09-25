@@ -13,8 +13,14 @@ cd tools/agent-workflow/sandbox
 docker build -t agent-sandbox:latest .
 ```
 
-Enthält: Node 22 (für die `claude` CLI), Python 3 + venv/pip, JDK 25
-(Eclipse Temurin) + Maven 3.9, git, curl, jq/bc (für die Statuszeile), sudo.
+Enthält: Node 22, beide Agent-CLIs (`claude` und `opencode`), Python 3 +
+venv/pip, JDK 25 (Eclipse Temurin) + Maven 3.9, git, curl, jq/bc (für die
+Statuszeile), sudo.
+
+OpenCode ist auch dann nötig, wenn der Mensch nur `claude` startet: der
+Orchestrator ruft einzelne Rollen per `opencode run --agent <rolle> --auto`
+als Unterprozess auf, sobald deren Task `runtime: opencode` trägt (siehe
+`../HARNESS.md`).
 
 Bewusst **ein gemeinsames Polyglott-Image** statt mehrerer abgeleiteter:
 Layer werden von allen Containern geteilt, der Platz wird also einmal
@@ -104,10 +110,25 @@ curl http://host.docker.internal:11434/api/version     # Ollama auf dem Host
 # jdbc:postgresql://host.docker.internal:5432/…        # Postgres auf dem Host
 ```
 
-Das gilt auch für Dienste, die auf dem Host nur an `127.0.0.1` lauschen
-(z.B. Ollama per Default) — Docker Desktop proxyt das. Ein Flag beim
-Container-Start ist dafür **nicht** nötig; `--add-host=host.docker.internal:host-gateway`
-braucht nur, wer native Docker Engine unter Linux fährt.
+Auf Docker Desktop ist dafür kein Flag nötig; unter nativer Docker Engine
+(Linux) schon. `run-sandbox.sh` setzt `--add-host=host.docker.internal:host-gateway`
+deshalb immer — auf Docker Desktop ist es wirkungslos, unter Linux nötig.
+
+**Ollama laeuft bewusst auf dem Host, nicht im Container** — im Container
+gaebe es keinen GPU-Durchgriff (unter macOS grundsaetzlich nicht, unter
+Linux nur mit `--gpus`, das dieses Skript nicht setzt). Ollama ist deshalb
+auch nicht im Image enthalten.
+
+Damit der Container es erreicht, muss es **an `0.0.0.0` gebunden** sein —
+per Default bindet es nur an `127.0.0.1` und ist dann trotz
+`host.docker.internal` nicht erreichbar:
+
+```bash
+OLLAMA_HOST=0.0.0.0 ollama serve       # auf dem Host, VOR dem Sandbox-Start
+```
+
+Das Image setzt passend dazu `OLLAMA_BASE_URL=http://host.docker.internal:11434/v1`,
+worauf die `opencode.json` des Projekt-Templates verweist.
 
 In der Sandbox zeigt die Anwendungskonfiguration also auf
 `host.docker.internal` statt auf `localhost`. Was **nicht** geht: eine

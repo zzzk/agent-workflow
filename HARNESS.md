@@ -78,6 +78,7 @@ Deshalb: neutrale Quelle plus generierte Adapter.
 → generiert (nie von Hand editieren):
 .claude/agents/implementer.md        # name/description/model/maxTurns/tools
 .opencode/agent/implementer.md       # description/mode/model/steps/permission
+                                    # (mode: all - siehe Warnung unten zu --agent)
 ```
 
 `meta.yml` beschreibt **Absicht** (`write_access: full`, `path_denies`),
@@ -112,8 +113,18 @@ model: ollama/<modell>         # optional, überschreibt meta.yml
 Der Orchestrator ruft den fremden Harness als **Unterprozess** auf und
 wartet auf dessen Ende:
 
+> **45 Minuten, nicht 15.** Gemessen am 2026-09-24 (M2 Pro, 32 GB,
+> qwen3.8:27b warm): ein Lauf, dessen ganze Aufgabe "antworte mit einer
+> Zeile" war, brauchte **91 s**; kalt 140 s. Das ist die Grundgebuehr fuer
+> nichts - qwen3.8 ist ein thinking-Modell und verarbeitet zusaetzlich den
+> ~2000 Woerter langen Rollen-Prompt bei jedem Aufruf. Ein echter Task mit
+> zehn bis zwanzig Werkzeug-Runden liegt um Groessenordnungen darueber.
+> Ein `timeout`-Abbruch mitten im Schreiben hinterlaesst einen halben Diff -
+> deshalb lieber zu grosszuegig. Cloud-Rollen brauchen das nicht, lokale
+> schon.
+
 ```bash
-timeout 900 opencode run \
+timeout 2700 opencode run \
   --agent implementer --dir . --auto \
   "Setze .agent/tasks/TASK-0007-<slug>.md um." \
   > .agent/runs/TASK-0007-umsetzung.log 2>&1
@@ -143,6 +154,19 @@ Aufruf prägen:
   sondern still abgelehnt** (Warnzeile auf stderr), der Lauf geht weiter.
   Ergebnis wäre ein "erfolgreicher" Lauf, der nichts geschrieben hat. Das
   Log deshalb immer auf `auto-rejecting` prüfen.
+- **`--agent <rolle>` schlägt bei `mode: subagent` still fehl.** OpenCode
+  weigert sich, einen Subagenten als Top-Level-Agent zu starten, meldet
+  `is a subagent, not a primary agent`, **fällt auf den Default-Agenten
+  zurück und läuft weiter** – ohne den Rollen-Prompt, ohne die
+  `permission`-Regeln, mit einem anderen Modell und mit Exit-Code 0. Der
+  Lauf sieht im Log erfolgreich aus und beantwortet den Auftrag sogar
+  plausibel; nur war es nicht die Rolle, die man aufgerufen hat. Der
+  Generator schreibt deshalb `mode: all` statt `subagent` – damit ist die
+  Rolle sowohl per `run` aufrufbar als auch als Subagent innerhalb von
+  OpenCode nutzbar. (Verifiziert 2026-09-24, opencode 1.18.32.)
+- Das erste Wort der Ausgabe nennt die tatsächlich verwendete Rolle und das
+  Modell (`> implementer · qwen3.8:27b`). Das ist die billigste Gegenprobe,
+  ob der Aufruf die gemeinte Rolle getroffen hat.
 
 Für viele Aufrufe hintereinander gibt es alternativ den Server-Modus
 (`opencode serve`, Default `127.0.0.1:4096`, `POST /session` +

@@ -2,7 +2,7 @@
 # GENERIERT von .agent/sync-agents.py - nicht von Hand editieren.
 # Quelle: .agent/agents/reviewer.md + reviewer.meta.yml
 description: Read-only Auditor in drei Modi - MAP (Architektur aus dem Code erfassen), AUDIT (Ist gegen Soll pruefen) und TRIAGE (Rohmaterial aus manuellem Testen auswerten). Schreibt Reports, nie Code.
-mode: subagent
+mode: all
 model: anthropic/claude-opus-5
 steps: 80
 permission:

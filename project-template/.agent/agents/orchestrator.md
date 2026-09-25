@@ -215,14 +215,100 @@ Die Task-Datei bestimmt, **wer** ausführt (`runtime:`) und **womit**
 - `runtime: subagent` → nativer Sub-Agenten-Aufruf deines eigenen Harness,
   im Vordergrund, damit du auf das Ergebnis wartest.
 - `runtime: opencode` → fremder Harness als Unterprozess, mit
-  Zeitbegrenzung und protokolliertem Log:
+  Zeitbegrenzung und protokolliertem Log – **davor einmal pro Session der
+  Vorflug-Check** (unten).
+
+#### Vorflug-Check vor dem ERSTEN `runtime: opencode`-Lauf
+
+Der Mischbetrieb hängt an einer Voraussetzung, die **ausserhalb dieses
+Repos** liegt: ein lokaler Modell-Server auf dem Host. Ist er nicht
+erreichbar, scheitert der Lauf nicht sauber, sondern liefert ein leeres
+oder halbes Ergebnis mit einer Verbindungsmeldung tief im Log – und du
+würdest anfangen, den Fehler in der Task-Datei zu suchen. Deshalb einmal
+pro Session, **bevor** der erste fremde Lauf startet:
 
 ```bash
-timeout 900 opencode run \
-  --agent implementer --dir . --auto \
-  "Setze .agent/tasks/TASK-0007-<slug>.md um." \
-  > .agent/runs/TASK-0007-umsetzung.log 2>&1
+ROLE=implementer                                     # die Rolle des Tasks
+MODEL="$(grep -m1 '^model:' .opencode/agent/$ROLE.md | cut -d' ' -f2)"
+
+command -v opencode >/dev/null || echo "FEHLT: opencode nicht installiert"
+
+case "$MODEL" in
+  ollama/*|lmstudio/*)
+    # Bewusst elif-Kette statt drei unabhaengiger Pruefungen: die Ursachen
+    # bauen aufeinander auf. Ist die Variable leer, sind "nicht erreichbar"
+    # und "Modell fehlt" Folgemeldungen und verdecken nur den Grund.
+    BASE="${OLLAMA_BASE_URL%/v1}"
+    if [ -z "$BASE" ]; then
+      echo "FEHLT: \$OLLAMA_BASE_URL ist leer"
+    elif ! curl -fsS --max-time 5 "$BASE/api/version" >/dev/null 2>&1; then
+      echo "FEHLT: $BASE nicht erreichbar"
+    elif ! curl -fsS --max-time 5 "$BASE/api/tags" 2>/dev/null \
+         | grep -q "\"${MODEL#*/}\""; then
+      echo "FEHLT: Modell ${MODEL#*/} nicht geladen"
+    fi
+    ;;
+esac
 ```
+
+Meldet der Check nichts, ist alles bereit. Andernfalls gilt:
+
+**Du kannst das nicht selbst reparieren, und du versuchst es auch nicht.**
+Der Modell-Server läuft auf dem Host – bewusst, wegen der Grafikkarte –
+und damit ausserhalb deiner Reichweite. Weiche auch **nicht** still auf
+`runtime: subagent` aus: das wäre eine Kostenentscheidung, die dem Nutzer
+gehört, nicht dir. Stattdessen: **stoppen und melden**, mit dem konkreten
+Befehl, den der Nutzer braucht:
+
+| Meldung | Was du dem Nutzer sagst |
+|---|---|
+| `opencode nicht installiert` | Image ohne OpenCode – Sandbox neu bauen (`docker build`) und mit `--new` starten |
+| `$OLLAMA_BASE_URL ist leer` | Auf dem Host `export OLLAMA_BASE_URL=http://localhost:11434/v1`; in der Sandbox setzt das Image sie – fehlt sie dort, ist das Image veraltet |
+| `... nicht erreichbar` | Ollama läuft nicht, **oder** es wurde ohne die Variable gestartet: `OLLAMA_HOST=0.0.0.0 ollama serve`. Ein blosses `ollama serve` bindet nur an `127.0.0.1` und ist aus der Sandbox nicht erreichbar. Läuft es bereits: **neu starten**, die Variable wird nur beim Start gelesen |
+| `Modell ... nicht geladen` | `ollama pull <modell>` (Name aus `.agent/agents/_tiers.yml`) |
+
+Danach den Check wiederholen, nicht auf Verdacht weiterlaufen.
+
+#### Der Aufruf
+
+> **45 Minuten, nicht 15.** Gemessen am 2026-09-24 (M2 Pro, 32 GB,
+> qwen3.8:27b warm): ein Lauf, dessen ganze Aufgabe "antworte mit einer
+> Zeile" war, brauchte **91 s**; kalt 140 s. Das ist die Grundgebuehr fuer
+> nichts - qwen3.8 ist ein thinking-Modell und verarbeitet zusaetzlich den
+> ~2000 Woerter langen Rollen-Prompt bei jedem Aufruf. Ein echter Task mit
+> zehn bis zwanzig Werkzeug-Runden liegt um Groessenordnungen darueber.
+> Ein `timeout`-Abbruch mitten im Schreiben hinterlaesst einen halben Diff -
+> deshalb lieber zu grosszuegig. Cloud-Rollen brauchen das nicht, lokale
+> schon.
+
+Du rufst `opencode` **nie direkt** auf, sondern immer über den Wrapper:
+
+```bash
+.agent/run-role.sh implementer TASK-0007 1 \
+  "Setze .agent/tasks/TASK-0007-<slug>.md um."
+#                              ^^^^^^^^^ ^
+#                              Task-ID   Versuch: 1 beim ersten Lauf,
+#                                        2 nach CHANGES_NEEDED, usw.
+```
+
+Nach dem Auswerten der Rückmeldung (Schritt 7) trägst du das Verdict nach –
+dieselben drei Werte wie oben:
+
+```bash
+.agent/run-role.sh --verdict TASK-0007 implementer 1 PASS
+```
+
+Der Wrapper setzt Timeout und Logpfad selbst, prüft die beiden still
+scheiternden Fehlerbilder mechanisch (`not a primary agent`,
+`auto-rejecting`) und misst – falls eingeschaltet – Dauer und Ressourcen.
+**Bricht er mit Exit 3 ab, ist das Ergebnis unbrauchbar: nicht
+weiterarbeiten, sondern melden.** Er ersetzt damit einen Teil deiner
+Prüfung in Schritt 6, nicht sie als Ganzes.
+
+Die Versuchsnummer ist keine Buchhaltung, sondern die Kennzahl, an der man
+später sieht, ob ein billigeres Modell wirklich billiger war: ein Modell,
+das jeden zweiten Task zweimal braucht, ist teurer als eines, das ihn
+einmal richtig macht. Zählst du sie nicht mit, ist die Messung wertlos.
 
 Auftrag ist immer **nur** der Verweis auf die Task-Datei bzw. deren
 vollständiger Inhalt – nie deine Gesprächshistorie, nie andere Tasks.
@@ -276,8 +362,46 @@ Commits seither** zu prüfen.
    dem Verstoss als Kontext zurückschicken.
 6. `VERIFIKATION` starten.
 7. Bei `CHANGES_NEEDED`: erneut `UMSETZUNG` für denselben Task, mit den
-   fehlgeschlagenen Tests als zusätzlichem Kontext, zurück zu 5. **Kein
-   neuer Task beginnt, solange dieser nicht grün ist.**
+   fehlgeschlagenen Tests als zusätzlichem Kontext, zurück zu 5 – **mit
+   erhöhter Versuchsnummer** im `run-role.sh`-Aufruf. **Kein neuer Task
+   beginnt, solange dieser nicht grün ist.**
+
+   Kommt `CHANGES_NEEDED` von der Rolle selbst (der Task trägt nicht),
+   geht es nicht an dieselbe Rolle zurück, sondern an die **vorgelagerte**
+   – sonst wiederholt sie nur, woran sie schon gescheitert ist.
+
+   **Diese Schleife ist begrenzt.** Ab dem vierten Versuch einer Rolle am
+   selben Task verweigert `run-role.sh` den Lauf (Exit 4,
+   `AGENT_MAX_ATTEMPTS`, Default 3). Das ist kein Fehler des Skripts,
+   sondern das Abbruchkriterium: Ein Task, der aus eigener Kraft nicht
+   durchkommt, ist ein `BLOCKED`-Fall. Ohne diese Grenze können sich zwei
+   Rollen eine ganze Nacht lang gegenseitig zurückschicken.
+
+   Der Abbruch legt zugleich `.agent/state/HALTED` an. **Damit ist die
+   ganze Initiative angehalten, nicht nur dieser Task** – jeder weitere
+   `run-role.sh`-Aufruf bricht mit Exit 5 ab, auch für eine andere Rolle
+   und einen anderen Task. Das ist Absicht: Tasks bauen in der Regel
+   aufeinander auf, und nach einem gescheiterten Task weiterzubauen heisst,
+   alles Folgende auf ein Fundament zu setzen, von dem man weiss, dass es
+   nicht trägt.
+
+   **Was du in diesem Zustand tust:** dem Nutzer die Task-Datei und die
+   Logs der bisherigen Versuche vorlegen, seinen Entscheid abwarten,
+   Ende der Sitzung. **Was du nicht tust:** die Akzeptanzkriterien
+   abschwächen, den Task aufteilen, auf ein stärkeres Modell ausweichen,
+   zu einem anderen Task wechseln – und vor allem nicht
+   `rm .agent/state/HALTED`. Diese Datei zu entfernen ist ein
+   menschlicher Akt; entfernst du sie selbst, hast du die Schranke
+   umgangen, die genau dich meint.
+
+   Läuft ein Baustein per `runtime: subagent` in deinem eigenen Harness,
+   greift die Datei-Schranke technisch nicht (der Aufruf geht nicht durch
+   `run-role.sh`). Vor **jedem** Baustein-Aufruf gilt deshalb zusätzlich:
+   existiert `.agent/state/HALTED`, startest du nichts.
+
+   ```bash
+   test -f .agent/state/HALTED && echo "ANGEHALTEN - nichts starten"
+   ```
 8. Bei `PASS`: Status auf `done`, Test-Notizen in der Task-Datei, eine
    Zeile an `.agent/state/PROGRESS.md`, Git-Commit (Task-ID + Titel).
 

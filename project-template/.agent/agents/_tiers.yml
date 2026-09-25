@@ -17,7 +17,39 @@ claude:
 # opencode.json definiert (npm: "@ai-sdk/openai-compatible" + baseURL),
 # danach ist die Provider-ID hier frei verwendbar – z.B. ollama/… oder
 # lmstudio/…, auch gemischt mit Cloud-Modellen.
+#
+# Voreinstellung = Mischbetrieb: Claude Code fährt den Orchestrator und die
+# Denk-Rollen aufs Abo, und `runtime: opencode` im Task-Frontmatter bedeutet
+# "diese eine Ausführung läuft lokal und kostet nichts". Deshalb zeigen
+# standard und cheap hier auf Ollama und NICHT auf anthropic/… – sonst
+# landet ein Task mit `runtime: opencode` auf der API-Abrechnung, also genau
+# dem, was der Mischbetrieb vermeiden soll.
+#
+# strong bleibt als Cloud-Modell stehen: es ist der Notausgang für den
+# seltenen Fall, dass eine Denk-Rolle bewusst über OpenCode laufen soll.
+# Dieser Eintrag wird nur wirksam, wenn ein Task das ausdrücklich anfordert
+# – und braucht dann einen ANTHROPIC_API_KEY (das Abo ist über OpenCode
+# nicht nutzbar, siehe HARNESS.md).
+# Nebenwirkung, bewusst in Kauf genommen: der Orchestrator teilt sich die
+# Stufe `standard` mit Implementer/Tester und landet dadurch in
+# .opencode/agent/orchestrator.md ebenfalls auf Ollama. Im Mischbetrieb
+# ist diese Datei ungenutzt - der Orchestrator laeuft in Claude Code.
+# Wer OpenCode als PRIMAEREN Harness fahren will, stellt `standard` hier
+# zurueck auf ein Cloud-Modell: die Protokolltreue des Orchestrators ist
+# das, was ein schwaches Modell zuerst verliert (DECISIONS.md, Lehre 7).
 opencode:
   strong: anthropic/claude-opus-5
-  standard: anthropic/claude-sonnet-5
-  cheap: ollama/qwen2.5-coder:14b
+  standard: ollama/qwen3.8:27b
+  cheap: ollama/qwen3.5:latest
+#
+# Zur Modellwahl (Stand 2026-09): qwen3.8:27b ist der Q4_K_M-Build mit
+# 17.7 GB und laeuft damit auf 32 GB Unified Memory. NICHT weiter
+# quantisieren, auch wenn der Speicher knapp wird: niedrige Quants
+# verlieren als erstes die Entschlusskraft - das Modell zaehlt dann
+# Alternativen auf, statt ein Werkzeug aufzurufen. Genau davon haengt
+# die Implementer-Rolle ab. Lieber ein kleineres Modell in hoher Quant
+# als ein grosses in niedriger.
+#
+# `cheap` nutzt derzeit KEINE Rolle (alle sind strong oder standard) -
+# der Eintrag steht als sinnvoller Default bereit, falls eine neue Rolle
+# ihn braucht.

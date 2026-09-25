@@ -2,7 +2,7 @@
 # GENERIERT von .agent/sync-agents.py - nicht von Hand editieren.
 # Quelle: .agent/agents/architect.md + architect.meta.yml
 description: Prueft einen fertigen Plan gegen die bestehende Architektur, bevor Code entsteht, und schreibt bindende Vorgaben in die Task-Dateien. Read-only gegenueber Produktcode und Tests.
-mode: subagent
+mode: all
 model: anthropic/claude-opus-5
 steps: 40
 permission:

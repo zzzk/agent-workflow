@@ -42,8 +42,8 @@ claude                                       # oder: opencode
 | Git | Ein Commit pro verifiziertem Task; der Orchestrator prüft Diffs | ja |
 | Python 3 (≥ 3.8) | Der Generator `sync-agents.py` (keine Pakete nötig) | ja |
 | Claude Code | Der Orchestrator und die Rollen im Anthropic-Ökosystem | eines von beiden |
-| OpenCode | Nötig, sobald einzelne Rollen auf anderen/lokalen Modellen laufen sollen (Installation: `opencode.ai/docs`) | optional |
-| Ollama / LM Studio | Lokale Modelle bereitstellen | nur bei lokalem Betrieb |
+| OpenCode | Nötig, sobald einzelne Rollen auf anderen/lokalen Modellen laufen sollen (`npm i -g opencode-ai`; im Sandbox-Image enthalten) | optional |
+| Ollama / LM Studio | Lokale Modelle bereitstellen. Läuft auf dem **Host**, nie in der Sandbox (GPU) – und muss dafuer mit `OLLAMA_HOST=0.0.0.0` starten | nur bei lokalem Betrieb |
 | Docker | Die Sandbox aus `sandbox/` | optional, empfohlen |
 
 ---
@@ -56,7 +56,7 @@ Das ist der Kern dieses Handbuchs. Alles andere ergibt sich daraus.
 |---|---|---|---|---|
 | 1 | **Wo liegen die Tests?** | `.agent/agents/implementer.meta.yml` + `tester.meta.yml` | einmal pro Projekt | **ja** |
 | 2 | **Welche Rolle auf welchem Modell?** | `.agent/agents/_tiers.yml` | einmal, dann bei Bedarf | nein (Standard funktioniert) |
-| 3 | **Lokale Modelle verfügbar machen** | `opencode.json` im Projekt-Root | nur bei lokalem Betrieb | nein |
+| 3 | **Lokale Modelle verfügbar machen** | `$OLLAMA_BASE_URL` (Datei `opencode.json` liegt bereit) | nur bei lokalem Betrieb | nein |
 | 4 | **Was soll das Produkt können?** | `.agent/spec/Requirements.md` | vor der ersten Initiative | ja (notfalls im Dialog) |
 | 5 | **Berechtigungsmodus** | `.claude/settings.json` bzw. OpenCode-`permission` | einmal, vor dem ersten Task | faktisch ja |
 | 6 | Schreibrechte / Schritt-Limit einer Rolle | `.agent/agents/<rolle>.meta.yml` | selten | nein |
@@ -99,9 +99,9 @@ claude:                    # Claude Code: nur Anthropic-Modelle möglich
   cheap: haiku
 
 opencode:                  # OpenCode: beliebig, auch lokal, auch gemischt
-  strong: anthropic/claude-opus-5
-  standard: anthropic/claude-sonnet-5
-  cheap: ollama/qwen2.5-coder:14b
+  strong: anthropic/claude-opus-5      # Notausgang, braucht API-Key
+  standard: ollama/qwen3.8:27b         # Implementer, Tester – lokal
+  cheap: ollama/qwen3.5:latest
 ```
 
 Welche Rolle welche Stufe hat, steht in `<rolle>.meta.yml`. Standard:
@@ -112,7 +112,7 @@ Welche Rolle welche Stufe hat, steht in `<rolle>.meta.yml`. Standard:
 | `standard` | Orchestrator, Implementer, Tester | Ausführung entlang einer engen, vollständigen Auftragsdatei |
 
 Willst du günstiger oder lokaler fahren, ändere die **Zuordnung**, nicht
-die Rollen: `standard: ollama/qwen2.5-coder:14b`. Der Implementer ist der
+die Rollen: `standard: ollama/qwen3.8:27b`. Der Implementer ist der
 beste Kandidat dafür – sein Auftrag ist eng, seine Arbeit wird von einem
 unabhängigen Tester geprüft, und Fehler kosten nur einen weiteren Durchlauf.
 
@@ -124,30 +124,208 @@ Anthropic-Modelle, und eine Umleitung auf einen anderen Anbieter
 Session. Ein Mischbetrieb – Planner in der Cloud, Implementer lokal – ist
 dort strukturell nicht möglich, nicht bloss unkonfiguriert.
 
-Mit OpenCode definierst du den Provider einmal im Projekt-Root:
+Der Provider wird einmal im Projekt-Root definiert. `opencode.json` liegt
+fertig im Template – Ollama, `qwen3.8:27b`, `num_ctx` bereits auf 32k.
+Anpassen musst du daran im Normalfall nichts, **eine** Umgebungs-
+variable aber schon:
 
-```jsonc
-// opencode.json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama (lokal)",
-      "options": { "baseURL": "http://localhost:11434/v1" },
-      "models": { "qwen2.5-coder:14b": { "name": "Qwen2.5 Coder 14B" } }
-    }
-  }
-}
+```bash
+export OLLAMA_BASE_URL=http://localhost:11434/v1        # Ollama auf dem Host
 ```
 
-Danach ist `ollama/qwen2.5-coder:14b` in `_tiers.yml` verwendbar. Das
-Modell vorher laden: `ollama pull qwen2.5-coder:14b`.
+Die Datei liest den Endpunkt über `{env:OLLAMA_BASE_URL}` statt ihn fest zu
+verdrahten, weil er nicht überall derselbe ist: **in der Sandbox ist
+`localhost` der Container**, nicht dein Rechner. Das Sandbox-Image setzt
+die Variable deshalb selbst auf `http://host.docker.internal:11434/v1` –
+dort musst du nichts tun. Nur auf dem Host exportierst du sie selbst.
+
+> Ist die Variable nicht gesetzt, ersetzt OpenCode sie durch einen leeren
+> String und der erste Aufruf scheitert mit einer wenig sprechenden
+> Verbindungsmeldung. Das ist die erste Stelle zum Nachsehen.
+
+> **Ollama muss mit `OLLAMA_HOST=0.0.0.0` gestartet werden.** Per Default
+> bindet es nur an `127.0.0.1` und ist damit aus dem Container **nicht**
+> erreichbar – auch nicht über `host.docker.internal`, entgegen einer
+> verbreiteten Annahme über Docker Desktop. Ein blosses `ollama serve`
+> genügt nicht. Das ist der Schritt, der am ehesten vergessen wird, weil
+> er ausserhalb der Sandbox und ausserhalb dieses Repos passiert.
+
+```bash
+ollama pull qwen3.8:27b
+OLLAMA_HOST=0.0.0.0 ollama serve        # NICHT nur `ollama serve`
+```
+
+Läuft Ollama bereits ohne die Variable, muss es **neu gestartet** werden –
+sie wird beim Start gelesen. Gegenprobe aus dem Container:
+
+```bash
+curl http://host.docker.internal:11434/api/version
+```
+
+Danach ist `ollama/qwen3.8:27b` in `_tiers.yml` verwendbar – und ist
+dort für die Stufen `standard` und `cheap` bereits eingetragen.
 
 > Wenn Tool-Aufrufe mit einem lokalen Modell unzuverlässig sind, ist das
 > Kontextfenster meist zu klein – bei Ollama `num_ctx` auf 16k–32k
 > anheben. Rollen dieser Methodik sind bewusst kontextarm, aber nicht
 > kontextfrei.
+
+> Die zweite Ursache für unzuverlässige Tool-Aufrufe ist zu **starke
+> Quantisierung**. Sie degradiert ein Modell nicht gleichmässig: Faktenwissen
+> überlebt, die Entschlusskraft stirbt zuerst – das Modell zählt dann
+> Alternativen auf, statt ein Werkzeug aufzurufen. Genau davon hängt der
+> Implementer ab. Unter Q4_K_M deshalb nicht gehen; lieber ein kleineres
+> Modell in hoher Quant als ein grosses in niedriger.
+
+### 3a. Mischbetrieb: Claude Code denkt, OpenCode arbeitet lokal
+
+Der praktisch wichtigste Aufbau, weil er das Claude-Abo nutzt, **ohne**
+dass die Fliessarbeit über die API abgerechnet wird:
+
+| Rolle | Harness | Modell | Kosten |
+|---|---|---|---|
+| Orchestrator, Planner, Architekt, Reviewer | Claude Code | Abo | im Abo enthalten |
+| Implementer, Tester (per `runtime: opencode`) | OpenCode | Ollama, lokal | keine |
+
+Das Claude-Abo lässt sich **nicht** über OpenCode nutzen – Anthropic
+untersagt das ausdrücklich, und OpenCode hat das entsprechende Plugin mit
+1.3.0 wieder entfernt. Die Trennung oben ist deshalb keine Sparvariante,
+sondern der einzige saubere Weg: Das Abo bleibt dort, wo es hingehört
+(Claude Code), und alles, was über OpenCode läuft, läuft lokal.
+
+Genau darauf ist die Voreinstellung in `_tiers.yml` ausgelegt: `standard`
+und `cheap` zeigen unter `opencode:` auf Ollama. `runtime: opencode` im
+Task-Frontmatter heisst damit schlicht "diese eine Ausführung läuft lokal".
+Stünde dort `anthropic/…`, landete derselbe Task auf der API-Abrechnung –
+also genau dem, was der Mischbetrieb vermeiden soll.
+
+Der Ablauf, einmalig:
+
+```bash
+OLLAMA_HOST=0.0.0.0 ollama serve &            # 1. auf dem HOST (GPU), 0.0.0.0 ist Pflicht
+ollama pull qwen3.8:27b
+$EDITOR .agent/agents/_tiers.yml              # 2. nur falls anderes Modell gewuenscht
+python3 .agent/sync-agents.py                 # 3. Adapter neu erzeugen
+claude                                        # 4. Orchestrator starten
+```
+
+Danach ruft der Orchestrator den Implementer bei Bedarf als Unterprozess
+auf (`opencode run --agent implementer --dir . --auto`) und beurteilt das
+Ergebnis wie jeden eigenen Lauf: aus `git diff` und der Task-Datei, nicht
+aus dem Log. Beide CLIs sind im Sandbox-Image enthalten.
+
+### 3b. Messung: was ein Lauf wirklich kostet
+
+Wer entscheiden soll, ob lokale Modelle eine Beschaffung wert sind,
+braucht Zahlen statt Eindrücke. Die Messung ist deshalb **standardmässig
+ein**:
+
+```bash
+AGENT_METRICS=0                    # nur falls man sie wirklich abschalten will
+```
+
+Der Default ist bewusst so herum. Die Messung kostet praktisch nichts – ein
+`/proc`-Lesen alle zwei Sekunden, eine angehängte Zeile je Lauf, zwei kurze
+`curl`s – und `.agent/runs/` ist ohnehin nicht versioniert, es entsteht also
+kein Rauschen im Repo. Wer sie abschaltet, hat im Fehlerfall keine Historie,
+und der Fehlerfall ist genau der Moment, in dem man sie gebraucht hätte.
+Der Schalter existiert trotzdem: für Umgebungen, in denen selbst eine lokale
+Laufzeit-Datei erklärungsbedürftig ist.
+
+Sie hängt an `.agent/run-role.sh` – dem einzigen Weg, über den der
+Orchestrator eine fremde Rolle aufruft. Das ist Absicht: Ein Zweig im
+Rollen-Prompt ("falls Messung aktiv, tue X") wäre eine Compliance-Frage,
+und Compliance ist das, was unter Last zuerst nachlässt. Hier entscheidet
+das Skript, der Aufruf bleibt in beiden Fällen identisch.
+
+Zwei Quellen, weil eine nicht reicht:
+
+| Quelle | Läuft wo | Liefert |
+|---|---|---|
+| `.agent/run-role.sh` | in der Sandbox, bei jedem Lauf | Dauer, Exit, Versuch, Verdict, geänderte Dateien, Kaltstart, Peak-RAM des Containers |
+| `.agent/sample-host.sh` | **auf dem Host**, die ganze Sitzung | CPU- und VRAM-Zeitreihe von Ollama |
+
+Der Grund für die Trennung ist derselbe wie beim GPU-Zugriff: Im
+Mischbetrieb liegt die Last dort, wo das Modell läuft – auf dem Host. Der
+`opencode`-Prozess in der Sandbox ist ein dünner HTTP-Client, seine
+CPU-Zahlen beantworten die Beschaffungsfrage **nicht**. Aus dem Container
+heraus ist der Host-Prozess aber unsichtbar. Deshalb Ereignisse hier,
+Zeitreihe dort, zusammengeführt über die Uhrzeit.
+
+```bash
+# Auf dem Host, vor der Sitzung:
+.agent/sample-host.sh 5 > .agent/runs/host.csv &
+
+# Nach der Sitzung, irgendwo:
+python3 .agent/metrics-report.py          # Tabelle
+python3 .agent/metrics-report.py --csv    # für Tabellenkalkulation/Folien
+```
+
+Der Report verdichtet je Rolle auf Median, Maximum, Summe und
+**Wiederholungsquote**. Die letzte ist die Zahl, auf die es ankommt: Ein
+Modell, das jeden zweiten Task zweimal braucht, ist nicht billiger,
+sondern teurer. Ohne sie vergleicht man Laufzeiten von Läufen, die
+unterschiedlich viel geleistet haben.
+
+Der Report zeigt je Task die **Kette**, nicht einzelne Zeilen:
+
+```
+TASK-0002
+  |- tester       #1    240s  PASS             2 Datei(en)
+  |- implementer  #1    410s  CHANGES_NEEDED   3 Datei(en)
+  |- planner      #1     95s  PASS             1 Datei(en)
+  `- implementer  #2    505s  PASS             4 Datei(en)
+```
+
+Das ist nicht Kosmetik. Eine Wiederholung ist ohne ihren Vorlauf nicht
+deutbar: „Implementer Versuch 2" heisst etwas anderes, je nachdem ob davor
+nur der Implementer stand (**Modell zu schwach**) oder eine vorgelagerte
+Rolle nachgebessert hat (**Task war schlecht geschnitten**). Für eine
+Beschaffungsentscheidung dürfen diese beiden Fälle nicht in derselben Zahl
+landen – sonst schreibt man dem lokalen Modell Fehler des Planners zu.
+
+Läufe, die der Wrapper als unbrauchbar erkannt hat (Rolle nicht
+ausgeführt, Berechtigung abgelehnt), weist der Report **separat** aus
+statt sie stillschweigend mitzumitteln. Dasselbe gilt für Tasks, die an
+der Versuchs-Obergrenze abgebrochen sind – sie erscheinen als
+`[NICHT ABGESCHLOSSEN]`, auch wenn ein früherer Lauf `PASS` ergab.
+
+**Abbruchkriterium:** Ab dem vierten Versuch einer Rolle am selben Task
+verweigert `run-role.sh` den Lauf (`AGENT_MAX_ATTEMPTS`, Default 3). Ohne
+diese Grenze ist die `CHANGES_NEEDED`-Schleife unbegrenzt – zwei Rollen
+können sich eine ganze Nacht lang gegenseitig zurückschicken.
+
+**Der Abbruch hält die ganze Initiative an, nicht nur den Task.** Er legt
+`.agent/state/HALTED` an; jeder weitere `run-role.sh`-Aufruf bricht danach
+mit Exit 5 ab – auch für eine andere Rolle und einen anderen Task. Tasks
+bauen in der Regel aufeinander auf, und nach einem gescheiterten Task
+weiterzubauen heisst, alles Folgende auf ein Fundament zu setzen, von dem
+man weiss, dass es nicht trägt. Weitergehen ist ein bewusster
+menschlicher Akt:
+
+```bash
+cat .agent/state/HALTED      # Grund und Logpfade
+rm .agent/state/HALTED       # erst nach deinem Entscheid
+```
+
+> **Grenze dieser Absicherung, damit du dich nicht auf mehr verlässt als
+> da ist:** Sie greift mechanisch für alles, was durch `run-role.sh`
+> läuft – also jeden `runtime: opencode`-Baustein. Bausteine mit
+> `runtime: subagent` ruft der Orchestrator in seinem eigenen Harness
+> auf, an der Datei vorbei; dort bleibt es eine Prompt-Regel (sie steht
+> in `orchestrator.md`). Wer das auch hart will, braucht einen
+> `PreToolUse`-Hook in `.claude/settings.json`, der bei vorhandener
+> HALTED-Datei den Sub-Agenten-Aufruf ablehnt.
+
+**Den Schritt `OLLAMA_HOST=0.0.0.0` musst du dir nicht merken.** Vor dem
+ersten `runtime: opencode`-Lauf einer Session führt der Orchestrator einen
+**Vorflug-Check** aus (`.agent/agents/orchestrator.md`, Schritt 5): Ist
+OpenCode installiert, ist `$OLLAMA_BASE_URL` gesetzt, antwortet der
+Endpunkt, ist das Modell aus `_tiers.yml` überhaupt geladen? Fehlt etwas,
+**stoppt er und nennt dir den konkreten Befehl** – er repariert es nicht
+selbst (der Modell-Server liegt ausserhalb der Sandbox) und weicht auch
+nicht still auf `runtime: subagent` aus, weil das eine Kostenentscheidung
+wäre, die dir gehört.
 
 ### 4. Requirements
 
@@ -384,6 +562,7 @@ Gegenstück: Was **du** pflegst, sind `Requirements.md`, `_tiers.yml`, die
 | Agent plant mehrere Tasks gleichzeitig | Protokollverstoss | Abbrechen; Modell/Harness-Kombination prüfen (siehe `DECISIONS.md`, Lehre Nr. 7) |
 | Tests schlagen nach `TEST_FIRST` **nicht** fehl | Verhalten existiert bereits, oder der Test prüft nichts | Der Tester meldet das als `CHANGES_NEEDED` – Task überprüfen, nicht den Test abschwächen |
 | Lokales Modell ruft keine Tools auf | Kontextfenster zu klein | Bei Ollama `num_ctx` auf 16k–32k anheben |
+| Lokales Modell nicht erreichbar (Verbindungsfehler) | `$OLLAMA_BASE_URL` nicht gesetzt (OpenCode ersetzt sie dann durch einen leeren String), oder Ollama lauscht nur auf `127.0.0.1` | Host: `export OLLAMA_BASE_URL=http://localhost:11434/v1`; Sandbox: setzt das Image selbst. Ollama mit `OLLAMA_HOST=0.0.0.0` starten |
 
 ---
 
@@ -393,7 +572,7 @@ Gegenstück: Was **du** pflegst, sind `Requirements.md`, `_tiers.yml`, die
 mein-projekt/
   AGENTS.md                          # importiert MEMORY.md + orchestrator.md
   CLAUDE.md                          # importiert AGENTS.md
-  opencode.json                      # nur bei lokalen/fremden Modellen  ← DU
+  opencode.json                      # Provider-Definition fuer lokale Modelle
   .gitattributes                     # markiert generierte Dateien
 
   .agent/

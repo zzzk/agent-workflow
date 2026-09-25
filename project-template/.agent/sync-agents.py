@@ -146,7 +146,16 @@ def opencode_adapter(meta, tiers, body):
         BANNER,
         SOURCE_NOTE.format(role=role),
         "description: {}".format(meta["description"]),
-        "mode: {}".format("primary" if meta.get("kind") == "primary" else "subagent"),
+        # "all" statt "subagent": In dieser Methodik wird eine OpenCode-Rolle
+        # IMMER als Top-Level-Agent eines eigenen "opencode run"-Prozesses
+        # aufgerufen (HARNESS.md, "Aufruf einer Rolle in einem fremden
+        # Harness"). OpenCode weigert sich aber, einen "mode: subagent" so zu
+        # starten: es meldet "is a subagent, not a primary agent", faellt auf
+        # den Default-Agenten zurueck - und laeuft dann OHNE Rollen-Prompt und
+        # OHNE die permission-Regeln weiter, mit Exit-Code 0. Verifiziert am
+        # 2026-09-24 mit opencode 1.18.32. "all" erlaubt beides: Aufruf per
+        # "run" und Nutzung als Subagent innerhalb von OpenCode.
+        "mode: {}".format("primary" if meta.get("kind") == "primary" else "all"),
         "model: {}".format(tiers["opencode"][meta["model_tier"]]),
         "steps: {}".format(meta.get("max_steps", 60)),
         "permission:",

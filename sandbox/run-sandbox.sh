@@ -57,6 +57,13 @@ if [ -z "$PROJECT_SLUG" ]; then
 fi
 BASE_NAME="agent-${PROJECT_SLUG}"
 
+# Lokale Modelle (Ollama) laufen auf dem HOST. Docker Desktop (macOS/Windows)
+# legt "host.docker.internal" von selbst an; die native Docker Engine unter
+# Linux nicht. Das Flag ist auf Docker Desktop wirkungslos und macht den
+# Start damit plattformunabhaengig. Siehe README.md, Abschnitt "Dienste auf
+# dem Host erreichen".
+HOST_GATEWAY_ARGS=(--add-host=host.docker.internal:host-gateway)
+
 mount_source_of() {
   docker inspect -f '{{range .Mounts}}{{if eq .Destination "/work"}}{{.Source}}{{end}}{{end}}' "$1" 2>/dev/null
 }
@@ -80,6 +87,7 @@ if [ "$NEW_CONTAINER" = 1 ]; then
     --name "$CONTAINER_NAME" \
     -v "$PROJECT_DIR:/work" \
     "${GIT_MOUNT_ARGS[@]}" \
+    "${HOST_GATEWAY_ARGS[@]}" \
     "$IMAGE_NAME" \
     bash
 fi
@@ -110,5 +118,6 @@ exec docker run -it \
   --name "$BASE_NAME" \
   -v "$PROJECT_DIR:/work" \
   "${GIT_MOUNT_ARGS[@]}" \
+  "${HOST_GATEWAY_ARGS[@]}" \
   "$IMAGE_NAME" \
   bash

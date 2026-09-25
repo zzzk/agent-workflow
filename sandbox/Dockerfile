@@ -4,7 +4,8 @@
 # Setup (z.B. .venv-backup-tool, requirements.txt) macht der Agent selbst
 # beim Start gemäss dem jeweiligen Projekt-AGENTS.md, nicht dieses Image.
 #
-# Enthaltene Toolchains: Node (Basis-Image), Python 3, JDK + Maven. Bewusst
+# Enthaltene Toolchains: Node (Basis-Image), Python 3, JDK + Maven, sowie
+# beide Agent-Harnesses (claude, opencode). Bewusst
 # ein gemeinsames Polyglott-Image statt mehrerer abgeleiteter: Layer werden
 # von allen Containern geteilt (Platz wird einmal bezahlt, nicht je Container)
 # und die Grösse kostet zur Laufzeit nichts — Layer werden gemountet, nicht
@@ -17,6 +18,8 @@ FROM node:22-slim
 # curl/ca-certificates: für spätere Installationsschritte innerhalb der Sandbox.
 # jq/bc: von project-template/.claude/statusline.sh benötigt (Kontextfenster-
 # und Ratenlimit-Anzeige in der Statuszeile).
+# procps: liefert ps/top. Fehlt im slim-Basis-Image; ohne es messen
+# Skripte, die Prozesse beobachten, still 0 statt zu scheitern.
 # sudo: der Agent läuft als Non-Root-User (siehe unten), braucht aber weiterhin
 # Rückfragen-frei apt-get etc. innerhalb des Containers (Sandbox-Grenze bleibt
 # der Container selbst, siehe SANDBOX_BOOTSTRAP_PATTERN.md Schritt 0).
@@ -30,6 +33,7 @@ RUN apt-get update \
        ca-certificates \
        jq \
        bc \
+       procps \
        sudo \
     && rm -rf /var/lib/apt/lists/*
 
@@ -64,7 +68,13 @@ RUN wget -q "https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/ap
     && ln -s "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn \
     && rm /tmp/maven.tar.gz
 
-RUN npm install -g @anthropic-ai/claude-code
+# Beide Harnesses ins Image: Claude Code als Orchestrator, OpenCode als
+# Unterprozess-Runtime fuer einzelne Rollen (Task-Frontmatter
+# "runtime: opencode", siehe HARNESS.md). OpenCode wird dabei nicht
+# interaktiv bedient, sondern per "opencode run --agent <rolle> --auto"
+# aufgerufen; es ist deshalb auch dann noetig, wenn der Mensch nur
+# "claude" startet.
+RUN npm install -g @anthropic-ai/claude-code opencode-ai
 
 # Claude Code verweigert --dangerously-skip-permissions / defaultMode
 # "bypassPermissions" (siehe SANDBOX_BOOTSTRAP_PATTERN.md Schritt 1), wenn
@@ -77,6 +87,15 @@ RUN useradd --create-home --shell /bin/bash agent \
     && chmod 0440 /etc/sudoers.d/agent
 USER agent
 ENV HOME=/home/agent
+
+# Lokale Modelle laufen auf dem HOST (Ollama), nicht im Container - dort ist
+# "localhost" der Container selbst. project-template/opencode.json liest den
+# Endpunkt deshalb aus dieser Variablen statt ihn fest zu verdrahten, damit
+# dieselbe Datei im Container und auf dem Host funktioniert. Auf dem Host
+# stattdessen: export OLLAMA_BASE_URL=http://localhost:11434/v1
+# (Docker Desktop proxyt host.docker.internal auch zu Diensten, die auf dem
+# Host nur an 127.0.0.1 lauschen - siehe README.md.)
+ENV OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
 
 # Bind-Mount-Zielpunkt für das Projektverzeichnis (siehe README.md /
 # SANDBOX_BOOTSTRAP_PATTERN.md für die -v-Flags beim Start).
