@@ -1,0 +1,9 @@
+# GENERIERT von .agent/sync-agents.py - nicht von Hand editieren.
+# Quelle: <rolle>.meta.yml (runtime, model_tier) + _tiers.yml
+# rolle	runtime	modell
+architect	subagent	opus
+implementer	opencode	ollama/qwen3.8:27b
+orchestrator	subagent	sonnet
+planner	subagent	opus
+reviewer	subagent	opus
+tester	subagent	sonnet

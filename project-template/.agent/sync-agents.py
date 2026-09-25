@@ -27,6 +27,14 @@ AGENTS_DIR = Path(".agent/agents")
 CLAUDE_DIR = Path(".claude/agents")
 OPENCODE_DIR = Path(".opencode/agent")
 
+# Maschinenlesbare Aufloesung Rolle -> (Harness, Modell). Generiert, damit
+# run-role.sh und der Orchestrator NICHT meta.yml und _tiers.yml selbst
+# parsen muessen - eine zweite Parser-Implementierung in bash waere die
+# sicherste Art, die beiden Quellen auseinanderlaufen zu lassen.
+RESOLVED = AGENTS_DIR / "_resolved.tsv"
+
+RUNTIMES = ("subagent", "opencode")
+
 BANNER = "# GENERIERT von .agent/sync-agents.py - nicht von Hand editieren."
 SOURCE_NOTE = "# Quelle: .agent/agents/{role}.md + {role}.meta.yml"
 
@@ -206,6 +214,7 @@ def main():
             sys.exit("Fehler: '{}' fehlt in _tiers.yml.".format(harness))
 
     targets = []
+    resolved_rows = []
     for meta_file in sorted(AGENTS_DIR.glob("*.meta.yml")):
         role = meta_file.name[: -len(".meta.yml")]
         body_file = AGENTS_DIR / "{}.md".format(role)
@@ -219,6 +228,16 @@ def main():
         if meta["model_tier"] not in tiers["claude"]:
             sys.exit("Fehler: unbekannter model_tier '{}' in {}.".format(meta["model_tier"], meta_file.name))
 
+        # runtime gehoert zur ROLLE, nicht zum Task: "der Implementer laeuft
+        # lokal" ist eine Eigenschaft des Implementers. Die Task-Datei kann
+        # es fuer Sonderfaelle ueberschreiben, gibt aber nicht den Takt vor.
+        runtime = meta.get("runtime", "subagent")
+        if runtime not in RUNTIMES:
+            sys.exit("Fehler: unbekannte runtime '{}' in {} (erlaubt: {}).".format(
+                runtime, meta_file.name, ", ".join(RUNTIMES)))
+        harness = "opencode" if runtime == "opencode" else "claude"
+        resolved_rows.append((meta["role"], runtime, tiers[harness][meta["model_tier"]]))
+
         body = body_file.read_text(encoding="utf-8")
 
         # Der Orchestrator ist die Hauptschleife, kein Sub-Agent: Claude Code
@@ -229,6 +248,12 @@ def main():
 
     if not targets:
         sys.exit("Fehler: keine *.meta.yml unter {} gefunden.".format(AGENTS_DIR))
+
+    resolved = "\n".join(
+        [BANNER, "# Quelle: <rolle>.meta.yml (runtime, model_tier) + _tiers.yml",
+         "# rolle\truntime\tmodell"]
+        + ["\t".join(row) for row in sorted(resolved_rows)]) + "\n"
+    targets.append((RESOLVED, resolved))
 
     stale = []
     for path, content in targets:

@@ -60,7 +60,8 @@ Das ist der Kern dieses Handbuchs. Alles andere ergibt sich daraus.
 | 4 | **Was soll das Produkt können?** | `.agent/spec/Requirements.md` | vor der ersten Initiative | ja (notfalls im Dialog) |
 | 5 | **Berechtigungsmodus** | `.claude/settings.json` bzw. OpenCode-`permission` | einmal, vor dem ersten Task | faktisch ja |
 | 6 | Schreibrechte / Schritt-Limit einer Rolle | `.agent/agents/<rolle>.meta.yml` | selten | nein |
-| 7 | Welcher Runtime für **einen** Task | `runtime:` im Task-Frontmatter | pro Task | nein |
+| 7 | **Welcher Harness für eine Rolle** | `runtime:` in `.agent/agents/<rolle>.meta.yml` | einmal pro Projekt | nein (Standard funktioniert) |
+| 8 | Abweichender Harness/Modell für **einen** Task | `runtime:`/`model:` im Task-Frontmatter | Sonderfall | nein |
 
 ### 1. Testpfade – die einzige echte Pflichtanpassung
 
@@ -176,6 +177,56 @@ dort für die Stufen `standard` und `cheap` bereits eingetragen.
 > Alternativen auf, statt ein Werkzeug aufzurufen. Genau davon hängt der
 > Implementer ab. Unter Q4_K_M deshalb nicht gehen; lieber ein kleineres
 > Modell in hoher Quant als ein grosses in niedriger.
+
+### 3c. Wer wo läuft: eine Eigenschaft der Rolle
+
+Zwei Dinge entscheiden über einen Lauf, und **beide gehören zur Rolle**,
+nicht zum Task:
+
+```yaml
+# .agent/agents/implementer.meta.yml
+runtime: opencode          # welcher Harness führt aus
+model_tier: standard       # welche Modellstufe
+```
+
+„Der Implementer läuft lokal" ist eine Aussage über den Implementer – sie
+gilt für alle seine Tasks. Müsste man sie in jede Task-Datei schreiben,
+wäre das nicht nur Wiederholung, sondern eine Fehlerquelle: Eine vergessene
+Zeile ändert still das Modell, ohne dass es jemandem auffällt.
+
+`sync-agents.py` löst `runtime` + `model_tier` + `_tiers.yml` zu einer
+Tabelle auf, die Mensch und Skript lesen können:
+
+```
+$ cat .agent/agents/_resolved.tsv
+# rolle        runtime    modell
+architect      subagent   opus
+implementer    opencode   ollama/qwen3.8:27b
+planner        subagent   opus
+reviewer       subagent   opus
+tester         subagent   sonnet
+```
+
+Das ist die Antwort auf „wer läuft eigentlich wo?" – eine Datei, kein
+Zusammensuchen aus drei Quellen. Sie ist **generiert**; geändert wird in
+`meta.yml` und `_tiers.yml`.
+
+**Der Sonderfall bleibt möglich.** `runtime:` und `model:` im
+Task-Frontmatter überschreiben die Rolle für genau diesen einen Task –
+etwa ein besonders heikler Task, der einmalig auf ein stärkeres Modell
+soll. Im Normalfall bleiben beide Felder **leer**. Was tatsächlich gilt,
+zeigt:
+
+```bash
+.agent/run-role.sh --resolve implementer TASK-0007
+# runtime=opencode modell=ollama/qwen3.8:27b (Quelle: Rolle)
+# Task-Override: model: anthropic/claude-opus-5
+```
+
+Die Voreinstellung im Template ist der Mischbetrieb aus 3a: **Implementer
+über OpenCode, alle anderen in Claude Code.** Die Begründung für den
+Tester steht als Kommentar in seiner `meta.yml` – seine Tests *sind* die
+Messlatte, und eine still gesenkte Latte merkt niemand.
 
 ### 3a. Mischbetrieb: Claude Code denkt, OpenCode arbeitet lokal
 

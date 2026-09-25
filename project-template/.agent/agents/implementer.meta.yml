@@ -1,6 +1,12 @@
 role: implementer
 kind: subagent
 description: Setzt genau eine Task-Datei um. Aendert niemals Testdateien und committet nichts.
+# Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
+# Orchestrators, opencode = fremder Harness als Unterprozess).
+# Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
+# Diese Rolle laeuft lokal ueber OpenCode: enger Auftrag, unabhaengig
+# geprueft vom Tester, Fehler kosten nur einen weiteren Durchlauf.
+runtime: opencode
 model_tier: standard
 write_access: full
 

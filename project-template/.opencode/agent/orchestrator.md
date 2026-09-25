@@ -221,14 +221,27 @@ SKIPPED ARCHITEKTUR_GATE – keine neue Komponente/Abhängigkeit im Plan
 
 ### 5. Baustein aufrufen
 
-Die Task-Datei bestimmt, **wer** ausführt (`runtime:`) und **womit**
-(`model:`, optional).
+**Die Rolle bestimmt, wer ausführt und womit** – nicht die Task-Datei.
+`runtime` und `model_tier` stehen in `.agent/agents/<rolle>.meta.yml`;
+`sync-agents.py` löst beides nach `.agent/agents/_resolved.tsv` auf. Du
+musst das nicht selbst zusammenführen:
 
-- `runtime: subagent` → nativer Sub-Agenten-Aufruf deines eigenen Harness,
-  im Vordergrund, damit du auf das Ergebnis wartest.
-- `runtime: opencode` → fremder Harness als Unterprozess, mit
-  Zeitbegrenzung und protokolliertem Log – **davor einmal pro Session der
-  Vorflug-Check** (unten).
+```bash
+.agent/run-role.sh --resolve implementer TASK-0007
+# runtime=opencode modell=ollama/qwen3.8:27b (Quelle: Rolle)
+```
+
+Die Felder `runtime:`/`model:` im Task-Frontmatter sind
+**Überschreibungen für Sonderfälle** und im Normalfall leer. Sind sie
+gefüllt, gewinnen sie – der Wrapper wertet das selbst aus, du musst es
+nicht vergleichen.
+
+- Aufgelöst auf `subagent` → nativer Sub-Agenten-Aufruf deines eigenen
+  Harness, im Vordergrund, damit du auf das Ergebnis wartest. `run-role.sh`
+  lehnt solche Rollen mit Exit 6 ab; das ist kein Fehler, sondern der
+  Hinweis, dass der Aufruf zu dir gehört.
+- Aufgelöst auf `opencode` → fremder Harness als Unterprozess über den
+  Wrapper – **davor einmal pro Session der Vorflug-Check** (unten).
 
 #### Vorflug-Check vor dem ERSTEN `runtime: opencode`-Lauf
 
@@ -241,7 +254,7 @@ pro Session, **bevor** der erste fremde Lauf startet:
 
 ```bash
 ROLE=implementer                                     # die Rolle des Tasks
-MODEL="$(grep -m1 '^model:' .opencode/agent/$ROLE.md | cut -d' ' -f2)"
+MODEL="$(awk -F'\t' -v r="$ROLE" '$1==r {print $3}' .agent/agents/_resolved.tsv)"
 
 command -v opencode >/dev/null || echo "FEHLT: opencode nicht installiert"
 

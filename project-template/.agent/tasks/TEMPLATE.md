@@ -9,8 +9,13 @@ depends_on: []            # andere Task-IDs, die vorher done sein müssen
 files: []                 # Dateien, die dieser Task berühren darf – so eng wie möglich,
                           # der Orchestrator prüft den Diff dagegen
 
-runtime: subagent         # subagent | opencode – wer führt aus
-model:                    # optional; überschreibt den model_tier der Rolle
+# Beide Felder sind ÜBERSCHREIBUNGEN für Sonderfälle und normalerweise LEER.
+# Wer eine Rolle ausführt und womit, steht bei der Rolle selbst
+# (.agent/agents/<rolle>.meta.yml: runtime + model_tier). Hier nur eintragen,
+# wenn GENAU DIESER Task davon abweichen soll – z.B. ein besonders heikler
+# Task, der einmalig auf ein stärkeres Modell soll.
+runtime:                  # leer = Rolle entscheidet | subagent | opencode
+model:                    # leer = Rolle entscheidet | z.B. ollama/qwen3.8:27b
 test_first: true          # false nur mit Begründung im Kontext-Abschnitt
 ---
 

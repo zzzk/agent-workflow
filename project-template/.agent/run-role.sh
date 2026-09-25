@@ -79,6 +79,20 @@ if [ "${1:-}" = "--verdict" ]; then
   exit 0
 fi
 
+# --- Modus: nur aufloesen, nichts ausfuehren ------------------------------
+# Damit der Orchestrator VOR dem Aufruf weiss, ob eine Rolle in seinen
+# eigenen Harness gehoert oder hierher - ohne raten zu muessen.
+if [ "${1:-}" = "--resolve" ]; then
+  R="${2:?rolle fehlt}"; T="${3:-}"
+  awk -F'\t' -v r="$R" '$1==r {printf "runtime=%s modell=%s (Quelle: Rolle)\n", $2, $3}' \
+    .agent/agents/_resolved.tsv
+  [ -n "$T" ] || exit 0
+  TF="$(ls .agent/tasks/${T}-*.md 2>/dev/null | head -1)"
+  [ -n "$TF" ] && grep -E '^(runtime|model):[[:space:]]*[^[:space:]#]' "$TF" \
+    | sed 's/^/Task-Override: /'
+  exit 0
+fi
+
 ROLE="${1:?Usage: run-role.sh <rolle> <task-id> <versuch> <auftrag>}"
 TASK="${2:?task-id fehlt}"
 ATTEMPT="${3:?versuch fehlt (1 beim ersten Lauf)}"
@@ -116,8 +130,38 @@ if [ "$ATTEMPT" -gt "$MAX_ATTEMPTS" ]; then
   exit 4
 fi
 
-MODEL="$(grep -m1 '^model:' ".opencode/agent/${ROLE}.md" 2>/dev/null | cut -d' ' -f2)"
-[ -n "$MODEL" ] || { echo "FEHLER: .opencode/agent/${ROLE}.md hat keine model-Zeile." >&2; exit 2; }
+# --- Aufloesung: Rolle bestimmt, Task darf ueberschreiben -----------------
+# Harness und Modell sind Eigenschaften der ROLLE (<rolle>.meta.yml). Die
+# Task-Datei ist der Sonderfall, nicht die Regel: sie ueberschreibt nur,
+# wenn sie ein nicht-leeres runtime:/model: traegt. Aufgeloest wird hier
+# und nicht im Prompt - sonst muesste der Orchestrator bei jedem Aufruf
+# zwei Dateien im Kopf zusammenfuehren, und genau dort entstehen stille
+# Fehler.
+RESOLVED_FILE=".agent/agents/_resolved.tsv"
+[ -f "$RESOLVED_FILE" ] || { echo "FEHLER: $RESOLVED_FILE fehlt - erst 'python3 .agent/sync-agents.py'." >&2; exit 2; }
+
+read -r RUNTIME MODEL <<< "$(awk -F'\t' -v r="$ROLE" '$1==r {print $2, $3}' "$RESOLVED_FILE")"
+[ -n "$RUNTIME" ] || { echo "FEHLER: Rolle '$ROLE' steht nicht in $RESOLVED_FILE." >&2; exit 2; }
+SOURCE="Rolle"
+
+# Task-Datei ueber die ID finden (Konvention: .agent/tasks/<ID>-<slug>.md).
+TASK_FILE="$(ls .agent/tasks/${TASK}-*.md 2>/dev/null | head -1)"
+if [ -n "$TASK_FILE" ]; then
+  T_RUNTIME="$(awk -F: '/^runtime:/ {sub(/#.*/,"",$2); gsub(/[ \t]/,"",$2); print $2; exit}' "$TASK_FILE")"
+  T_MODEL="$(awk '/^model:/ {sub(/^model:/,""); sub(/#.*/,""); gsub(/^[ \t]+|[ \t]+$/,""); print; exit}' "$TASK_FILE")"
+  [ -n "$T_RUNTIME" ] && { RUNTIME="$T_RUNTIME"; SOURCE="Task-Datei"; }
+  [ -n "$T_MODEL" ]   && { MODEL="$T_MODEL";   SOURCE="Task-Datei"; }
+fi
+
+# Dieser Wrapper fuehrt nur fremde Harnesses aus. Loest die Rolle auf
+# "subagent" auf, gehoert der Aufruf in den eigenen Harness des
+# Orchestrators - dort gibt es keinen Unterprozess, den man messen koennte.
+if [ "$RUNTIME" != "opencode" ]; then
+  echo "Rolle '$ROLE' laeuft als '$RUNTIME' (Quelle: $SOURCE), nicht ueber diesen" >&2
+  echo "Wrapper. Rufe sie als nativen Sub-Agenten deines eigenen Harness auf." >&2
+  exit 6
+fi
+[ -n "$MODEL" ] || { echo "FEHLER: kein Modell fuer Rolle '$ROLE' aufloesbar." >&2; exit 2; }
 
 # VRAM vor dem Lauf: zeigt, ob das Modell kalt startet (erklaert Ausreisser
 # in der Dauer, ohne die man die Zahlen falsch liest).
@@ -156,8 +200,13 @@ sample_loop() {
 START_TS="$(date -u +%FT%TZ)"
 START_S=$(date +%s)
 
+# --model nur bei einem Task-Override: ohne das Flag gilt die model-Zeile
+# der generierten Rollen-Datei, und genau die ist der Normalfall.
+MODEL_ARGS=()
+[ "$SOURCE" = "Task-Datei" ] && MODEL_ARGS=(--model "$MODEL")
+
 timeout "$TIMEOUT" opencode run \
-  --agent "$ROLE" --dir . --auto "$PROMPT" > "$LOG" 2>&1 &
+  --agent "$ROLE" --dir . --auto "${MODEL_ARGS[@]}" "$PROMPT" > "$LOG" 2>&1 &
 RUN_PID=$!
 sample_loop "$RUN_PID" &
 SAMPLE_PID=$!

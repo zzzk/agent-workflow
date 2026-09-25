@@ -66,6 +66,7 @@ Deshalb: neutrale Quelle plus generierte Adapter.
    role: implementer
    kind: subagent                    # subagent | primary
    description: ...                  # beide Harnesses brauchen sie
+   runtime: opencode                 # subagent | opencode – WO die Rolle läuft
    model_tier: standard              # strong | standard | cheap
    write_access: full                # none | limited | full
    path_denies: ["tests/**"]         # bei full: Ausnahmen
@@ -79,6 +80,7 @@ Deshalb: neutrale Quelle plus generierte Adapter.
 .claude/agents/implementer.md        # name/description/model/maxTurns/tools
 .opencode/agent/implementer.md       # description/mode/model/steps/permission
                                     # (mode: all - siehe Warnung unten zu --agent)
+.agent/agents/_resolved.tsv          # rolle -> runtime, modell (fuer Skripte)
 ```
 
 `meta.yml` beschreibt **Absicht** (`write_access: full`, `path_denies`),

@@ -1,6 +1,10 @@
 role: reviewer
 kind: subagent
 description: Read-only Auditor in drei Modi - MAP (Architektur aus dem Code erfassen), AUDIT (Ist gegen Soll pruefen) und TRIAGE (Rohmaterial aus manuellem Testen auswerten). Schreibt Reports, nie Code.
+# Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
+# Orchestrators, opencode = fremder Harness als Unterprozess).
+# Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
+runtime: subagent
 model_tier: strong
 
 # Ausnahme: im Modus MAP schreibt der Reviewer spec/Architecture.md, im

@@ -1,6 +1,13 @@
 role: tester
 kind: subagent
 description: Schreibt vor der Implementierung fehlschlagende Tests aus den Akzeptanzkriterien (TEST_FIRST) und verifiziert danach die gesamte Suite (VERIFIKATION). Editiert nie Produktcode.
+# Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
+# Orchestrators, opencode = fremder Harness als Unterprozess).
+# Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
+# Bewusst NICHT lokal: die Tests dieser Rolle SIND die Messlatte.
+# Ein schwacher Implementer wird vom Tester gefangen; ein schwacher
+# Tester senkt die Latte still, und nichts stromabwaerts merkt es.
+runtime: subagent
 model_tier: standard
 write_access: limited
 

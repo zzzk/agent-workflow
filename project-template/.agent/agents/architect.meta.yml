@@ -1,6 +1,10 @@
 role: architect
 kind: subagent
 description: Prueft einen fertigen Plan gegen die bestehende Architektur, bevor Code entsteht, und schreibt bindende Vorgaben in die Task-Dateien. Read-only gegenueber Produktcode und Tests.
+# Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
+# Orchestrators, opencode = fremder Harness als Unterprozess).
+# Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
+runtime: subagent
 model_tier: strong
 write_access: limited
 path_allows: [".agent/tasks/**"]
