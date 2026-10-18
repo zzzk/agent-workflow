@@ -1,0 +1,18 @@
+# Virtuelle Umgebung
+.venv-backup-tool/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Lokale, maschinenspezifische Config/Keys (siehe config.example.yaml als Vorlage)
+config.yaml
+keys/
+
+# Claude Code lokale Einstellungen (persoenlich, nicht teilen)
+.claude/settings.local.json
+
+# Mac Finder cache
+.DS_Store
