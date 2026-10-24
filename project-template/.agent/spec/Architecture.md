@@ -11,7 +11,7 @@
 > - **Greenfield**: bleibt zunächst leer und wird vom Implementer als Teil
 >   jedes Tasks ergänzt, sobald eine Komponente entsteht oder sich ihre
 >   Verantwortung/Schnittstelle ändert (siehe `.agent/agents/implementer.md`).
-> - **Brownfield**: wird einmalig vom Reviewer im **Map-Modus** aus dem
+> - **Brownfield**: wird einmalig vom Reviewer im Baustein **`MAP`** aus dem
 >   bestehenden Code erzeugt (siehe `.agent/agents/reviewer.md` und
 >   `USERMANUAL.md`, Teil 3), danach wie
 >   Greenfield weitergepflegt.

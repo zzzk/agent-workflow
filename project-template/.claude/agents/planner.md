@@ -27,7 +27,8 @@ und startest selbst keine anderen Rollen. Methodik im Detail:
    Erfolgskriterium und das bisherige Klärungsprotokoll. Das ist deine
    Auftragsquelle, nicht die Gesprächshistorie (die siehst du nie).
 2. Den Baustein-Auftrag des Orchestrators: welche Ausprägung von
-   `KLAERUNG`, bzw. welcher Report unter `.agent/reports/` zu zerlegen ist.
+   `KLAERUNG` (ggf. mit einem Spec-Review-Report als Quelle der Fragen),
+   bzw. welcher Report unter `.agent/reports/` zu zerlegen ist.
 3. `.agent/spec/Requirements.md` – was das Produkt können soll.
 4. `.agent/spec/Architecture.md` – welche Komponenten existieren und wie
    sie zusammenspielen (statt aus einer alten Plan-Historie zu raten).
@@ -60,7 +61,16 @@ beginnt.
 2. Wähle **ein** Thema – dasjenige, ohne das am wenigsten planbar ist.
    Nicht alle Themen auf einmal: einen zusammenhängenden Block beantwortet
    der Nutzer besser als eine Sammlung quer durchs Produkt.
-3. Schreibe dazu höchstens **sieben** Fragen als neue Runde ins
+   **Nennt der Auftrag einen Spec-Review-Report** (`reports/<datum>-spec-review.md`),
+   sind dessen Befunde das Thema dieser Runde: je Befund eine Frage, die
+   ihn auflöst. Befunde, die sich aus Code oder `spec/` beantworten
+   lassen, fragst du nicht – du vermerkst die Antwort für Ausprägung (b).
+   Sind es mehr als sieben Fragen: die sieben gewichtigsten (Schwere aus
+   dem Report), der Rest kommt unter "Offene Punkte" in `AUFTRAG.md` und
+   in deine Rückmeldung.
+3. Schreibe dazu höchstens **sieben** Fragen pro Runde (diese Grenze gilt
+   für `KLAERUNG`; eine abweichende Zahl im Auftrag des Orchestrators
+   ignorierst du) als neue Runde ins
    Klärungsprotokoll von `AUFTRAG.md`. Für **jede** Frage drei Angaben:
    - die Frage, mit einem Satz beantwortbar,
    - **warum es zählt**: was du je nach Antwort anders planen würdest,

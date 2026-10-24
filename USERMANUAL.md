@@ -382,12 +382,14 @@ wäre, die dir gehört.
 
 `.agent/spec/Requirements.md` beschreibt, was das Produkt können soll. Du
 musst es nicht vorab ausfüllen: sag dem Orchestrator, dass du die
-Anforderungen erarbeiten willst – das wird ein eigener Auftrag im Modus
+Anforderungen erarbeiten willst – das wird ein eigener Auftrag vom Typ
 `REQUIREMENTS`. Er klärt dann Thema für Thema mit dir: je Runde höchstens
 sieben Fragen, jede mit Begründung und einem Vorschlag, den du nur
 bestätigen musst; danach formuliert der Planner das geklärte Thema aus und
-sagt, ob noch eines offen ist. Am Ende steht die fertige
-`Requirements.md` – noch kein Code. Existiert bereits eine Beschreibung
+sagt, ob noch eines offen ist. Zum Schluss prüft der Reviewer die
+Anforderungen unabhängig (`SPEC_REVIEW`: prüfbar, vollständig,
+widerspruchsfrei); findet er Lücken, bekommst du dazu eine letzte
+Fragerunde. Am Ende steht die fertige `Requirements.md` – noch kein Code. Existiert bereits eine Beschreibung
 (README, Tickets), nenne sie: sie wird zum Ausgangsmaterial im Auftrag.
 
 ### 5. Berechtigungen und Git
@@ -406,7 +408,7 @@ ist "selbständig durchlaufen lassen" nicht möglich.
 
 - **Claude Code**: `/permissions` bzw. `.claude/settings.json`; der Skill
   `fewer-permission-prompts` erzeugt eine passende Allowlist aus deiner
-  bisherigen Nutzung. Sub-Agenten erben deinen Modus.
+  bisherigen Nutzung. Sub-Agenten erben deinen Berechtigungsmodus.
 - **Sandbox** (empfohlen für volle Freiheit): `sandbox/run-sandbox.sh`,
   danach die Selbstcheck-Schritte aus `sandbox/README.md`. Achtung: dort
   ist `.git` read-only gemountet – der Orchestrator bereitet dann Diffs
@@ -468,7 +470,7 @@ cp /pfad/zu/tools/agent-workflow/project-template/.gitattributes .   # falls noc
 3. **Baustein `MAP` laufen lassen**: der Reviewer liest den bestehenden
    Code und schreibt `.agent/spec/Architecture.md` daraus. Das ist der
    Bootstrap-Schritt; ohne ihn planen alle nachfolgenden Rollen blind.
-4. **Requirements erfassen**: Auftrag im Modus `REQUIREMENTS`, aus
+4. **Requirements erfassen**: Auftrag vom Typ `REQUIREMENTS`, aus
    README/Tickets abgeleitet und von dir bestätigt – nicht aus dem Code
    geraten.
 5. **Erste Initiative ist meist ein `AUDIT`** – der Ist-Zustand gegen die
@@ -528,13 +530,15 @@ die Auftragsklärung: er hält in `.agent/state/AUFTRAG.md` fest, was du
 willst, was dazugehört (und was nicht) und woran man erkennt, dass es
 erledigt ist. Nur wenn das nicht eindeutig ist, fragt er nach – höchstens
 fünf Fragen mit Vorschlägen zum Bestätigen; bei "änder in Datei X das Y"
-fragt er gar nicht. Aus diesem Auftrag ergibt sich der Modus. Du musst die
-Modi nicht auswendig können – es hilft nur zu wissen, was passieren wird:
+fragt er gar nicht. Aus diesem Auftrag ergibt sich der **Auftragstyp**, und
+zu jedem Auftragstyp gehört ein fester **Ablauf** aus Bausteinen. Du musst
+die Auftragstypen nicht auswendig können – es hilft nur zu wissen, was
+passieren wird:
 
-| Du sagst … | Modus | Was läuft |
+| Du sagst … | Auftragstyp | Ablauf |
 |---|---|---|
-| "Lass uns die Anforderungen erarbeiten" | `REQUIREMENTS` | Klärung Thema für Thema → `spec/Requirements.md`, kein Code |
-| "Bau Feature X" | `FEATURE` | Klärung → Plan → Architektur-Gate → Task-Schleife → Review |
+| "Lass uns die Anforderungen erarbeiten" | `REQUIREMENTS` | Klärung Thema für Thema → Spec-Review → `spec/Requirements.md`, kein Code |
+| "Bau Feature X" | `FEATURE` | Klärung → Spec-Review → Plan → Architektur-Gate → Task-Schleife → Review |
 | "Behebe die Findings aus dem Report" | `FIX` | Plan → Task-Schleife → Review |
 | "Prüf mal den Stand" | `AUDIT` | nur Reviewer, keine Änderung |
 | "Ich hab manuell getestet, schau in die Inbox" | `MANUELLER-TEST` | Triage → dann Fix |
@@ -544,13 +548,16 @@ Modi nicht auswendig können – es hilft nur zu wissen, was passieren wird:
 
 Lege alles, was beim Testen anfällt, unstrukturiert in `.agent/inbox/` –
 Screenshots, Terminal-Auszüge, Notizen. Der Reviewer verknüpft im
-Triage-Modus jedes Fundstück mit einer Codestelle und macht daraus einen
+Baustein `TRIAGE` jedes Fundstück mit einer Codestelle und macht daraus einen
 Report; verarbeitetes Material wandert nach `.agent/inbox/processed/<datum>/`.
 Du musst nichts vorformulieren – genau dafür ist die Inbox da.
 
-Das Ergebnis eines Auftrags ist immer genau ein Modus. Willst du danach
-etwas anderes – z.B. die frisch erarbeiteten Requirements umsetzen – ist
-das ein **neuer** Auftrag, und die Klärung beginnt von vorn. Der alte
+Ein Auftrag hat immer genau einen Auftragstyp. Willst du danach etwas
+anderes – z.B. die frisch erarbeiteten Requirements umsetzen – ist das
+ein **neuer** Auftrag, und die Klärung beginnt von vorn. Einzige Ausnahme:
+ein kleiner Einschub-Task mit demselben Ziel, ohne neue Klärung – den darf
+der Orchestrator in den laufenden Auftrag schieben und vermerkt ihn in
+`AUFTRAG.md` und `PROGRESS.md`. Der alte
 wandert nach `.agent/history/<datum>-<slug>-auftrag.md`.
 
 ### Was du im Verlauf liest
@@ -572,7 +579,7 @@ Der übliche Zyklus, wenn du den Stand prüfen lässt:
 
 1. `REVIEW` (oder `TRIAGE`) schreibt einen datierten Report unter
    `.agent/reports/` – Findings, keine Änderungen am Code.
-2. Neuer Auftrag im Modus `FIX`: der Planner macht aus jedem Finding einen
+2. Neuer Auftrag vom Typ `FIX`: der Planner macht aus jedem Finding einen
    Task (weiter unterteilt, falls ein Finding mehrere Dateien betrifft).
 3. Normale Task-Schleife.
 4. Danach ein erneuter `REVIEW` zur Bestätigung – als **neuer**, datierter

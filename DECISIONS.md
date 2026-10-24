@@ -29,6 +29,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | `spec/Architecture.md` statt wachsender Plan-Historie | Nr. 6 |
 | Strikt sequentiell, nie parallel; mechanische Härtung statt Prosa | Nr. 7 |
 | `AUFTRAGSKLAERUNG`, `state/AUFTRAG.md`, Modus `REQUIREMENTS` | Nr. 8 |
+| `SPEC_REVIEW` vor dem Planen; Einschub-Tasks mit Protokoll | Nr. 9, 10 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -122,6 +123,30 @@ Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
    liegen und die Runden vom Orchestrator getaktet werden – die Rolle
    selbst wird nicht gesprächsfähig. Daraus entstanden `AUFTRAGSKLAERUNG`,
    `state/AUFTRAG.md` und der Modus `REQUIREMENTS` (v3.1).
+
+### Aus Projekt 2: pwd-transform, Browser-Extension (Rückfluss 2026-10)
+
+Ab hier heisst der "Modus" **Auftragstyp**, seine Bausteinfolge **Ablauf**
+(Glossar in `AGENT_WORKFLOW.md`). Anlass: "Modus" stand zugleich für die
+Art des Auftrags und für die Arbeitsweisen des Reviewers, und `AUDIT` war
+beides.
+
+9. **Anforderungslücken fielen erst während der Umsetzung auf.** In drei
+   Klärungsrunden des Projekts fanden erst Tester, Architekt oder ein
+   Neuschnitt des Planners, dass Anforderungen fehlten oder sich
+   widersprachen – also dann, wenn jede Lücke einen Lauf oder einen
+   Neuschnitt kostete. Der Planner hatte die Anforderungen selbst
+   ausformuliert; seine Prüfung wäre Selbstauskunft gewesen. Daraus
+   entstand `SPEC_REVIEW`: der Reviewer prüft die Requirements einmal pro
+   Initiative auf Prüfbarkeit, Vollständigkeit und Widersprüche und
+   liefert Befunde, der Planner macht daraus Fragen mit Default.
+10. **"Notieren, nicht anhängen" wurde im Betrieb unterlaufen.** Drei
+    kleine Tasks (TASK-0028–0030) wurden als "EINZELAUFTRAG" bezeichnet,
+    aber in den laufenden FEATURE-Auftrag eingeschoben – sinnvoll, nur
+    nicht vorgesehen und deshalb nicht protokolliert. Statt die Praxis zu
+    verbieten, ist der Einschub jetzt unter drei Bedingungen erlaubt
+    (gleiches Ziel, Einzelauftrag-Grösse, keine neue Klärung) und wird in
+    `AUFTRAG.md` und `PROGRESS.md` vermerkt.
 
 ---
 

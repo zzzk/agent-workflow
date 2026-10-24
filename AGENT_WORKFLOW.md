@@ -31,7 +31,21 @@ günstigen oder lokalen Modellen mit begrenztem Kontextfenster laufen.
    Auftrag mit dem Nutzer, wählt die Bausteine, prüft Ergebnisse an Git und
    Dateien – und schreibt selbst keinen Code.
 4. **Es gibt keine feste Pipeline.** Aus dem geklärten Auftrag ergibt sich
-   ein Modus, und ein Modus ist nur eine Reihenfolge von Bausteinen.
+   ein Auftragstyp, und zu jedem Auftragstyp gehört ein Ablauf – nur eine
+   Reihenfolge von Bausteinen.
+
+### Begriffe
+
+| Begriff | Bedeutung | Beispiel |
+|---|---|---|
+| **Auftrag** | das geklärte Anliegen des Nutzers, festgehalten in `state/AUFTRAG.md` | "Login-Fehler aus dem Review beheben" |
+| **Auftragstyp** | die Art der Arbeit, ergibt sich aus dem Auftrag | `FEATURE`, `FIX`, `REQUIREMENTS` |
+| **Ablauf** | die feste Bausteinfolge eines Auftragstyps (Teil C) | `PLAN → Task-Schleife → REVIEW` |
+| **Baustein** | ein Aufruf genau einer Rolle mit genau einem Auftrag (Teil B) | `TEST_FIRST`, `SPEC_REVIEW` |
+| **Verdict** | die erste Zeile der Rückmeldung eines Bausteins | `PASS`, `CHANGES_NEEDED` |
+
+Früher hiess der Auftragstyp "Modus"; ältere Texte (`DECISIONS.md`)
+verwenden noch dieses Wort.
 
 ---
 
@@ -42,14 +56,14 @@ günstigen oder lokalen Modellen mit begrenztem Kontextfenster laufen.
 ```mermaid
 flowchart TB
     U(["Nutzer"])
-    O["ORCHESTRATOR<br/>klärt den Auftrag, wählt den Modus,<br/>startet Bausteine, prüft Ergebnisse"]
+    O["ORCHESTRATOR<br/>klärt den Auftrag, wählt den Auftragstyp,<br/>startet Bausteine, prüft Ergebnisse"]
     U <-->|"Auftrag klären, Rückfragen beantworten"| O
 
-    O ==>|"genau ein Baustein,<br/>dann warten"| P["Planner<br/>klärt, zerlegt"]
+    O ==>|"genau ein Baustein,<br/>dann warten"| P["Planner<br/>(Anforderungen und Planung)<br/>klärt, zerlegt"]
     O ==> A["Architekt<br/>prüft den Plan"]
     O ==> I["Implementer<br/>setzt einen Task um"]
     O ==> T["Tester<br/>schreibt, führt aus"]
-    O ==> R["Reviewer<br/>auditiert, kartiert"]
+    O ==> R["Reviewer<br/>prüft Specs, auditiert, kartiert"]
 
     P & A & I & T & R -.-> O
 
@@ -75,10 +89,10 @@ flowchart TD
     S(["Session-Start"]) --> L["Lage feststellen<br/>offene Tasks? Inbox-Material?<br/>unterbrochener Auftrag?"]
     L --> K["AUFTRAGSKLAERUNG<br/>Orchestrator im Dialog mit dem Nutzer"]
     K --> AU["state/AUFTRAG.md<br/>Anliegen - Umfang - Erfolgskriterium"]
-    AU --> M{"Modus<br/>ergibt sich aus dem Auftrag"}
+    AU --> M{"Auftragstyp<br/>ergibt sich aus dem Auftrag"}
 
-    M -->|"Anforderungen erarbeiten"| RQ["REQUIREMENTS<br/>KLAERUNG je Thema,<br/>bis nichts mehr offen ist"]
-    M -->|"neues Feature"| FE["FEATURE<br/>KLAERUNG - PLAN - ARCHITEKTUR_GATE"]
+    M -->|"Anforderungen erarbeiten"| RQ["REQUIREMENTS<br/>KLAERUNG je Thema,<br/>bis nichts mehr offen ist,<br/>dann SPEC_REVIEW"]
+    M -->|"neues Feature"| FE["FEATURE<br/>KLAERUNG - SPEC_REVIEW - PLAN -<br/>ARCHITEKTUR_GATE"]
     M -->|"Report abarbeiten"| FI["FIX<br/>PLAN"]
     M -->|"manuell getestet"| MT["MANUELLER-TEST<br/>TRIAGE"]
     M -->|"nur prüfen"| AD["AUDIT<br/>REVIEW"]
@@ -98,7 +112,7 @@ flowchart TD
 ```
 
 Zwei Dinge, die das Bild zeigt und die leicht übersehen werden: die
-Auftragsklärung steht **vor** der Modus-Wahl (nicht umgekehrt), und
+Auftragsklärung steht **vor** der Wahl des Auftragstyps (nicht umgekehrt), und
 `REQUIREMENTS` endet ohne eine Zeile Code – die Umsetzung ist ein eigener,
 neu zu klärender Auftrag.
 
@@ -157,12 +171,13 @@ ein Report, o.ä.) tatsächlich braucht.
 1. **Orchestrator** (`orchestrator.md`) – dünne Schleife, kein grosses
    Kontextfenster nötig. Ermittelt die Ausgangslage, **klärt den Auftrag
    mit dem Nutzer** (Baustein `AUFTRAGSKLAERUNG` → `state/AUFTRAG.md`),
-   leitet daraus den **Modus** ab (Teil C), ruft die Bausteine in der
-   dafür festgelegten Reihenfolge auf, wertet deren **Verdict** aus,
+   leitet daraus den **Auftragstyp** ab (Teil C), ruft die Bausteine seines
+   **Ablaufs** der Reihe nach auf, wertet deren **Verdict** aus,
    pflegt Task-Status und `state/PROGRESS.md`, committet. Schreibt selbst
    keinen Code und plant selbst keine Schritte. Er ist die **einzige**
    Rolle mit Nutzerkontakt.
-2. **Planner** (`planner.md`) – die "Denkarbeit": schärft eine unklare
+2. **Planner** (`planner.md`), Anforderungen und Planung – die
+   "Denkarbeit": schärft eine unklare
    Anforderung (Baustein `KLAERUNG`, rundenbasiert über das
    Klärungsprotokoll in `state/AUFTRAG.md`) und zerlegt eine Quelle (neue
    Anforderung oder Findings aus einem Report) in kleine, unabhängige
@@ -186,10 +201,12 @@ ein Report, o.ä.) tatsächlich braucht.
    sie verhindert, dass Tests nachvollziehen, was sich der Implementer
    gedacht hat, statt echt gegen die Spezifikation zu prüfen.
 6. **Reviewer** (`reviewer.md`) – read-only Auditor, editiert nie
-   Produktcode/Tests. Drei Modi: **Map** (Bestandsaufnahme eines
-   bestehenden Codebestands → `spec/Architecture.md`), **Audit** (Code +
-   Tests gegen `spec/` prüfen → datierter Report) und **Triage**
-   (Rohmaterial aus manuellem Testen in `.agent/inbox/` → Report).
+   Produktcode/Tests. Vier Bausteine: `MAP` (Bestandsaufnahme eines
+   bestehenden Codebestands → `spec/Architecture.md`), `SPEC_REVIEW`
+   (Requirements auf Vollständigkeit, Widerspruchsfreiheit und
+   Prüfbarkeit prüfen → Report mit Befunden), `REVIEW` (Code + Tests gegen
+   `spec/` prüfen → datierter Report) und `TRIAGE` (Rohmaterial aus
+   manuellem Testen in `.agent/inbox/` → Report).
    Erzeugt selbst keine Tasks – das macht der Planner aus dem Report.
 
 Implementer und Tester interagieren **nie direkt** miteinander – jede
@@ -234,7 +251,7 @@ statt Fliesstext zu interpretieren.
 
 | Verdict | Bedeutung | Was der Orchestrator tut |
 |---|---|---|
-| `PASS` | Auftrag erfüllt, nichts anzumerken | Nächster Baustein des Modus |
+| `PASS` | Auftrag erfüllt, nichts anzumerken | Nächster Baustein des Ablaufs |
 | `PASS_WITH_NOTES` | Erfüllt, aber mit Hinweisen für nachfolgende Rollen | Weiter; Notizen in die Task-Datei bzw. den Plan übernehmen |
 | `CHANGES_NEEDED` | Nicht erfüllt; die Begründung benennt konkret was fehlt | Zurück an die vorgelagerte Rolle, mit der Begründung als zusätzlichem Kontext |
 | `BLOCKED` | Kann nicht entscheiden – Information fehlt oder es ist eine Produktentscheidung | Stopp; Rückfrage an den Nutzer, kein Weitermachen auf Verdacht |
@@ -249,23 +266,24 @@ Begründung sind selbst ein Fehler und gehen an dieselbe Rolle zurück.
 ## Teil B – Der Baustein-Katalog
 
 Ein **Baustein** ist ein Aufruf genau einer Rolle mit genau einem Auftrag.
-Bausteine sind unabhängig voneinander definiert; ein Modus (Teil C) ist
+Bausteine sind unabhängig voneinander definiert; ein Ablauf (Teil C) ist
 nur eine Reihenfolge daraus. Es gibt bewusst **keine feste Pipeline**:
 nicht jede Arbeit ist "Anforderung bis Auslieferung", und Bausteine, die
 nichts zu tun hätten, werden gar nicht erst gestartet.
 
 | Baustein | Rolle | Aktivierung | Input | Ergebnis |
 |---|---|---|---|---|
-| `AUFTRAGSKLAERUNG` | Orchestrator | **immer**, als erster Baustein jeder Initiative | Nutzer-Anliegen, Lage im Repo | `state/AUFTRAG.md` + der daraus abgeleitete Modus |
-| `MAP` | Reviewer (Map) | `spec/Architecture.md` fehlt/leer, aber Code existiert | vorhandener Code | `spec/Architecture.md` |
-| `KLAERUNG` | Planner (Klärung) | Anforderung unklar oder `spec/Requirements.md` lückenhaft | `state/AUFTRAG.md`, `spec/` | Fragerunde im Klärungsprotokoll **oder** ausformulierte Anforderung in `Requirements.md` |
+| `AUFTRAGSKLAERUNG` | Orchestrator | **immer**, als erster Baustein jeder Initiative | Nutzer-Anliegen, Lage im Repo | `state/AUFTRAG.md` + der daraus abgeleitete Auftragstyp |
+| `MAP` | Reviewer | `spec/Architecture.md` fehlt/leer, aber Code existiert | vorhandener Code | `spec/Architecture.md` |
+| `KLAERUNG` | Planner | Anforderung unklar oder `spec/Requirements.md` lückenhaft, oder Befunde aus `SPEC_REVIEW` | `state/AUFTRAG.md`, `spec/`, ggf. Spec-Review-Report | Fragerunde im Klärungsprotokoll **oder** ausformulierte Anforderung in `Requirements.md` |
+| `SPEC_REVIEW` | Reviewer | einmal pro Initiative, nach der letzten `KLAERUNG` (Ablauf `REQUIREMENTS` und `FEATURE`, Ausnahme siehe Teil C) | `spec/Requirements.md`, `spec/Architecture.md` | `reports/<datum>-spec-review.md` mit Befunden – keine Fragen |
 | `PLAN` | Planner | immer, ausser bei Einzelauftrag | Anforderung oder Report | `tasks/TASK-*.md` (+ ggf. `state/IMPLEMENTATION_PLAN.md`) |
 | `ARCHITEKTUR_GATE` | Architekt | Plan führt neue Komponente/Schnittstelle/Abhängigkeit ein | Task-Set, `spec/Architecture.md` | Verdict + Vorgaben für Implementer |
 | `TEST_FIRST` | Tester | pro Task, sofern nicht abgewählt | nur Akzeptanzkriterien des Tasks | fehlschlagende Tests + Commit (Freeze-Grenze) |
 | `UMSETZUNG` | Implementer | pro Task | vollständige Task-Datei | Code-Änderung |
 | `VERIFIKATION` | Tester | pro Task, nach `UMSETZUNG` | Akzeptanzkriterien + Testlauf | Verdict + Test-Notizen in der Task-Datei |
-| `REVIEW` | Reviewer (Audit) | nach Abschluss einer Initiative, oder auf Wunsch | `spec/`, Code, Testlauf | `reports/<datum>-review.md` |
-| `TRIAGE` | Reviewer (Triage) | `.agent/inbox/` enthält Material | Inbox-Rohmaterial + Code | `reports/<datum>-triage.md` |
+| `REVIEW` | Reviewer | nach Abschluss einer Initiative, oder auf Wunsch | `spec/`, Code, Testlauf | `reports/<datum>-review.md` |
+| `TRIAGE` | Reviewer | `.agent/inbox/` enthält Material | Inbox-Rohmaterial + Code | `reports/<datum>-triage.md` |
 
 ### Auftragsklärung: der einzige Baustein mit Nutzerkontakt
 
@@ -275,7 +293,7 @@ eine Antwort warten. Deshalb liegt das Klären des Auftrags beim
 Orchestrator, und sein Ergebnis ist eine **Datei** (`state/AUFTRAG.md`)
 statt eines Gesprächsverlaufs:
 
-- Der Modus wird aus dem geklärten Auftrag abgeleitet, nicht aus dem
+- Der Auftragstyp wird aus dem geklärten Auftrag abgeleitet, nicht aus dem
   Dateizustand plus einer Chat-Antwort. "Requirements sind leer" heisst
   eben nicht automatisch "bau ein Feature".
 - Nachfolgende Rollen lesen den Auftrag, statt ihn als Prosa gereicht zu
@@ -284,17 +302,40 @@ statt eines Gesprächsverlaufs:
   den Auftrag wieder aufnehmen, weil er auf der Platte steht.
 
 Der Baustein ist ein **Filter, kein Interview**: gefragt wird nur, wenn
-der Modus nicht eindeutig ableitbar ist, ein prüfbares Erfolgskriterium
-fehlt, der Umfang offen ist oder der Auftrag etwas Bestehendem
-widerspricht – dann höchstens fünf Fragen, jede mit Default-Vorschlag.
+der Auftragstyp nicht eindeutig ableitbar ist, ein prüfbares
+Erfolgskriterium fehlt, der Umfang offen ist oder der Auftrag etwas
+Bestehendem widerspricht – dann höchstens fünf Fragen, jede mit
+Default-Vorschlag. (Diese Grenze gilt nur für die Auftragsklärung; eine
+`KLAERUNG`-Runde des Planners hat ihre eigene, siehe Teil C.)
 Fachlich entworfen wird hier nicht; das ist Sache von `KLAERUNG`.
 
 Die beiden Klärungen sind bewusst getrennt:
 
 | Baustein | Rolle | Klärt | Ergebnis |
 |---|---|---|---|
-| `AUFTRAGSKLAERUNG` | Orchestrator (im Dialog) | *Was für Arbeit, welcher Umfang?* | `state/AUFTRAG.md` + Modus |
+| `AUFTRAGSKLAERUNG` | Orchestrator (im Dialog) | *Was für Arbeit, welcher Umfang?* | `state/AUFTRAG.md` + Auftragstyp |
 | `KLAERUNG` | Planner (Subagent, je Runde ein Aufruf) | *Ist diese Anforderung planbar?* | Fragen bzw. Anforderung in `spec/Requirements.md` |
+
+### `SPEC_REVIEW`: ein unabhängiges Auge auf die Anforderungen
+
+Lücken in den Anforderungen fallen sonst erst während der Umsetzung auf –
+beim Tester, beim Architekten oder als Neuschnitt durch den Planner, also
+dann, wenn sie am teuersten sind. Der Planner hat die Anforderungen selbst
+ausformuliert; seine Prüfung wäre eine Selbstauskunft, und Selbstauskunft
+wird in diesem Workflow nicht geglaubt. Deshalb prüft der Reviewer
+`spec/Requirements.md` einmal pro Initiative auf:
+
+- **Prüfbarkeit**: jede Anforderung hat ein prüfbares Kriterium,
+- **Vollständigkeit**: alle sichtbaren Texte sind festgelegt, das
+  Fehlerverhalten ist für jede Aktion festgelegt,
+- **Widerspruchsfreiheit**: untereinander und gegenüber
+  `spec/Architecture.md`.
+
+Er liefert **Befunde, keine Fragen**. Daraus formuliert der Planner in
+einer zusätzlichen `KLAERUNG`-Runde die Fragen an den Nutzer, je mit
+Vorschlag als Default – der Reviewer kennt den Nutzer nicht, der Planner
+kennt das Klärungsprotokoll. Einmal pro Initiative heisst: nach dieser
+Fragerunde folgt kein zweiter `SPEC_REVIEW`, die Schleife ist begrenzt.
 
 ### Aktivierung: mechanisch, wo es geht
 
@@ -333,16 +374,26 @@ Rollen-Dateien klein und die Aktivierungsentscheidung mechanisch.
 
 ---
 
-## Teil C – Modi: Bausteine zusammensetzen
+## Teil C – Auftragstypen und ihre Abläufe
 
 Der Orchestrator ermittelt zu Beginn jeder Session die Ausgangslage, klärt
-den Auftrag und leitet daraus den Modus ab. Ein Modus ist nichts weiter
-als eine Reihenfolge von Bausteinen.
+den Auftrag und leitet daraus den Auftragstyp ab. Zu jedem Auftragstyp
+gehört ein Ablauf, und ein Ablauf ist nichts weiter als eine Reihenfolge
+von Bausteinen.
 
-Jede Initiative beginnt mit `AUFTRAGSKLAERUNG`; der Modus ist das Ergebnis
-dieses Bausteins und steht in `state/AUFTRAG.md`. Ein Auftrag ergibt genau
-einen Modus – fällt unterwegs etwas an, das einen anderen bräuchte, wird
-das ein eigener Auftrag, kein Anhängsel.
+Jede Initiative beginnt mit `AUFTRAGSKLAERUNG`; der Auftragstyp ist das
+Ergebnis dieses Bausteins und steht in `state/AUFTRAG.md`. Ein Auftrag
+ergibt genau einen Auftragstyp – fällt unterwegs etwas an, das einen
+anderen bräuchte, wird das ein eigener Auftrag, kein Anhängsel.
+
+**Ausnahme: Einschub-Tasks.** Ein kleiner Task darf in den laufenden
+Auftrag eingeschoben werden, wenn alle drei Bedingungen gelten: er hat
+dieselbe Quelle bzw. dasselbe Ziel wie der laufende Auftrag, er ist
+höchstens so gross wie ein `EINZELAUFTRAG`, und er braucht keine neue
+fachliche Klärung. Er bekommt eine Teil-Task-ID an der passenden Stelle
+der Reihenfolge und je eine Zeile "Einschub: <Task>, <Grund>" in
+`state/AUFTRAG.md` und `state/PROGRESS.md`. Alles andere wird weiterhin
+notiert und ein eigener Auftrag.
 
 ```
 BOOTSTRAP (Brownfield, erstmalig)
@@ -352,12 +403,17 @@ REQUIREMENTS (Anforderungen erarbeiten – Deliverable ist spec/Requirements.md)
   je Thema: KLAERUNG(a: Fragerunde) → Nutzer antwortet (Orchestrator)
           → KLAERUNG(b: Ausformulierung)
   bis der Planner "keine offenen Themen" meldet
+  → SPEC_REVIEW → bei Befunden: eine KLAERUNG-Runde (a + b) dazu
   (kein PLAN, keine Tasks, kein Code – die Umsetzung ist ein neuer Auftrag)
 
 FEATURE (neue Anforderung umsetzen)
-  KLAERUNG → PLAN → ARCHITEKTUR_GATE
+  KLAERUNG → SPEC_REVIEW → bei Befunden: eine KLAERUNG-Runde dazu
+           → PLAN → ARCHITEKTUR_GATE
            → [ TEST_FIRST → UMSETZUNG → VERIFIKATION ] pro Task
            → REVIEW
+  (SPEC_REVIEW entfällt, wenn die Requirements unverändert aus einem
+   REQUIREMENTS-Auftrag mit SPEC_REVIEW stammen – mechanisch per git diff
+   seit dessen Abschluss geprüft)
 
 FIX (Findings aus einem Report beheben)
   PLAN → [ TEST_FIRST → UMSETZUNG → VERIFIKATION ] pro Task
@@ -377,7 +433,7 @@ EINZELAUFTRAG (kleine, klar umrissene Änderung)
    Akzeptanzkriterien hat – sonst ist es ein FIX oder FEATURE.)
 ```
 
-### Die Klärungsschleife des Modus `REQUIREMENTS`
+### Die Klärungsschleife des Auftragstyps `REQUIREMENTS`
 
 Der Planner kann den Nutzer nicht fragen und erinnert sich zwischen zwei
 Aufrufen an nichts. Trotzdem ist ein mehrrundiges, thematisch geordnetes
@@ -386,8 +442,10 @@ führt und der **Zustand in der Datei liegt**, nicht im Kontext eines
 Agenten:
 
 1. `KLAERUNG` (a): Planner wählt **ein** Thema und schreibt höchstens
-   sieben Fragen – je mit Begründung und Default-Vorschlag – als neue
-   Runde ins Klärungsprotokoll von `state/AUFTRAG.md`.
+   sieben Fragen pro Runde – je mit Begründung und Default-Vorschlag – als
+   neue Runde ins Klärungsprotokoll von `state/AUFTRAG.md`. Die Grenze
+   steht in `planner.md`; der Orchestrator gibt im Auftrag keine eigene
+   Fragenzahl vor.
 2. Der Orchestrator stellt sie dem Nutzer wörtlich und trägt die Antworten
    in dieselbe Runde ein.
 3. `KLAERUNG` (b): ein **frischer** Planner liest das Protokoll,
@@ -396,6 +454,9 @@ Agenten:
 4. Der Orchestrator verzweigt daran: weitere Runde oder fertig. Nach fünf
    Runden ohne Abschluss stoppt er und fragt den Nutzer – eine Klärung,
    die nicht konvergiert, ist ein zu gross geschnittener Auftrag.
+5. Meldet der Planner "keine offenen Themen": `SPEC_REVIEW`. Liefert er
+   Befunde, folgt genau eine weitere Runde (a) + (b), in der der Planner
+   die Befunde zu Fragen macht; danach ist die Schleife fertig.
 
 Dasselbe Muster trägt überall dort, wo ein kontextfreier Subagent etwas
 "Interaktives" beitragen soll: nicht die Rolle interaktiv machen, sondern
@@ -404,7 +465,7 @@ die Runden takten lassen.
 
 ### Nicht verhandelbare Grundregel: strikt sequentiell, nie parallel
 
-Unabhängig vom Modus gilt: Zu jedem Zeitpunkt ist genau **ein** Baustein
+Unabhängig vom Auftragstyp gilt: Zu jedem Zeitpunkt ist genau **ein** Baustein
 aktiv und genau **ein** Task "in Arbeit". Der nächste Task wird nicht
 einmal geplant, solange der aktuelle nicht verifiziert und auf `done`
 gesetzt ist. Jeder Baustein geht an einen **frischen Agenten** (echter
@@ -428,8 +489,8 @@ Begründung und der reale Vorfall, der zu dieser Regel führte: siehe
      statt neu zu klären.
 2. **`AUFTRAGSKLAERUNG`** – immer, auch wenn der Nutzer schon gesagt hat,
    was er will. Ergebnis: `state/AUFTRAG.md`.
-3. **Modus ableiten** aus `state/AUFTRAG.md`, Bausteine der Reihe nach
-   abarbeiten, nach jedem Baustein das Verdict auswerten.
+3. **Auftragstyp ableiten** aus `state/AUFTRAG.md`, die Bausteine seines
+   Ablaufs der Reihe nach abarbeiten, nach jedem Baustein das Verdict auswerten.
 4. **Abschluss**: `state/AUFTRAG.md` (und, falls befüllt,
    `state/IMPLEMENTATION_PLAN.md`) nach `history/` archivieren und auf die
    leere Vorlage zurücksetzen.
