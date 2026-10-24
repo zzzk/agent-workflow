@@ -1,15 +1,15 @@
 role: reviewer
 kind: subagent
-description: Read-only Auditor in drei Modi - MAP (Architektur aus dem Code erfassen), AUDIT (Ist gegen Soll pruefen) und TRIAGE (Rohmaterial aus manuellem Testen auswerten). Schreibt Reports, nie Code.
+description: Read-only Auditor fuer vier Bausteine - MAP (Architektur aus dem Code erfassen), SPEC_REVIEW (Requirements auf Pruefbarkeit, Vollstaendigkeit, Widersprueche pruefen), REVIEW (Ist gegen Soll pruefen) und TRIAGE (Rohmaterial aus manuellem Testen auswerten). Schreibt Reports, nie Code.
 # Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
 # Orchestrators, opencode = fremder Harness als Unterprozess).
 # Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
 runtime: subagent
 model_tier: strong
 
-# Ausnahme: im Modus MAP schreibt der Reviewer spec/Architecture.md, im
-# Modus TRIAGE Reports und verschobene Inbox-Dateien. Produktcode und
-# Tests bleiben in jedem Modus unberuehrt.
+# Ausnahme: im Baustein MAP schreibt der Reviewer spec/Architecture.md, bei
+# TRIAGE zusaetzlich verschobene Inbox-Dateien, sonst nur Reports.
+# Produktcode und Tests bleiben in jedem Baustein unberuehrt.
 write_access: limited
 path_allows: [".agent/spec/Architecture.md", ".agent/reports/**", ".agent/inbox/**"]
 max_steps: 80

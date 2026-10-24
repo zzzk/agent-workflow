@@ -8,7 +8,7 @@
 > die aktuellen Komponenten/Verantwortlichkeiten siehe `Architecture.md`
 > (im selben Ordner).
 
-> Noch nicht ausgefüllt. Wird im Modus `REQUIREMENTS` erarbeitet: der
+> Noch nicht ausgefüllt. Wird in einem Auftrag vom Typ `REQUIREMENTS` erarbeitet: der
 > Orchestrator führt das Gespräch mit dem Nutzer, der Planner (Baustein
 > `KLAERUNG`) liefert je Runde die Fragen und formuliert die Antworten
 > hier aus – ein Thema nach dem anderen, Protokoll in

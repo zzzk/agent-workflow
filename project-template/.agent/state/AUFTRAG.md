@@ -24,9 +24,9 @@ gelöst.>
 
 ## Art der Arbeit
 
-<Genau ein Modus: REQUIREMENTS | FEATURE | FIX | AUDIT | MANUELLER-TEST |
-EINZELAUFTRAG | BOOTSTRAP – plus ein Satz, warum dieser und nicht ein
-naheliegender anderer.>
+<Genau ein Auftragstyp: REQUIREMENTS | FEATURE | FIX | AUDIT |
+MANUELLER-TEST | EINZELAUFTRAG | BOOTSTRAP – plus ein Satz, warum dieser
+und nicht ein naheliegender anderer.>
 
 ## Umfang
 
@@ -56,6 +56,16 @@ rekonstruieren kann statt aus der Gesprächshistorie (die er nie sieht):
   **Warum**: <was je nach Antwort anders geplant würde>
   **Vorschlag**: <Default, den der Nutzer nur bestätigen muss>
   **A**: <Antwort des Nutzers – vom Orchestrator nachgetragen>
+-->
+
+## Einschübe
+
+<!--
+Nur befüllt, wenn der Orchestrator einen Task in diesen Auftrag
+eingeschoben hat (Bedingungen: siehe orchestrator.md, Schritt 3). Eine
+Zeile je Einschub:
+
+Einschub: TASK-0037.1, <Grund>
 -->
 
 ## Offene Punkte

@@ -18,10 +18,10 @@ optional mit lokalen Modellen für einzelne Rollen.
   übernehmen, Entscheidungen und ihre Dateien, Modellwahl (auch lokal),
   Betrieb im Alltag, Fehlerbilder.
 - **`AGENT_WORKFLOW.md`** – die Methodik: drei Diagramme als Überblick,
-  dann sechs Rollen (Orchestrator, Planner, Architekt, Implementer,
-  Tester, Reviewer), der Baustein-Katalog, aus dem der Orchestrator je
-  nach geklärtem Auftrag einen Modus zusammensetzt (statt einer festen
-  Pipeline), und die Task-Warteschlange als Übergabe-Format zwischen
+  dann sechs Rollen (Orchestrator, Planner (Anforderungen und Planung),
+  Architekt, Implementer, Tester, Reviewer), der Baustein-Katalog und die
+  Auftragstypen, deren Ablauf der Orchestrator je nach geklärtem Auftrag
+  aus Bausteinen zusammensetzt (statt einer festen Pipeline), und die Task-Warteschlange als Übergabe-Format zwischen
   kontextfreien Läufen. **Hier anfangen, wenn du verstehen oder erklären
   willst.**
 - **`HARNESS.md`** – Referenz: was Claude Code und OpenCode je können, der
@@ -74,8 +74,8 @@ Innerhalb von `.agent/` ist die Aufteilung bewusst zweigeteilt:
   nur für dieses Workflow-Tooling relevant. `AUFTRAG.md` hält das
   Teilstück fest, das der Nutzer gerade braucht (Anliegen, Umfang,
   Erfolgskriterium, Klärungsprotokoll) – es ist die erste Datei, die in
-  einer Initiative entsteht, und die Quelle, aus der der Modus abgeleitet
-  wird. `IMPLEMENTATION_PLAN.md` ist bewusst auf die **aktuell laufende
+  einer Initiative entsteht, und die Quelle, aus der der Auftragstyp
+  abgeleitet wird. `IMPLEMENTATION_PLAN.md` ist bewusst auf die **aktuell laufende
   Initiative** beschränkt (nicht die ganze Projekt-Geschichte); beide
   werden nach Abschluss nach `history/` archiviert – siehe `DECISIONS.md`,
   Abschnitt "Warum die Trennung spec/ ↔ state/": das war ein konkretes
@@ -139,9 +139,10 @@ Ab jetzt arbeitet der Agent als Orchestrator (Rolle in
 `AGENTS.md`/`CLAUDE.md`). Sein erster Baustein ist immer die
 **Auftragsklärung**: was ansteht, in welchem Umfang, woran man den
 Abschluss erkennt – festgehalten in `.agent/state/AUFTRAG.md`, woraus sich
-der Modus ergibt. Bei einem leeren Projekt ist das meist `REQUIREMENTS`
-(Anforderungen Thema für Thema erarbeiten, Ergebnis `Requirements.md`),
-danach als eigener Auftrag `FEATURE`: Klärung → Plan → Architektur-Gate →
+der Auftragstyp ergibt. Bei einem leeren Projekt ist das meist
+`REQUIREMENTS` (Anforderungen Thema für Thema erarbeiten, Ergebnis
+`Requirements.md`, zum Schluss geprüft durch `SPEC_REVIEW`), danach als
+eigener Auftrag `FEATURE`: Klärung → Spec-Review → Plan → Architektur-Gate →
 pro Task die Schleife aus `TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` →
 abschliessender Review. Details: `AGENT_WORKFLOW.md`, Teil C.
 
@@ -164,7 +165,7 @@ erzeugt `spec/Architecture.md` direkt daraus. Keine Rekonstruktion einer
 Bauhistorie nötig – nur der aktuelle Stand zählt.
 
 ### 3. Requirements erfassen
-Eigener Auftrag im Modus `REQUIREMENTS`: der Orchestrator klärt Thema für
+Eigener Auftrag vom Typ `REQUIREMENTS`: der Orchestrator klärt Thema für
 Thema mit dem Nutzer, der Planner formuliert `spec/Requirements.md` daraus
 aus. Falls bereits eine funktionale Beschreibung existiert (README,
 Tickets), wird sie zum Ausgangsmaterial – ableiten und bestätigen lassen
@@ -183,7 +184,8 @@ die normale Task-Schleife. Details: `USERMANUAL.md`, Teil 3 und Teil 5.
   eine Regel im System-Prompt plus die Diff-Prüfung des Orchestrators; ein
   `PreToolUse`-Hook könnte ihn wie in OpenCode hart durchsetzen.
 - **Prüf-Linsen ausbauen.** Sicherheits-, Abhängigkeits- und
-  UI-Perspektiven laufen als Linsen innerhalb des Reviewer-Audit-Modus.
+  UI-Perspektiven laufen als Linsen innerhalb des Reviewer-Bausteins
+  `REVIEW`.
   Falls eine davon regelmässig eigenständiges Gewicht bekommt, nach
   demselben Muster eine eigene Rolle ergänzen: Body + `meta.yml`, der
   Generator erzeugt die Adapter automatisch mit.
