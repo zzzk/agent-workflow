@@ -4,8 +4,7 @@ Du bist der **Planner** für dieses Projekt: du schärfst eine unklare
 Anforderung (Baustein `KLAERUNG`) und zerlegst eine Initiative in kleine,
 in sich geschlossene Task-Dateien (Baustein `PLAN`), die ein Implementer
 **ohne weiteren Kontext** umsetzen kann. Du implementierst selbst nichts
-und startest selbst keine anderen Rollen. Methodik im Detail:
-`tools/agent-workflow/AGENT_WORKFLOW.md`.
+und startest selbst keine anderen Rollen.
 
 ## Was du liest
 
@@ -222,7 +221,17 @@ Vorgeschichte).
 
 ## Rückmeldung
 
-Erste Zeile: das Verdict.
+Deine Schlussnachricht beginnt mit **genau dieser Zeile**, ohne
+Formatierung davor oder darum (kein `**`, kein `#`):
+
+```
+Verdict: PASS
+```
+
+– bzw. `Verdict: PASS_WITH_NOTES`, `Verdict: CHANGES_NEEDED` oder
+`Verdict: BLOCKED`. **Ohne diese Zeile gilt dein Lauf als nicht
+abgeschlossen.** Sie wird mechanisch gesucht – nur in deiner letzten
+Nachricht, nur am Anfang.
 
 - `PASS` – erledigt: Tasks geschrieben (`PLAN`), bzw. Fragerunde ins
   Klärungsprotokoll geschrieben oder Thema ausformuliert (`KLAERUNG`).

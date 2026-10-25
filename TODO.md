@@ -21,7 +21,8 @@ aufgefallen.
 Beide nennen den Prüfbefehl wörtlich:
 
 ```bash
-git diff <freeze-commit>..HEAD --name-only -- tests/
+git diff <freeze-commit> --name-only -- tests/
+git status --porcelain -- tests/
 ```
 
 **Warum das stört**
@@ -179,3 +180,44 @@ Orchestrator anweisen, sich für Datumsangaben nicht auf die Sandbox-Uhr
 zu verlassen, sondern die Zeit explizit vom Nutzer/einer externen Quelle
 zu erfragen.
 
+---
+
+## 6. `auto-rejecting`-Prüfung sucht noch im ganzen Log
+
+**Wo**: `project-template/.agent/run-role.sh`, Abschnitt "Mechanische
+Pruefung der beiden stillen Fehlerbilder".
+
+**Warum das stört**: Die Prüfung greppt das gesamte Log. Dort steht auch,
+was das Modell nur zitiert – in Nacht 1 (pwd-transform) zeigte der
+Implementer per `git diff` eine PROGRESS-Zeile mit genau diesem Wort, und
+die Prüfung schlug fälschlich an. Die Verdict-Prüfung ist bereits auf die
+letzte Antwort des Modells beschränkt (über `opencode export`); für
+`auto-rejecting` fehlt noch der Nachweis, wo opencode diese Meldung
+ausgibt (stderr? eigenes Log-Format? als Tool-Fehler in der Sitzung?).
+
+**Mögliche Lösung**: An einem echten Lauf mit abgelehnter Berechtigung
+prüfen, ob die Meldung nur auf stderr kommt (dann stderr getrennt
+mitschreiben und nur dort suchen) oder in der Sitzung als Tool-Fehler
+steht (dann über `opencode export`).
+
+**Aufgefallen**: Rückfluss pwd-transform, 2026-10-14; Umsetzung
+2026-10-24 ohne erreichbares Modell, daher offen.
+
+---
+
+## 7. Lesesperre für fremde Task-Dateien noch nicht scharf
+
+**Wo**: `project-template/.agent/agents/implementer.meta.yml`
+(`read_denies`, auskommentiert), `run-role.sh` (`AGENT_ATTACH_TASK`).
+
+**Warum offen**: OpenCode kennt `read`-Regeln mit Mustern (verifiziert
+per `opencode debug agent`). Mit der Sperre kann der Implementer aber
+auch die eigene Task-Datei nicht per Read-Tool öffnen; sie muss per `-f`
+angehängt werden. Ob ein Anhang trotz Sperre gelesen wird, ist an einem
+echten Lauf zu prüfen.
+
+**Vorgehen**: Einen Lauf mit `read_denies` und `AGENT_ATTACH_TASK=1`
+fahren; liest der Implementer die Task und versucht ein Read auf einen
+fremden Task, muss dieser abgelehnt werden. Dann Default umstellen.
+
+**Aufgefallen**: TASK-0066 V1 (pwd-transform) las fünf fremde Task-Dateien.

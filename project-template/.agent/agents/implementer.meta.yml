@@ -14,4 +14,13 @@ write_access: full
 # Diese Muster sind projektspezifisch – an die Testablage des Projekts
 # anpassen (z.B. app/src/test/**, spec/**, **/*.test.ts).
 path_denies: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts"]
+
+# Lesesperre fuer fremde Task-Dateien (TASK-0066 V1 las fuenf andere Tasks,
+# das kostete Kontext). Bewusst AUSKOMMENTIERT: mit der Sperre kann der
+# Implementer auch die eigene Task-Datei nicht mehr per Read-Tool lesen;
+# run-role.sh haengt sie dann mit AGENT_ATTACH_TASK=1 per "-f" an den
+# Auftrag an. Ob OpenCode einen Anhang trotz read-deny liest, ist noch an
+# einem echten Lauf zu pruefen. Erst danach einschalten, neu generieren
+# und AGENT_ATTACH_TASK=1 setzen:
+# read_denies: [".agent/tasks/*", ".agent/history/*"]
 max_steps: 80

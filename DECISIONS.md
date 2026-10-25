@@ -36,6 +36,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | `GRUEN_PROBE` und Entscheidungsregel nach gescheitertem Lauf | Nr. 15 |
 | Task-Niveau "normaler Entwickler"; `ist.md` in `files:`; grep ist kein Test | Nr. 16 |
 | Gate nur Schnittstellen/Verantwortungen; Kriterien auf Wirksamkeit prüfen; `not ok` zählt | Nr. 17 |
+| Wörtliche Verdict-Zeile, Prüfung nur in der letzten Antwort; still gescheiterte Läufe | Nr. 18 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -239,6 +240,22 @@ beides.
     ausdrücklich erlaubt. Ein Testlauf meldete `# fail 0`, enthielt aber
     `not ok`-Zeilen (Retro 14); und wackelige Tests (TASK-0028/0029)
     kamen von festen Wartezeiten statt bedingtem Warten.
+18. **Die Verdict-Zeile kam von lokalen Modellen fast nie wie verlangt.**
+    In 14 lokalen Läufen gab es zwölfmal ein Verdict, aber nie als erste
+    Zeile und in wechselnder Form; einmal fehlte es ganz, einmal endete
+    der Lauf ohne jede Schlussmeldung. Die Regel "Erste Zeile: das
+    Verdict" war eindeutig, aber schwach gesetzt: ohne wörtliches Muster,
+    ohne Bezug ("erste Zeile" wovon?), ohne mechanische Prüfung. Daraus:
+    ein wörtliches Muster in jeder Rolle und am Ende jedes Auftrags, eine
+    Prüfung nur in der letzten Antwort (nicht im ganzen Log – eine
+    Log-weite Prüfung hatte in Nacht 1 einen Fehlalarm ausgelöst), und
+    die Dauerregel: fehlt die Zeile, entscheidet die Verifikation über das
+    Deliverable. Dazu zwei Fehlerbilder, die vorher ganz durchrutschten:
+    Exit 0 ohne Änderung und ohne Schlussmeldung (TASK-0073 V1, 51
+    Minuten) und opencodes "no user query found in messages". Und
+    Rollen-Dateien verwiesen auf `tools/agent-workflow/AGENT_WORKFLOW.md`,
+    das in der Sandbox nicht existiert – der Implementer versuchte es zu
+    lesen; die Subagenten-Rollen sind jetzt in sich vollständig.
 
 ---
 

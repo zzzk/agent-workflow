@@ -626,7 +626,9 @@ die Zielarchitektur, `_tiers.yml`, die `*.meta.yml` und die Inbox.
 |---|---|---|
 | Rolle wird nicht gefunden / falsches Modell | Generator nicht gelaufen | `python3 .agent/sync-agents.py` |
 | Implementer hat Testdateien geändert | Testpfade in `meta.yml` passen nicht zum Projekt | Pfade korrigieren, neu generieren; der Orchestrator fängt es zusätzlich per `git diff` |
-| Fremder Lauf "erfolgreich", aber nichts geändert | Berechtigung still abgelehnt | Log auf `auto-rejecting` prüfen, `--auto` bzw. `permission: allow` setzen |
+| Fremder Lauf "erfolgreich", aber nichts geändert | Berechtigung still abgelehnt – oder still gescheitert (Log endet mitten in der Recherche) | `run-role.sh` meldet beides mit Exit 3; bei `auto-rejecting` `--auto` bzw. `permission: allow` prüfen, sonst Grün-Probe (`orchestrator.md`, Schritt 8a) |
+| `Verdict-Zeile: FEHLT` | Modell hat die Schlussnachricht nicht mit `Verdict: …` begonnen | Liegt das Deliverable vor, entscheidet die Verifikation; in den Messdaten getrennt gezählt (`verdict_line: false`) |
+| Exit 1 mit `no user query found in messages` | opencode-Fehlerbild, meist zu kleiner Kontext beim Modell-Server | Vorflug wiederholen (`context_length`); das Deliverable kann trotzdem vorliegen – Grün-Probe |
 | Fehler `unbekannter model_tier '<x>'` | Stufe in einer `meta.yml` hat keinen Eintrag in `_tiers.yml` | Stufe dort ergänzen (oder Tippfehler korrigieren) |
 | Agent plant mehrere Tasks gleichzeitig | Protokollverstoss | Abbrechen; Modell/Harness-Kombination prüfen (siehe `DECISIONS.md`, Lehre Nr. 7) |
 | Tests schlagen nach `TEST_FIRST` **nicht** fehl | Verhalten existiert bereits, oder der Test prüft nichts | Der Tester meldet das als `CHANGES_NEEDED` – Task überprüfen, nicht den Test abschwächen |
