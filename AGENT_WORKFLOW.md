@@ -683,6 +683,10 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
     MEMORY.md                    # projektspezifische Notizen über Sessions hinweg
 
   sync-agents.py                 # Generator: neutrale Quelle → Adapter
+  run-role.sh                    # einziger Weg, eine Rolle in OpenCode zu starten
+  vorflug.sh                     # Modell-Server bereit? (Kontext, GPU-Anteil)
+  monitor.sh                     # laufenden Baustein beobachten
+  export.sh                      # Messdaten sichern (vor Compact, bei Abschluss)
 
   agents/                        # eine Datei pro Rolle (lowercase), harness-neutral
     _tiers.yml                   # model_tier → konkretes Modell, je Harness

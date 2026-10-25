@@ -293,7 +293,7 @@ Zwei Quellen, weil eine nicht reicht:
 
 | Quelle | Läuft wo | Liefert |
 |---|---|---|
-| `.agent/run-role.sh` | in der Sandbox, bei jedem Lauf | Dauer, Exit, Versuch, Verdict, geänderte Dateien, Kaltstart, Peak-RAM des Containers |
+| `.agent/run-role.sh` | in der Sandbox, bei jedem Lauf | Dauer, Exit, Versuch, Verdict, ob die Verdict-Zeile kam, geänderte Dateien, Kaltstart, Peak-RAM des Containers, tatsächlich gelaufenes Modell, Token (grösster Kontext, Ausgabe), geladene Kontextlänge und GPU-Anteil |
 | `.agent/sample-host.sh` | **auf dem Host**, die ganze Sitzung | CPU- und VRAM-Zeitreihe von Ollama |
 
 Der Grund für die Trennung ist derselbe wie beim GPU-Zugriff: Im
@@ -600,6 +600,35 @@ Der übliche Zyklus, wenn du den Stand prüfen lässt:
    Report. Alte Reports werden nie überschrieben, damit sich der Zustand
    über die Zeit nachvollziehen lässt.
 
+### Unbeaufsichtigte Läufe (z.B. über Nacht)
+
+- **Session in `tmux`** starten (`tmux new -s orch`, dann `claude`), damit
+  ein Verbindungsabbruch sie nicht beendet; auf dem Mac zusätzlich
+  `caffeinate -dis` in einem zweiten Fenster, sonst schläft der Rechner
+  ein.
+- **Vorher den Vorflug** laufen lassen (`.agent/vorflug.sh`) – er prüft
+  auch Kontextlänge und GPU-Anteil, die beiden Fehler, die sonst erst nach
+  Stunden auffallen.
+- **Benachrichtigung aufs Handy**, wenn der Agent auf dich wartet
+  (Rückfrage, `BLOCKED`, `HALTED`, Ende): ntfy-App installieren, einen
+  zufälligen Topic-Namen abonnieren (z.B. `agent-` plus
+  `openssl rand -hex 8`) und vor dem Start `export NTFY_TOPIC=<name>`
+  setzen (in der Sandbox im Container). Die Hooks in
+  `.claude/settings.json` rufen dann `.claude/notify.sh` auf. Verschickt
+  werden nur Projektname und Ereignis, nie Inhalte; der Topic-Name ist das
+  einzige Geheimnis. Ohne `NTFY_TOPIC` passiert nichts. (Push über Remote
+  Control der Claude-App geht nur mit demselben Claude-Konto auf dem
+  Handy – der Hook-Weg ist davon unabhängig.)
+- **Mitlesen**: `.agent/monitor.sh` in einem zweiten Fenster zeigt den
+  laufenden Baustein, Laufzeit gegen Timeout und ob das Log noch wächst.
+- **Messdaten sichern**: `.agent/export.sh` – der Orchestrator ruft es beim
+  Abschluss jeder Initiative auf; vor einem `/compact` von Hand.
+- **Messlauf mit Absicherung**: Unter "Betriebsmodus" in `AUFTRAG.md`
+  `lokal-mit-cloud-fallback` eintragen – dann geht der letzte erlaubte
+  Versuch einer lokalen Rolle an die Cloud, statt die Nacht anzuhalten;
+  der Messbericht weist diese Tasks gesondert aus.
+- **Auf runpod o.ä.**: `sandbox/runpod/README.md`.
+
 ### Wenn ein Limit erreicht wird
 
 Der Orchestrator stoppt sauber, lässt den laufenden Task auf
@@ -636,6 +665,9 @@ die Zielarchitektur, `_tiers.yml`, die `*.meta.yml` und die Inbox.
 | Agent plant mehrere Tasks gleichzeitig | Protokollverstoss | Abbrechen; Modell/Harness-Kombination prüfen (siehe `DECISIONS.md`, Lehre Nr. 7) |
 | Tests schlagen nach `TEST_FIRST` **nicht** fehl | Verhalten existiert bereits, oder der Test prüft nichts | Der Tester meldet das als `CHANGES_NEEDED` – Task überprüfen, nicht den Test abschwächen |
 | Lokales Modell ruft keine Tools auf | Kontextfenster zu klein | Bei Ollama `num_ctx` auf 16k–32k anheben |
+| Vorflug: `Kontextlaenge … < num_ctx` | Ollama läuft mit anderem Kontext als in `opencode.json` – oft ein zweiter Server (Mac: Ollama-App **und** `ollama serve` im Terminal) | Nur einen Server laufen lassen, mit `OLLAMA_CONTEXT_LENGTH=<num_ctx>` starten |
+| Vorflug: `Modell nur zu …% auf der GPU` | Modell plus Kontext passen nicht in den Grafikspeicher; Apple Silicon gibt der GPU ab Werk nur rund 2/3 des RAM | Kontext verkleinern; Mac: `sudo sysctl iogpu.wired_limit_mb=<MB>` |
+| Lauf bricht bei grossem Kontext nach 5 min ab | opencode wartet standardmässig 300 s auf die erste Antwort des Modells | `headerTimeout`/`chunkTimeout` des Anbieters in `opencode.json` erhöhen (die Vorlage setzt 30 min) |
 | Lokales Modell nicht erreichbar (Verbindungsfehler) | `$OLLAMA_BASE_URL` nicht gesetzt (OpenCode ersetzt sie dann durch einen leeren String), oder Ollama lauscht nur auf `127.0.0.1` | Host: `export OLLAMA_BASE_URL=http://localhost:11434/v1`; Sandbox: setzt das Image selbst. Ollama mit `OLLAMA_HOST=0.0.0.0` starten |
 
 ---
@@ -651,6 +683,11 @@ mein-projekt/
 
   .agent/
     sync-agents.py                   # der Generator
+    run-role.sh                      # einziger Weg, eine Rolle in OpenCode zu starten
+    vorflug.sh                       # Modell-Server bereit? (Kontext, GPU)
+    monitor.sh                       # laufenden Baustein beobachten
+    export.sh                        # Messdaten sichern
+    metrics-report.py                # Messbericht
     agents/
       _tiers.yml                     # Stufe → Modell                    ← DU
       <rolle>.md                     # Rollentext (selten anfassen)
@@ -670,6 +707,8 @@ mein-projekt/
     runs/                            # Logs fremder Läufe (nicht versioniert)
     history/                         # archivierte Pläne
 
+  .claude/settings.json              # Statuszeile, Hooks fuer notify.sh
+  .claude/notify.sh                  # Handy-Benachrichtigung (nur mit NTFY_TOPIC)
   .claude/agents/*.md                # GENERIERT – nie von Hand editieren
   .opencode/agent/*.md               # GENERIERT – nie von Hand editieren
 ```

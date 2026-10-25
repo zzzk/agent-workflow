@@ -194,6 +194,12 @@ cd /work
 claude
 ```
 
+## Ohne Docker: runpod und ähnliche GPU-Container
+
+Gemietete GPU-Pods sind selbst Container; dort bildet
+`runpod/setup.sh` dieselbe Trennung mit Unix-Usern nach – Anleitung und
+Stolpersteine in `runpod/README.md`.
+
 ## Commit-Flow: der Agent committet, nur du pushst
 
 Grundsatz: Der Agent hat **lokal volles Git** und committet je Task auf

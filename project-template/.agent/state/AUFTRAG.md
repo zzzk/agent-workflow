@@ -28,6 +28,15 @@ gelöst.>
 MANUELLER-TEST | EINZELAUFTRAG | BOOTSTRAP – plus ein Satz, warum dieser
 und nicht ein naheliegender anderer.>
 
+## Betriebsmodus
+
+normal
+
+<!-- normal | lokal-mit-cloud-fallback. Nur für Messläufe mit lokalen
+Modellen: der letzte erlaubte Versuch einer lokalen Rolle geht dann an die
+Cloud und wird in den Messdaten als Fallback gezählt (orchestrator.md,
+Schritt 5). Im Zweifel normal. -->
+
 ## Umfang
 
 - **Drin**: <was zu diesem Auftrag gehört>

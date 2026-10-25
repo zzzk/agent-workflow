@@ -30,7 +30,7 @@ def load():
     if not METRICS.is_file():
         sys.exit("Keine Messdaten: {} fehlt.\n"
                  "Messung einschalten mit AGENT_METRICS=1 (siehe run-role.sh).".format(METRICS))
-    runs, verdicts, aborts = [], {}, []
+    runs, verdicts, aborts, cloud = [], {}, [], []
     for line in METRICS.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
@@ -45,8 +45,11 @@ def load():
             verdicts[(rec["task"], rec["role"], rec["attempt"])] = rec["verdict"]
         elif rec.get("type") == "aborted":
             aborts.append(rec)
+        elif rec.get("type") == "cloud_fallback":
+            cloud.append(rec)
     for r in runs:
         r["verdict"] = verdicts.get((r["task"], r["role"], r["attempt"]), "-")
+    load.cloud = cloud
     return runs, aborts
 
 
@@ -143,6 +146,38 @@ def main():
         retries = sum(1 for x in rs if x["attempt"] > 1)
         print("  {:<14} {:>5} {:>9} {:>9} {:>9} {:>9}%".format(
             role, len(rs), med, max(ds), sum(ds), round(100 * retries / len(rs))))
+
+    # Kontext je Rolle: der groesste Kontext eines Laufs (Tokens) zeigt, wie
+    # nah eine Rolle an der Grenze des Modells arbeitet - "zu viel
+    # Lesestoff" wird damit belegbar statt vermutet.
+    ctx = [r for r in runs if r.get("max_context_tokens")]
+    if ctx:
+        print("\nKontext (groesster je Lauf, Tokens):")
+        by = {}
+        for r in ctx:
+            by.setdefault(r["role"], []).append(r["max_context_tokens"])
+        for role, vs in sorted(by.items()):
+            vs = sorted(vs)
+            lim = next((r.get("loaded_context_length") for r in ctx
+                        if r["role"] == role and r.get("loaded_context_length")), None)
+            print("  {:<14} Median {:>7}  Max {:>7}{}".format(
+                role, vs[len(vs) // 2], vs[-1],
+                "  (geladen: {})".format(lim) if lim else ""))
+
+    nover = [r for r in runs if r.get("verdict_line") is False]
+    if nover:
+        print("\nOhne Verdict-Zeile: {} von {} Laeufen ({}) - getrennt zaehlen, "
+              "die VERIFIKATION hat entschieden.".format(
+                  len(nover), len(runs),
+                  ", ".join("{} #{}".format(r["task"], r["attempt"]) for r in nover)))
+
+    cloud = getattr(load, "cloud", [])
+    if cloud:
+        print("\nCloud-Fallback (Betriebsmodus lokal-mit-cloud-fallback): "
+              "diese Tasks hat das lokale Modell NICHT geschafft:")
+        for c in cloud:
+            print("  {} / {} Versuch {}: {}".format(
+                c["task"], c["role"], c["attempt"], c.get("reason", "")))
 
     bad = [r for r in runs if r.get("fallback") or r.get("auto_rejected")]
     if bad:
