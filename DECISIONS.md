@@ -187,7 +187,11 @@ beides.
     arbeitet in einem eigenen Klon mit beschreibbarem `.git` und
     committet frei, bekommt aber keine Zugangsdaten – pushen tut nur der
     Nutzer. Das schützt das Remote vollständig; lokal verlierbar sind nur
-    Commits seit dem letzten Push.
+    Commits seit dem letzten Abholen. Wichtig dabei: Der Nutzer holt per
+    `git fetch` in seine eigene Kopie und pusht von dort – nie Git im Klon
+    des Agenten aufrufen, denn dort könnte der Agent Hooks oder
+    `core.fsmonitor` ablegen, die Git mit den Rechten des Nutzers auf dem
+    Host ausführen würde.
 14. **Der Task-Lebenszyklus kannte nur den Normalfall.** Im Projekt
     wurden Tasks mehrfach neu geschnitten (TASK-0010, -0013 bis -0017),
     und dabei fehlte jedes Mal dasselbe: Der alte Task stand als `open`

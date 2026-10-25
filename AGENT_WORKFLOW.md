@@ -558,8 +558,10 @@ letzten Baustein passiert ist – nicht die Änderungen aller Vortasks, die
 ein kleines Modell beim Selbst-Check verwirren.
 
 **Gepusht wird nie vom Agenten.** Er bekommt keine Zugangsdaten; der
-Nutzer pusht vom Host aus (auch während der Agent arbeitet) und mergt den
-Branch per PR. In der Sandbox heisst das: eigener Klon nur für den
+Nutzer holt den Branch per `git fetch` in seine eigene Arbeitskopie (auch
+während der Agent arbeitet), pusht von dort und mergt per PR – Git im Klon
+des Agenten aufzurufen wäre unsicher, weil der Agent dort Hooks ablegen
+kann, die mit den Rechten des Nutzers liefen. In der Sandbox heisst das: eigener Klon nur für den
 Agenten, gestartet mit `run-sandbox.sh --git-rw` (Details:
 `sandbox/README.md`, "Commit-Flow").
 

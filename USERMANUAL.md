@@ -403,9 +403,12 @@ auf einem eigenen Branch `agent/<slug>`; der Agent committet je Task (und
 nach jedem Baustein, der etwas geändert hat), **gepusht wird nur von
 dir**. Ohne Commits gibt es keine Freeze-Grenze für die Tests und keine
 Wiederherstellungspunkte – ein Commit pro verifiziertem Task ist Teil der
-Methodik. Übernehmen kannst du den Branch jederzeit:
-`git push origin agent/<slug>` aus dem Klon des Agenten, oder
-`git fetch <klon-des-agenten> agent/<slug>` in deine Arbeitskopie.
+Methodik. Übernehmen kannst du den Branch jederzeit, und zwar **aus deiner
+eigenen Arbeitskopie heraus**: `git fetch <klon-des-agenten>
+agent/<slug>:agent/<slug>`, danach von dort `git push`. Im Klon des
+Agenten selbst rufst du nie Git auf – er könnte dort Hooks ablegen, die
+dann mit deinen Rechten auf dem Host liefen (Details:
+`sandbox/README.md`, "Commit-Flow").
 
 **Berechtigungen**: Muss der Agent bei jedem Dateizugriff einzeln fragen,
 ist "selbständig durchlaufen lassen" nicht möglich.
