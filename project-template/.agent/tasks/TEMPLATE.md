@@ -1,11 +1,15 @@
 ---
 id: TASK-0000
 title: <kurzer, imperativer Titel>
-status: open              # open | in_progress | done | failed | blocked
+status: open              # open | in_progress | done | failed | blocked | superseded
+superseded_by: []         # nur bei status: superseded – die Task-IDs, die diesen
+                          # begonnenen Task ersetzen (Neuschnitt)
 source: plan-step         # plan-step | review-finding | triage-finding | auftrag
 source_ref: <state/IMPLEMENTATION_PLAN.md#initiative-<slug>, reports/<datum>-review.md#<finding>
                           # oder state/AUFTRAG.md bei einem EINZELAUFTRAG>
-depends_on: []            # andere Task-IDs, die vorher done sein müssen
+depends_on: []            # andere Task-IDs, die vorher done sein müssen; ein
+                          # superseded-Task gilt als done, sobald alle seine
+                          # superseded_by done sind
 files: []                 # Dateien, die dieser Task berühren darf – so eng wie möglich,
                           # der Orchestrator prüft den Diff dagegen
 
@@ -34,6 +38,21 @@ test_first: true          # false nur mit Begründung im Kontext-Abschnitt
 Referenzen, der Finding-Text aus dem Report, Verweis auf den relevanten
 Abschnitt unter spec/architecture/ – nicht die ganze Datei, nicht die
 Konversationshistorie>
+
+## Vorgeschichte
+
+<normalerweise leer. Nach einem gescheiterten Lauf vom Orchestrator
+ergänzt, je Lauf ein Eintrag – das Gedächtnis zwischen kontextfreien
+Aufrufen:
+
+### Versuch <n> – <Rolle>, <Datum>
+- Ausgang: <Timeout nach …s | CHANGES_NEEDED | still gescheitert | …>
+- Erreicht: <was danach vorlag, z.B. "Kriterien 1–4 erfüllt">
+- Offen: <was fehlte>
+- Log: .agent/runs/<datei>.log
+
+Teil-Tasks eines Neuschnitts übernehmen die Vorgeschichte ihres
+Eltern-Tasks.>
 
 ## Vorgaben aus dem Architektur-Gate
 

@@ -32,6 +32,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | `SPEC_REVIEW` vor dem Planen; Einschub-Tasks mit Protokoll | Nr. 9, 10 |
 | Zielarchitektur neben Ist-Architektur; `spec/` als Ordner mit Index | Nr. 11, 12 |
 | Agent committet je Task auf `agent/<slug>`, pusht nie | Nr. 13 |
+| Vorgeschichte, `superseded`, Teil-IDs, zurückgestellte Findings | Nr. 14 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -183,6 +184,17 @@ beides.
     committet frei, bekommt aber keine Zugangsdaten – pushen tut nur der
     Nutzer. Das schützt das Remote vollständig; lokal verlierbar sind nur
     Commits seit dem letzten Push.
+14. **Der Task-Lebenszyklus kannte nur den Normalfall.** Im Projekt
+    wurden Tasks mehrfach neu geschnitten (TASK-0010, -0013 bis -0017),
+    und dabei fehlte jedes Mal dasselbe: Der alte Task stand als `open`
+    oder `failed` herum, obwohl beides nicht stimmte; ein nachträglich
+    angelegter Task mit "höchste ID + 1" lief nach der Regel "niedrigste
+    ID zuerst" hinter unabhängigen späteren Tasks; der zweite Versuch
+    wusste nichts vom ersten; und Review-Findings, die bewusst liegen
+    blieben (F1–F7, H1–H12), wären ohne Nachfrage des Nutzers vergessen
+    worden. Daraus: Abschnitt "Vorgeschichte", Status `superseded`,
+    Teil-IDs `.N`, ein festes Neuschnitt-Muster und die Liste
+    zurückgestellter Findings in `MEMORY.md`.
 
 ---
 

@@ -114,12 +114,22 @@ ls -A .agent/inbox/ 2>/dev/null | grep -v -e '^processed$' -e '^\.gitkeep$'
 grep -q "Noch kein Auftrag aktiv" .agent/state/AUFTRAG.md; echo "frei: $?"
 ```
 
+```bash
+# Zurückgestellte Findings aus früheren Initiativen?
+sed -n '/^## Zurückgestellte Findings/,/^## /p' .agent/state/MEMORY.md | grep '^- '
+```
+
 Das ergibt Material für die Auftragsklärung, noch keine Entscheidung:
 
 - Offene Tasks vorhanden → dem Nutzer melden (Anzahl, Titel), fragen ob
   fortgesetzt werden soll oder etwas Neues Vorrang hat.
 - Material in der Inbox (auch zusätzlich zu offenen Tasks) → melden, wie
   viele Dateien dort liegen, fragen ob das jetzt triagiert werden soll.
+- Zurückgestellte Findings vorhanden und das Anliegen führt zu einer
+  Umsetzung (`FEATURE`/`FIX`) → in der Auftragsklärung nennen und fragen,
+  ob sie mitkommen. **Nicht** von dir aus anhängen; kommen sie mit,
+  stehen sie im Umfang von `AUFTRAG.md`, und du streichst sie aus der
+  Liste in `MEMORY.md`.
 - `AUFTRAG.md` ist gefüllt und die zugehörige Arbeit nicht abgeschlossen →
   unterbrochener Lauf; dort weitermachen statt neu zu klären.
 
@@ -453,7 +463,10 @@ Commits seither** zu prüfen.
 ### 8. Task-Schleife
 
 1. Nächsten Task ermitteln: `status: open`, alle `depends_on` bereits
-   `done`. Bei mehreren wählbaren: niedrigste ID zuerst.
+   `done` – ein `superseded`-Task zählt dabei als `done`, sobald alle
+   Tasks in seinem `superseded_by` `done` sind. Bei mehreren wählbaren:
+   niedrigste ID zuerst, numerisch je Stufe verglichen
+   (`TASK-0037` < `TASK-0037.1` < `TASK-0037.2` < `TASK-0038`).
 2. Status auf `in_progress` setzen.
 3. `TEST_FIRST` starten (ausser die Task-Datei hat `test_first: false` mit
    Begründung). Der Tester committet die Tests (`<TASK-ID>: Tests
@@ -536,7 +549,12 @@ steht):
    kleinem Kontext gelesen zu werden. Schlage dem Nutzer einen eigenen
    Auftrag vor, sie in Kapitel aufzuteilen (grösster eigenständiger Teil
    in eine eigene Datei, Index nachführen) – nicht jetzt anhängen.
-2. `.agent/state/AUFTRAG.md` nach
+2. **Zurückgestellte Findings festhalten**: Findings aus Reports dieser
+   Initiative, die bewusst nicht behoben wurden, als Liste in
+   `.agent/state/MEMORY.md` unter "Zurückgestellte Findings" eintragen –
+   je Zeile `- <Finding-ID> <Kurztitel> – reports/<datei>#<anker>`. Sie
+   gehen nicht verloren, nur weil der Report liegen bleibt.
+3. `.agent/state/AUFTRAG.md` nach
    `.agent/history/<datum>-<slug>-auftrag.md` verschieben und auf die
    leere Vorlage zurücksetzen, dasselbe mit
    `.agent/state/IMPLEMENTATION_PLAN.md` (falls befüllt) nach
