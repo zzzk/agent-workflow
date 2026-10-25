@@ -34,6 +34,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | Agent committet je Task auf `agent/<slug>`, pusht nie | Nr. 13 |
 | Vorgeschichte, `superseded`, Teil-IDs, zurückgestellte Findings | Nr. 14 |
 | `GRUEN_PROBE` und Entscheidungsregel nach gescheitertem Lauf | Nr. 15 |
+| Task-Niveau "normaler Entwickler"; `ist.md` in `files:`; grep ist kein Test | Nr. 16 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -208,6 +209,23 @@ beides.
     Der fünfte Befund `ZU_VIEL_LESESTOFF` kommt aus den Experimenten:
     Doku-Tasks an grossen Dateien scheiterten nicht an der Arbeit,
     sondern am Lesen (siehe Nr. 12) – dort hilft kein Neuschnitt.
+16. **Wer Fakten in die Task-Datei schreibt, leistet die Arbeit vorab.**
+    Nach einem Doku-Task, der im Timeout endete, trug der Planner Fakten
+    aus dem Code inline in die Tasks ein (Exporte, Zeilen, Einfügeanker) –
+    der Nachfolger war in 15 statt 70 Minuten fertig. Bei der Durchsicht
+    von fünf Tasks entschied der Nutzer dagegen (2026-10-12): Damit
+    leistet der Planner die Umsetzung vorab, das verfälscht die Messung
+    für die Hardware-Beschaffung, und das Modell soll die Umsetzung selbst
+    erarbeiten. Seither ist das Niveau "Auftrag für einen normalen
+    Entwickler", die Ist-Architektur die Landkarte, und Wegweiser auf
+    Abschnitte sind erlaubt, Zeilen und Inhalte nicht. Zwei Folgeregeln
+    aus demselben Projekt: Drei Regeln widersprachen sich (Implementer
+    zieht `Architecture.md` nach, Planner nimmt sie nie in `files:` auf,
+    Orchestrator prüft den Diff gegen `files:`) – jetzt gehört `ist.md` in
+    `files:`, und separate Doku-Nachzug-Tasks entfallen. Und bei
+    Übersetzungs-Tasks rutschten trotz Umlaut-grep und Wortliste in drei
+    von vier Fällen Reste durch, die erst die unabhängige Verifikation
+    fand – grep ist seither nur Hilfe, nicht Test.
 
 ---
 

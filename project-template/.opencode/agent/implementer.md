@@ -47,7 +47,8 @@ zurück, statt zu raten.
 2. Erfülle **jedes einzelne** Akzeptanzkriterium – nicht nur den
    augenscheinlich wichtigsten Teil.
 3. Ändert dein Task die Verantwortung oder öffentliche Schnittstelle einer
-   Komponente: aktualisiere den entsprechenden Abschnitt in
+   Komponente (dann steht `ist.md` in `files:`): aktualisiere den
+   entsprechenden Abschnitt in
    `.agent/spec/architecture/ist.md` **im selben Task** (kleiner, lokaler Diff
    – kein Sweep über die ganze Datei).
 4. Nutze ausschliesslich die projektlokale virtuelle Umgebung bzw. das

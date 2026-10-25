@@ -749,9 +749,10 @@ test_first: true        # false nur mit Begründung im Kontext-Abschnitt
 - <prüfbare Bedingung 2>
 
 ## Kontext
-<nur was nötig ist: exakte Zeilen-/Snippet-Referenzen, der Finding-Text,
-Verweis auf den relevanten Abschnitt unter spec/architecture/ – nicht die ganze
-Datei, nicht die Konversationshistorie>
+<Niveau "Auftrag für einen normalen Entwickler": Quellen, bindende
+Schnittstellen, Wegweiser auf Komponenten (aus ist.md) bzw. auf die
+Kapiteldatei einer grossen Spec-Datei – kein fertiger Code, keine
+Zeilennummern, nicht die Konversationshistorie>
 
 ## Vorgeschichte
 <normalerweise leer; nach einem gescheiterten Lauf vom Orchestrator
@@ -768,8 +769,25 @@ Freeze-Commit-Hash>
 
 ### Regeln für die Task-Grösse
 
-- Ein Task betrifft max. 1–2 Dateien/Module. Ist er grösser, wird er vom
-  Planner weiter unterteilt statt in einem Rutsch vergeben.
+- Ein Task betrifft max. 1–2 Dateien/Module und **eine
+  Verhaltensfacette**. Ist er grösser, wird er vom Planner weiter
+  unterteilt statt in einem Rutsch vergeben.
+- **Niveau: ein Auftrag für einen normalen Entwickler** – Ziel,
+  Akzeptanzkriterien mit konkreten Werten, bindende Schnittstellen,
+  Quellen, Wegweiser auf Komponentenebene. Kein fertiger Code, keine
+  Ersetzungszeilen, keine vorformulierte Doku: Wer die Arbeit in die
+  Task-Datei schreibt, leistet sie vorab und verfälscht, was die
+  ausführende Rolle (und ein Modellvergleich) eigentlich zeigen soll.
+- **Die Ist-Architektur ist die Landkarte.** Muss der Planner in den Code
+  schauen, um die zuständige Stelle überhaupt zu finden, ist das ein
+  Befund über `ist.md`, kein Anlass für Zeilennummern. Beschreibt `ist.md`
+  den heutigen Code falsch, wird das vor den Code-Tasks korrigiert.
+- Ändert ein Task einen Vertrag, steht `ist.md` in seinem `files:`; der
+  Implementer zieht den Eintrag im selben Task nach – separate
+  Doku-Nachzug-Tasks gibt es dafür nicht.
+- "Überall X ersetzen"-Tasks haben nie grep als einziges
+  Akzeptanzkriterium; der eigentliche Test ist die Durchsicht Wort für
+  Wort.
 - Ein Task muss ohne Kenntnis anderer Tasks umsetzbar sein – Ausnahme:
   `depends_on` macht eine unvermeidbare Reihenfolge explizit.
 - Jeder Task hat konkrete, prüfbare Akzeptanzkriterien (keine vagen
