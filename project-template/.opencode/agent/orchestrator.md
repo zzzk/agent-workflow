@@ -464,7 +464,7 @@ Entscheidungsgrundlage.
 | Verdict | Was du tust |
 |---|---|
 | `PASS` | Nächster Baustein des Ablaufs |
-| `PASS_WITH_NOTES` | Weiter; Notizen in die Task-Datei bzw. den Plan übernehmen |
+| `PASS_WITH_NOTES` | Weiter; Notizen in die Task-Datei bzw. den Plan übernehmen. Empfiehlt das `ARCHITEKTUR_GATE` eine **zusätzliche** Abhängigkeit, trägst du sie selbst in `depends_on` ein und vermerkst das in `PROGRESS.md` – alles andere an Reihenfolge (Abhängigkeit entfernen, umbauen) geht an den Planner |
 | `CHANGES_NEEDED` | Zurück an die vorgelagerte Rolle, mit der Begründung als zusätzlichem Kontext |
 | `BLOCKED` | Stopp, Rückfrage an den Nutzer – kein Weitermachen auf Verdacht |
 

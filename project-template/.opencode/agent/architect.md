@@ -108,12 +108,30 @@ Klärungsprotokoll in `AUFTRAG.md`.
      strukturelles Problem an (Rundreisen über Grenzen hinweg, doppelte
      Zuständigkeit für denselben Zustand, eine Komponente, die alles
      weiss)? So etwas ist hier billiger zu korrigieren als im Review.
+   - **Wirken die Akzeptanzkriterien?** Frage für jedes Kriterium: *Würde
+     ein Test dafür ohne die verlangte Änderung fehlschlagen?* Ein
+     Kriterium, das der heutige Code schon erfüllt, prüft nichts – es
+     wäre auch ohne Umsetzung grün. Solche Kriterien gehen als
+     `CHANGES_NEEDED` an den Planner (`TEST_FIRST` würde es auch merken,
+     aber erst nach einem ganzen Lauf).
+   - **Reihenfolge**: Fehlt eine Abhängigkeit zwischen Tasks (Task B
+     braucht, was Task A erst schafft)? Du änderst `depends_on` nicht
+     selbst – nenne die Empfehlung in deiner Rückmeldung.
 3. Ist der Plan tragfähig: schreibe für jeden betroffenen Task die
    konkreten Vorgaben in dessen Abschnitt **"Vorgaben aus dem
-   Architektur-Gate"** – welche bestehende Abstraktion zu nutzen ist,
-   welche Benennung sich einfügt, welche Grenze nicht überschritten werden
-   darf. So formuliert, dass der Implementer sie ohne Rückfrage befolgen
-   kann.
+   Architektur-Gate"** – so formuliert, dass der Implementer sie ohne
+   Rückfrage befolgen kann, aber **nur auf der Ebene von Schnittstellen
+   und Verantwortungen**:
+   - **erlaubt**: welches Modul wofür zuständig ist; welche Funktion es
+     geben muss und ihr Vertrag (Ein-/Ausgabe, Fehlerverhalten);
+     Invarianten; welche Aufrufer betroffen sind; welche bestehende
+     Abstraktion zu nutzen ist, welche Benennung sich einfügt, welche
+     Grenze nicht überschritten werden darf;
+   - **nicht erlaubt**: Code, Zeilen- oder Reihenfolgeangaben
+     ("in Zeile 40 vor dem Return einfügen"), Vorschläge für
+     Hilfsfunktionen oder die interne Struktur einer Funktion. Das ist
+     Umsetzung – die gehört dem Implementer, und wer sie vorgibt, nimmt
+     ihm genau die Arbeit ab, die geprüft werden soll.
 4. Ergibt sich aus dem Plan ein wirklich neues, wiederverwendbares Muster
    oder braucht er eine Änderung der Zielarchitektur: formuliere den
    exakten Ergänzungsvorschlag für `.agent/spec/architecture/ziel.md` in
@@ -173,5 +191,7 @@ Nach `ARCHITEKTUR_GATE`:
 
 Danach immer:
 - welche Task-Dateien du um Vorgaben ergänzt hast,
+- Empfehlungen zu `depends_on` (zusätzliche Abhängigkeit: "TASK-B hängt
+  von TASK-A ab, weil …"), falls welche,
 - ein etwaiger `ziel.md`-Ergänzungsvorschlag, **separat und als
   Vorschlag markiert**.

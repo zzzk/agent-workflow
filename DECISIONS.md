@@ -35,6 +35,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | Vorgeschichte, `superseded`, Teil-IDs, zurückgestellte Findings | Nr. 14 |
 | `GRUEN_PROBE` und Entscheidungsregel nach gescheitertem Lauf | Nr. 15 |
 | Task-Niveau "normaler Entwickler"; `ist.md` in `files:`; grep ist kein Test | Nr. 16 |
+| Gate nur Schnittstellen/Verantwortungen; Kriterien auf Wirksamkeit prüfen; `not ok` zählt | Nr. 17 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -226,6 +227,18 @@ beides.
     Übersetzungs-Tasks rutschten trotz Umlaut-grep und Wortliste in drei
     von vier Fällen Reste durch, die erst die unabhängige Verifikation
     fand – grep ist seither nur Hilfe, nicht Test.
+17. **Kleinere Lehren aus Gate und Verifikation.** Der erste Gate-Lauf
+    der Stufe 1 gab teils Umsetzungsdetails vor (Zeilen, Hilfsfunktionen);
+    mit der Grenze "nur Schnittstellen und Verantwortungen" im Auftrag
+    hielt sich der zweite daran – jetzt steht sie in der Rolle. Derselbe
+    zweite Lauf fand ein Kriterium (TASK-0050), das auch ohne
+    Code-Änderung grün gewesen wäre; die Prüffrage "würde der Test ohne
+    die Änderung fehlschlagen?" gehört seither ins Gate. Eine
+    `depends_on`-Empfehlung des Gates trug der Orchestrator mangels Regel
+    selbst nach – jetzt ist das für zusätzliche Abhängigkeiten
+    ausdrücklich erlaubt. Ein Testlauf meldete `# fail 0`, enthielt aber
+    `not ok`-Zeilen (Retro 14); und wackelige Tests (TASK-0028/0029)
+    kamen von festen Wartezeiten statt bedingtem Warten.
 
 ---
 

@@ -60,7 +60,11 @@ gibt, den man nachträglich rationalisieren könnte.
    gegenstandslos). Beides melden statt stillschweigend weitergehen.
 4. Ist ein Akzeptanzkriterium nicht prüfbar formuliert: `BLOCKED`, mit der
    konkreten Frage – nicht nach eigenem Ermessen interpretieren.
-5. Committe **nur die Testdateien** dieses Tasks, mit der Message
+5. **Asynchrone Ergebnisse** wartest du mit einer Bedingung ab
+   (`waitUntil` o.ä., mit Timeout), nie mit einer festen Anzahl Ticks
+   oder Millisekunden – feste Wartezeiten machen Tests wackelig: mal
+   grün, mal rot, je nach Last.
+6. Committe **nur die Testdateien** dieses Tasks, mit der Message
    `<TASK-ID>: Tests (TEST_FIRST)`. Dieser Commit ist die
    **Freeze-Grenze**; nenne seinen Hash in der Rückmeldung. Gepusht wird
    nie.
@@ -72,13 +76,17 @@ und ob nichts anderes dabei kaputtgegangen ist.
 
 1. Führe die **gesamte** Testsuite aus, nicht nur die neuen/geänderten
    Tests.
-2. Wiederhole den Lauf, wenn ein Ergebnis timing- oder
+2. Ein Lauf ist nur grün, wenn **keine einzige** Fehlerzeile vorkommt –
+   bei TAP-Ausgabe also kein `not ok`, auch wenn die Summenzeile
+   `# fail 0` meldet. Die Summenzeile allein genügt nicht; prüfe die
+   Einzelzeilen.
+3. Wiederhole den Lauf, wenn ein Ergebnis timing- oder
    reihenfolgeabhängig wirken könnte. (In einem früheren Projekt war ein
    Bug nur im vollen Suite-Lauf reproduzierbar, nicht bei Einzelausführung.)
-3. Prüfe jedes Akzeptanzkriterium einzeln gegen das **tatsächliche
+4. Prüfe jedes Akzeptanzkriterium einzeln gegen das **tatsächliche
    Verhalten** – nicht gegen das, was ein Test zu prüfen behauptet, und
    nicht gegen die Selbsteinschätzung des Implementers.
-4. Trage das Ergebnis in den Abschnitt "Test-Notizen" der Task-Datei ein:
+5. Trage das Ergebnis in den Abschnitt "Test-Notizen" der Task-Datei ein:
    welche Tests geschrieben/ausgeführt wurden, das Ergebnis, und den
    Freeze-Commit-Hash.
 
