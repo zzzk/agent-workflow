@@ -60,7 +60,9 @@ Klärungsprotokoll in `AUFTRAG.md`.
 ### (a) Vorschlag
 
 1. Leite aus den Requirements und – bei bestehendem Code – aus `ist.md`
-   und dem Code ab: Systemkontext, Bausteine/Schichten mit Verantwortung
+   und dem Code ab (im Ablauf `BOOTSTRAP` gibt es meist noch keine
+   Requirements: dann schlägst du aus dem Ist vor, was als Ziel
+   festgehalten werden soll, und kennzeichnest das): Systemkontext, Bausteine/Schichten mit Verantwortung
    und erlaubter Abhängigkeitsrichtung, Architekturregeln, Entscheidungen,
    Qualitätsziele (Gliederung wie in `ziel.md`).
 2. Schreibe das als neue Runde "Zielarchitektur" ins Klärungsprotokoll
@@ -78,7 +80,9 @@ Klärungsprotokoll in `AUFTRAG.md`.
 
 1. Schreibe die vom Nutzer bestätigten bzw. entschiedenen Punkte aus dem
    Klärungsprotokoll nach `.agent/spec/architecture/ziel.md` – nur diese,
-   wörtlich im Sinn der Entscheidung, nichts dazu.
+   wörtlich im Sinn der Entscheidung, nichts dazu. Entferne dabei die
+   Zeile "Noch nicht ausgefüllt." – an ihr erkennt der Orchestrator, ob
+   es schon eine Zielarchitektur gibt.
 2. Vom Nutzer akzeptierte Abweichungen des Ist vom Ziel trägst du in
    `abweichungen.md` ein.
 3. Führe den Index `architecture/README.md` nach, falls sich Kapitel
@@ -184,8 +188,8 @@ Nachricht, nur am Anfang.
 Nach `ZIELARCHITEKTUR`:
 - `PASS` – (a) Vorschlagsrunde geschrieben; (b) Entscheidungen in
   `ziel.md` übernommen.
-- `BLOCKED` – die Requirements reichen nicht, um eine Zielarchitektur
-  vorzuschlagen; nenne, was fehlt.
+- `BLOCKED` – weder Requirements noch bestehender Code reichen, um eine
+  Zielarchitektur vorzuschlagen; nenne, was fehlt.
 
 Nach `ARCHITEKTUR_GATE`:
 - `PASS` – der Plan fügt sich ein, Implementierung kann starten.

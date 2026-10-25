@@ -1,7 +1,6 @@
 # Architektur: <Projektname>
 
-> Dauerhaftes Produktwissen (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
-> Teil E "Dateistruktur"). Keine Historie: veraltete Abschnitte werden
+> Dauerhaftes Produktwissen. Keine Historie: veraltete Abschnitte werden
 > ersetzt, nicht als "Nachtrag" angehängt.
 
 **Diese Datei ist der Index.** Sie bleibt klein und wird von jeder Rolle
@@ -14,7 +13,7 @@ Die Architektur hat zwei Teile mit verschiedenen Besitzern:
 |---|---|---|---|
 | [`ziel.md`](ziel.md) | **top-down, Soll** | Systemkontext, Bausteine/Schichten, Architekturregeln, Entscheidungen, Qualitätsziele | Architekt schlägt vor (Baustein `ZIELARCHITEKTUR`), der **Nutzer entscheidet**; alle anderen Rollen lesen nur |
 | [`ist.md`](ist.md) | **bottom-up, Ist** | Komponenten, wie sie heute im Code sind: Zuständigkeit, Schnittstelle, Abhängigkeiten, Invarianten | Reviewer (Baustein `MAP`), danach der Implementer je Task |
-| [`abweichungen.md`](abweichungen.md) | Lücke Soll ↔ Ist | bewusst akzeptierte Abweichungen/Schulden mit Beleg | Planner (aus Reports), Nutzerentscheid |
+| [`abweichungen.md`](abweichungen.md) | Lücke Soll ↔ Ist | bewusst akzeptierte Abweichungen/Schulden mit Beleg | nur nach Nutzerentscheid: Orchestrator (Kandidaten aus Reports) bzw. Architekt (`ZIELARCHITEKTUR` b) |
 
 Wie die Teile zusammenspielen: Das `ARCHITEKTUR_GATE` prüft einen Plan
 gegen `ziel.md`; der `REVIEW` prüft das Ist gegen das Soll – jede

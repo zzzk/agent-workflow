@@ -178,6 +178,33 @@ dort für die Stufen `standard` und `cheap` bereits eingetragen.
 > Implementer ab. Unter Q4_K_M deshalb nicht gehen; lieber ein kleineres
 > Modell in hoher Quant als ein grosses in niedriger.
 
+#### Andere lokale Server: LM Studio, Firmen-Server (OpenAI-kompatibel)
+
+Statt Ollama geht jeder Server mit OpenAI-kompatibler Schnittstelle. In
+`opencode.json` dafür einen zweiten Anbieter eintragen – der Name vor dem
+`/` im Modellnamen ist zugleich das, woran `.agent/vorflug.sh` erkennt,
+wie es prüfen muss (`lmstudio/…` oder `openai-compat/…`):
+
+```json
+"openai-compat": {
+  "npm": "@ai-sdk/openai-compatible",
+  "name": "Firmen-Server",
+  "options": {
+    "baseURL": "{env:OPENAI_COMPAT_BASE_URL}",
+    "apiKey": "{env:OPENAI_COMPAT_API_KEY}",
+    "headerTimeout": 1800000,
+    "chunkTimeout": 1800000
+  },
+  "models": { "<modell-id>": { "name": "<Anzeigename>" } }
+}
+```
+
+`OPENAI_COMPAT_BASE_URL` endet auf `/v1` (z.B.
+`https://llm.firma.example/v1`, LM Studio: `http://host.docker.internal:1234/v1`);
+der Vorflug hängt `/models` an. Kontextlänge und GPU-Anteil kann er an
+solchen Servern meist nicht abfragen und sagt das ausdrücklich – dort
+selbst kontrollieren.
+
 ### 3c. Wer wo läuft: eine Eigenschaft der Rolle
 
 Zwei Dinge entscheiden über einen Lauf, und **beide gehören zur Rolle**,
@@ -660,7 +687,7 @@ die Zielarchitektur, `_tiers.yml`, die `*.meta.yml` und die Inbox.
 | Implementer hat Testdateien geändert | Testpfade in `meta.yml` passen nicht zum Projekt | Pfade korrigieren, neu generieren; der Orchestrator fängt es zusätzlich per `git diff` |
 | Fremder Lauf "erfolgreich", aber nichts geändert | Berechtigung still abgelehnt – oder still gescheitert (Log endet mitten in der Recherche) | `run-role.sh` meldet beides mit Exit 3; bei `auto-rejecting` `--auto` bzw. `permission: allow` prüfen, sonst Grün-Probe (`orchestrator.md`, Schritt 8a) |
 | `Verdict-Zeile: FEHLT` | Modell hat die Schlussnachricht nicht mit `Verdict: …` begonnen | Liegt das Deliverable vor, entscheidet die Verifikation; in den Messdaten getrennt gezählt (`verdict_line: false`) |
-| Exit 1 mit `no user query found in messages` | opencode-Fehlerbild, meist zu kleiner Kontext beim Modell-Server | Vorflug wiederholen (`context_length`); das Deliverable kann trotzdem vorliegen – Grün-Probe |
+| Exit 3 mit `ABBRUCH: opencode: no user query found in messages` | opencode-Fehlerbild, meist zu kleiner Kontext beim Modell-Server | Vorflug wiederholen (`context_length`); das Deliverable kann trotzdem vorliegen – Grün-Probe |
 | Fehler `unbekannter model_tier '<x>'` | Stufe in einer `meta.yml` hat keinen Eintrag in `_tiers.yml` | Stufe dort ergänzen (oder Tippfehler korrigieren) |
 | Agent plant mehrere Tasks gleichzeitig | Protokollverstoss | Abbrechen; Modell/Harness-Kombination prüfen (siehe `DECISIONS.md`, Lehre Nr. 7) |
 | Tests schlagen nach `TEST_FIRST` **nicht** fehl | Verhalten existiert bereits, oder der Test prüft nichts | Der Tester meldet das als `CHANGES_NEEDED` – Task überprüfen, nicht den Test abschwächen |
@@ -714,4 +741,5 @@ mein-projekt/
 ```
 
 `← DU` markiert die Dateien, in denen du Entscheidungen triffst. Es sind
-vier, und nur die erste ist wirklich Pflicht.
+fünf; wirklich Pflicht ist nur die Anpassung der Testpfade in den
+`*.meta.yml`.

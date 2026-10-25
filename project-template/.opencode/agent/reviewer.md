@@ -36,7 +36,9 @@ erzeugen, ohne Bauhistorie zu rekonstruieren. Die Zielarchitektur
 2. Für jede identifizierbare Komponente: Zuständigkeit, Schnittstelle (was
    rufen andere davon auf), Abhängigkeiten, Invarianten (siehe Vorlage in
    `ist.md`). Keine Testdateien je Komponente auflisten.
-3. Schreibe/aktualisiere `.agent/spec/architecture/ist.md` direkt. Wird
+3. Schreibe/aktualisiere `.agent/spec/architecture/ist.md` direkt und
+   entferne dabei die Zeile "Noch nicht ausgefüllt." (an ihr erkennt der
+   Orchestrator eine leere Ist-Architektur). Wird
    die Datei grösser als etwa 30 KB, lagere die grössten Komponenten nach
    `architecture/komponenten/<name>.md` aus und trage sie im Index
    `architecture/README.md` ein. Für den reinen
@@ -136,7 +138,10 @@ identisch weiterverarbeiten kann.
 
 ## Report-Format (Bausteine `SPEC_REVIEW`, `REVIEW` und `TRIAGE`)
 
-Pro Finding:
+Pro Finding ein Abschnitt mit fortlaufender ID als Überschrift
+(`### F1 <Kurztitel>`, bei `SPEC_REVIEW` `### S1 …`) – über diese ID
+werden Findings in Tasks und in der Liste zurückgestellter Findings
+referenziert (`reports/<datei>#f1`). Darin:
 - **Fundstelle**: Datei:Zeile (oder die Komponente, wenn nicht enger
   eingrenzbar)
 - **Beobachtetes Fehlverhalten/Abweichung**: was ist, statt was sein soll

@@ -91,7 +91,8 @@ gross geschnitten ist – dann sag genau das, statt zu fragen.
 
 1. Formuliere das geklärte Thema im passenden Kapitel unter
    `spec/requirements/` aus (neues Kapitel → Datei anlegen und im Index
-   `README.md` eintragen): als Anforderung, nicht als
+   `README.md` eintragen; beim ersten Kapitel die Zeile "Noch nicht
+   ausgefüllt." im Index entfernen): als Anforderung, nicht als
    Frage-Antwort-Protokoll. Werden die Anforderungen in Stufen umgesetzt,
    trägt jeder Abschnitt seine Stufe, und die Übersicht im Index wird
    nachgeführt. Das Protokoll bleibt in `AUFTRAG.md`
@@ -124,8 +125,11 @@ die wirklich ihm gehören.
    `IMPLEMENTATION_PLAN.md` nötig: `source_ref` in jeder Task-Datei
    verweist direkt auf den Report-Abschnitt.
 3. Findings, die eine Architekturentscheidung berühren (nicht nur ein
-   lokaler Bug) und nicht sofort behoben werden, zusätzlich unter
-   in `.agent/spec/architecture/abweichungen.md` vermerken.
+   lokaler Bug) und nicht sofort behoben werden, nennst du in der
+   Rückmeldung als **Kandidaten für `architecture/abweichungen.md`**. Ob
+   eine Abweichung bewusst akzeptiert wird, entscheidet der Nutzer (der
+   Orchestrator fragt und trägt sie dann ein); was nur aufgeschoben ist,
+   kommt als zurückgestelltes Finding in `MEMORY.md`.
 
 ## Regeln für Tasks
 

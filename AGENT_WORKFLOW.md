@@ -42,7 +42,7 @@ günstigen oder lokalen Modellen mit begrenztem Kontextfenster laufen.
 | **Auftragstyp** | die Art der Arbeit, ergibt sich aus dem Auftrag | `FEATURE`, `FIX`, `REQUIREMENTS` |
 | **Ablauf** | die feste Bausteinfolge eines Auftragstyps (Teil C) | `PLAN → Task-Schleife → REVIEW` |
 | **Baustein** | ein Aufruf genau einer Rolle mit genau einem Auftrag (Teil B) | `TEST_FIRST`, `SPEC_REVIEW` |
-| **Verdict** | die erste Zeile der Rückmeldung eines Bausteins | `PASS`, `CHANGES_NEEDED` |
+| **Verdict** | die Zeile, mit der die Schlussnachricht eines Bausteins beginnt (`Verdict: …`) | `PASS`, `CHANGES_NEEDED` |
 
 Früher hiess der Auftragstyp "Modus"; ältere Texte (`DECISIONS.md`)
 verwenden noch dieses Wort.
@@ -132,7 +132,7 @@ sequenceDiagram
     O->>I: UMSETZUNG - die vollständige Task-Datei
     I->>G: Code-Änderung, Testdateien unberührt
     I-->>O: PASS, Selbstcheck bestätigt
-    O->>G: git diff FREEZE..HEAD -- tests/ muss leer sein
+    O->>G: git diff FREEZE -- tests/ und git status -- tests/ müssen leer sein
     O->>T: VERIFIKATION - die gesamte Suite
     T-->>O: PASS oder CHANGES_NEEDED
     Note over O,I: CHANGES_NEEDED: zurück an UMSETZUNG.<br/>Kein neuer Task, solange dieser nicht grün ist.
@@ -197,9 +197,11 @@ ein Report, o.ä.) tatsächlich braucht.
    Kennt weder vorherige noch zukünftige Tasks im Detail.
 5. **Tester** (`tester.md`) – unabhängig vom Implementer, kennt nur die
    **Akzeptanzkriterien** des Tasks (nicht die Implementierungs-
-   Begründung). Läuft in zwei Bausteinen: `TEST_FIRST` (schreibt die Tests,
-   bevor implementiert wird) und `VERIFIKATION` (führt die gesamte Suite
-   aus, nachdem implementiert wurde). Diese Unabhängigkeit ist bewusst:
+   Begründung). Läuft in drei Bausteinen: `TEST_FIRST` (schreibt die Tests,
+   bevor implementiert wird), `VERIFIKATION` (führt die gesamte Suite
+   aus, nachdem implementiert wurde) und – nur nach einem gescheiterten
+   Lauf – `GRUEN_PROBE` (Diagnose: Tests erfüllbar? Wie weit ist der
+   Teilstand?). Diese Unabhängigkeit ist bewusst:
    sie verhindert, dass Tests nachvollziehen, was sich der Implementer
    gedacht hat, statt echt gegen die Spezifikation zu prüfen.
 6. **Reviewer** (`reviewer.md`) – read-only Auditor, editiert nie
@@ -625,7 +627,7 @@ der Unterschied zwischen "hält" und "hält meistens".
 
 | Zusage | Mechanisch durch | Prosa nur als Ergänzung |
 |---|---|---|
-| Reviewer/Architekt ändern nichts | `tools:`-Allowlist bzw. `permission: { edit: deny }` | "du editierst nie" |
+| Reviewer/Architekt schreiben nur ihre eigenen Dateien (Reports, Ist- bzw. Zielarchitektur, Gate-Vorgaben) | `path_allows` → OpenCode `permission.edit`; in Claude Code Regel im Prompt + Diff-Prüfung | "du editierst nie Produktcode und Tests" |
 | Implementer fasst keine Tests an | OpenCode `edit: { "tests/**": deny }`; Claude Code `PreToolUse`-Hook; zusätzlich Diff-Prüfung durch den Orchestrator | "du editierst nie Testcode" |
 | Frischer Kontext je Baustein | eigener Agenten-/Session-Aufruf | "lies nicht die Historie" |
 | Kein Endlos-Lauf | `max_steps` / `steps` / `maxTurns`, `timeout` um den Unterprozess | – |
@@ -719,7 +721,8 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
     processed/<datum>/           # nach der Triage hierhin verschoben
 
   runs/                          # Logs fremder Harness-Läufe (nicht committen)
-    TASK-0007-umsetzung.log
+    TASK-0007-implementer-a1.log # <task>-<rolle>-a<versuch>.log
+    metrics.jsonl                # Messdaten je Lauf
 
   history/                       # Archiv abgeschlossener Aufträge/Pläne
     2026-08-15-initial-build-auftrag.md
@@ -762,8 +765,8 @@ source_ref: state/IMPLEMENTATION_PLAN.md#schritt-6
 depends_on: []          # andere Task-IDs, die vorher done sein müssen
 files: [pfad/zur/datei.py]
 
-runtime: subagent       # subagent | opencode   – wer führt aus
-model:                  # optional; überschreibt den model_tier der Rolle
+runtime:                # leer = Rolle entscheidet | subagent | opencode
+model:                  # leer = Rolle entscheidet; nur für Sonderfälle
 test_first: true        # false nur mit Begründung im Kontext-Abschnitt
 
 ---
