@@ -143,6 +143,13 @@ def claude_adapter(meta, tiers, body):
         lines.append("> prueft es nach deinem Lauf per `git diff`.)")
         lines.append("")
 
+    read_denies = meta.get("read_denies", []) or []
+    if read_denies:
+        lines.append("> **Leseverbot:** Du liest keine Dateien unter `{}`".format("`, `".join(read_denies)))
+        lines.append("> - ausser der Datei, die dein Auftrag ausdruecklich nennt.")
+        lines.append("> (In diesem Harness nicht mechanisch erzwungen.)")
+        lines.append("")
+
     return "\n".join(lines) + "\n" + body
 
 
@@ -189,6 +196,17 @@ def opencode_adapter(meta, tiers, body):
                 lines.append('    "{}": deny'.format(pattern))
         else:
             lines.append("  edit: allow")
+
+    # Lesesperren: OpenCode kennt "read" mit Glob-Mustern (verifiziert per
+    # "opencode debug agent", opencode 1.18.32). Bash bleibt erlaubt, ein
+    # "cat" umgeht die Sperre also - sie haelt das Modell davon ab, aus
+    # Gewohnheit fremde Dateien zu oeffnen, ist aber keine Sicherheitsgrenze.
+    read_denies = meta.get("read_denies", []) or []
+    if read_denies:
+        lines.append("  read:")
+        lines.append('    "*": allow')
+        for pattern in read_denies:
+            lines.append('    "{}": deny'.format(pattern))
 
     lines.append("  bash: allow")
     lines.append("---")

@@ -238,7 +238,8 @@ Modellen, die lange Fliesstexte ungleichmässig gewichten.
 Anti-Beispiel aus einem realen Vorfall statt abstrakter Regel.>
 
 ## Rückmeldung
-<Exaktes Ausgabeformat: Verdict-Zeile zuerst, dann die Pflichtangaben.>
+<Exaktes Ausgabeformat: die Schlussnachricht beginnt wörtlich mit
+"Verdict: <WERT>", ohne Formatierung; danach die Pflichtangaben.>
 ```
 
 Der Body enthält **kein** Frontmatter – er ist harness-neutral
@@ -247,9 +248,18 @@ Der Body enthält **kein** Frontmatter – er ist harness-neutral
 
 ### Verdicts: das gemeinsame Rückgabe-Vokabular
 
-Jeder Baustein endet mit **genau einer** Verdict-Zeile als erster Zeile
-der Rückmeldung. Der Orchestrator verzweigt danach mechanisch (greppbar),
-statt Fliesstext zu interpretieren.
+Jeder Baustein endet mit **genau einer** Verdict-Zeile: Die
+Schlussnachricht beginnt wörtlich mit `Verdict: PASS` (bzw.
+`PASS_WITH_NOTES`, `CHANGES_NEEDED`, `BLOCKED`), ohne Formatierung. Der
+Orchestrator verzweigt danach mechanisch, statt Fliesstext zu
+interpretieren. Das wörtliche Muster ist nötig: lokale Modelle lieferten
+das Verdict in 14 Läufen nie als erste Zeile und in wechselnder Form
+(`**PASS**`, `## Verdict: PASS`, …). Deshalb steht der Satz in jeder
+Rolle **und** am Ende jedes Auftrags, und `run-role.sh` sucht die Zeile
+nur in der letzten Antwort des Modells – nicht im ganzen Log, wo auch
+Zitiertes stehen kann. Fehlt sie, entscheidet bei vorliegendem
+Deliverable die `VERIFIKATION`; ohne Deliverable gilt der Lauf als still
+gescheitert.
 
 | Verdict | Bedeutung | Was der Orchestrator tut |
 |---|---|---|

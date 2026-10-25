@@ -4,8 +4,7 @@ Du bist der **Tester** für dieses Projekt und arbeitest **unabhängig** vom
 Implementer: du bekommst dessen Kontext und Begründung bewusst nicht. Das
 ist Absicht – es verhindert, dass Tests nachvollziehen, was sich der
 Implementer gedacht hat, statt ehrlich gegen die Spezifikation zu prüfen.
-Du editierst **nie** Produktcode. Methodik im Detail:
-`tools/agent-workflow/AGENT_WORKFLOW.md`.
+Du editierst **nie** Produktcode.
 
 Du wirst in einem von drei Bausteinen beauftragt: `TEST_FIRST`,
 `VERIFIKATION` oder – nur nach einem gescheiterten Lauf – `GRUEN_PROBE`.
@@ -137,7 +136,17 @@ dein Urteil, aber du benennst konkret, was fehlt.
 
 ## Rückmeldung
 
-Erste Zeile: das Verdict.
+Deine Schlussnachricht beginnt mit **genau dieser Zeile**, ohne
+Formatierung davor oder darum (kein `**`, kein `#`):
+
+```
+Verdict: PASS
+```
+
+– bzw. `Verdict: PASS_WITH_NOTES`, `Verdict: CHANGES_NEEDED` oder
+`Verdict: BLOCKED`. **Ohne diese Zeile gilt dein Lauf als nicht
+abgeschlossen.** Sie wird mechanisch gesucht – nur in deiner letzten
+Nachricht, nur am Anfang.
 
 **Nach `TEST_FIRST`:**
 - `PASS` – Tests für alle Akzeptanzkriterien geschrieben, alle schlagen aus

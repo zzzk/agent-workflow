@@ -35,6 +35,9 @@
 #                          statt weiterzulaufen (siehe unten).
 #   AGENT_ROLE_TIMEOUT     Sekunden, Default 2700 (siehe orchestrator.md)
 #   OLLAMA_BASE_URL        fuer die VRAM-Abfrage; ohne sie entfaellt nur dieses Feld
+#   AGENT_ATTACH_TASK=1    die Task-Datei per "-f" an den Auftrag haengen -
+#                          noetig, wenn eine Rolle read_denies auf
+#                          .agent/tasks/ hat (siehe implementer.meta.yml)
 
 set -uo pipefail
 
@@ -203,14 +206,19 @@ if [ -f "$LOG" ]; then mv "$LOG" "${LOG%.log}.$(date -u +%Y%m%dT%H%M%SZ).log"; f
 
 START_TS="$(date -u +%FT%TZ)"
 START_S=$(date +%s)
+START_MS=$(( START_S * 1000 ))
 
 # --model nur bei einem Task-Override: ohne das Flag gilt die model-Zeile
 # der generierten Rollen-Datei, und genau die ist der Normalfall.
 MODEL_ARGS=()
 [ "$SOURCE" = "Task-Datei" ] && MODEL_ARGS=(--model "$MODEL")
+# "-f" ist ein Array-Argument: es muss VOR den anderen Flags stehen, sonst
+# verschluckt es den Auftragstext als weiteren Dateinamen.
+ATTACH_ARGS=()
+[ "${AGENT_ATTACH_TASK:-0}" = "1" ] && [ -n "$TASK_FILE" ] && ATTACH_ARGS=(-f "$TASK_FILE")
 
-timeout "$TIMEOUT" opencode run \
-  --agent "$ROLE" --dir . --auto "${MODEL_ARGS[@]}" "$PROMPT" > "$LOG" 2>&1 &
+timeout "$TIMEOUT" opencode run ${ATTACH_ARGS[@]+"${ATTACH_ARGS[@]}"} \
+  --agent "$ROLE" --dir . --auto ${MODEL_ARGS[@]+"${MODEL_ARGS[@]}"} "$PROMPT" > "$LOG" 2>&1 &
 RUN_PID=$!
 sample_loop "$RUN_PID" &
 SAMPLE_PID=$!
@@ -229,20 +237,103 @@ grep -q "auto-rejecting" "$LOG" 2>/dev/null && { REJECTED=true
   PROBLEM="${PROBLEM:+$PROBLEM; }Berechtigung still abgelehnt"; }
 [ "$EXIT" = "124" ] && PROBLEM="${PROBLEM:+$PROBLEM; }Timeout nach ${TIMEOUT}s"
 
+# opencode-Fehlerbild "no user query found in messages": trat bei zu
+# kleinem Ollama-Kontext auf (TASK-0013) und spaeter mit vorhandenem
+# Deliverable (TASK-0052, -0063). Kein Modelltext, sondern eine Meldung von
+# opencode selbst - deshalb hier als bekannter Grund ausgewiesen.
+grep -q "no user query found in messages" "$LOG" 2>/dev/null && \
+  PROBLEM="${PROBLEM:+$PROBLEM; }opencode: no user query found in messages (Kontextlaenge pruefen, Vorflug)"
+
 # Gegenprobe aus der Ausgabe: welche Rolle und welches Modell liefen wirklich?
 ACTUAL="$(grep -m1 '^>' "$LOG" 2>/dev/null | sed 's/^> *//')"
 
+# --- Auswertung der Sitzung selbst (opencode export) -----------------------
+# Die Verdict-Zeile wird NUR in der letzten Antwort des Modells gesucht,
+# nicht im ganzen Log: im Log steht auch, was das Modell nur zitiert (z.B.
+# per git diff eine PROGRESS-Zeile mit dem Suchbegriff - so ist in Nacht 1
+# ein Fehlalarm entstanden). Dieselbe Quelle liefert das tatsaechlich
+# gelaufene Modell und die Token-Zahlen je Antwort.
+# Gesucht wird die neueste Sitzung dieses Verzeichnisses seit Laufbeginn -
+# eindeutig, weil Laeufe strikt sequentiell sind.
+SESSION_JSON="$(opencode session list --format json 2>/dev/null \
+  | python3 -c 'import json,sys,os
+try:
+    ss=[s for s in json.load(sys.stdin)
+        if os.path.realpath(s.get("directory","")) == os.path.realpath(".")
+        and s.get("created",0) >= int(sys.argv[1])]
+    print(max(ss, key=lambda s: s["created"])["id"] if ss else "")
+except Exception: print("")' "$START_MS" 2>/dev/null)"
+ANALYSIS="$( { [ -n "$SESSION_JSON" ] && opencode export "$SESSION_JSON" 2>/dev/null; } \
+  | python3 -c 'import json,sys,re
+out={"verdict":None,"actual_model":None,"max_context_tokens":None,"output_tokens":None,"exported":False}
+try:
+    d=json.load(sys.stdin); out["exported"]=True
+    am=[m for m in d.get("messages",[]) if m.get("info",{}).get("role")=="assistant"]
+    texts=[]
+    for m in am:
+        t="".join(p.get("text","") for p in m.get("parts",[]) if p.get("type")=="text").strip()
+        if t: texts.append(t)
+    if texts:
+        first=texts[-1].splitlines()[0].strip()
+        mm=re.match(r"^Verdict: (PASS_WITH_NOTES|PASS|CHANGES_NEEDED|BLOCKED)\b", first)
+        out["verdict"]=mm.group(1) if mm else None
+    if am:
+        i=am[-1]["info"]
+        if i.get("providerID") and i.get("modelID"):
+            out["actual_model"]=i["providerID"]+"/"+i["modelID"]
+        tk=[m["info"].get("tokens") or {} for m in am]
+        ctx=[(t.get("input") or 0)+((t.get("cache") or {}).get("read") or 0) for t in tk]
+        out["max_context_tokens"]=max(ctx) if any(ctx) else None
+        out["output_tokens"]=sum((t.get("output") or 0) for t in tk) or None
+except Exception: pass
+print(json.dumps(out))' 2>/dev/null)"
+[ -n "$ANALYSIS" ] || ANALYSIS='{"verdict":null,"actual_model":null,"max_context_tokens":null,"output_tokens":null,"exported":false}'
+field() { python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get(sys.argv[2]); print("" if v is None else v)' "$ANALYSIS" "$1"; }
+VERDICT="$(field verdict)"; ACTUAL_MODEL="$(field actual_model)"
+EXPORTED="$(field exported)"
+
+# Modell-Gegenprobe: lief ein anderes Modell als aufgeloest, ist das ein
+# Setup-Fehler - die Messung waere sonst einem falschen Modell zugeordnet.
+if [ -n "$ACTUAL_MODEL" ] && [ "$ACTUAL_MODEL" != "$MODEL" ]; then
+  PROBLEM="${PROBLEM:+$PROBLEM; }falsches Modell: erwartet $MODEL, gelaufen $ACTUAL_MODEL"
+fi
+
+# Aenderungen dieses Laufs: vor jedem Lauf ist committet (orchestrator.md),
+# also gehoert alles im Arbeitsbaum zu diesem Lauf.
+CHANGED=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+
+# "Still gescheitert": exit 0, nichts geaendert, keine Verdict-Zeile - der
+# Lauf sieht erfolgreich aus und hat nichts getan (TASK-0073 V1: Log endet
+# mitten in der Recherche). Nur pruefbar, wenn die Sitzung exportiert wurde.
+if [ "$EXIT" = "0" ] && [ "$EXPORTED" = "True" ] && [ -z "$VERDICT" ] && [ "${CHANGED:-0}" = "0" ]; then
+  PROBLEM="${PROBLEM:+$PROBLEM; }still gescheitert: keine Aenderung und keine Verdict-Zeile"
+fi
+
 if [ "${AGENT_METRICS:-1}" != "0" ]; then
-  CHANGED=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
-  printf '{"type":"run","task":%s,"role":%s,"attempt":%s,"model":%s,"actual":%s,"ts_start":%s,"duration_s":%s,"exit":%s,"peak_rss_kb":%s,"vram_before":%s,"vram_after":%s,"files_changed":%s,"fallback":%s,"auto_rejected":%s,"log":%s}\n' \
-    "$(json_escape "$TASK")" "$(json_escape "$ROLE")" "$ATTEMPT" \
-    "$(json_escape "$MODEL")" "$(json_escape "$ACTUAL")" "$(json_escape "$START_TS")" \
+  python3 -c 'import json,sys
+(a,task,role,attempt,model,actual,ts,dur,ex,rss,vb,va,chg,fb,rej,sess,log)=sys.argv[1:]
+a=json.loads(a)
+num=lambda v: json.loads(v) if v not in ("","null") else None
+print(json.dumps({"type":"run","task":task,"role":role,"attempt":int(attempt),
+  "model":model,"actual":actual,"actual_model":a["actual_model"],"ts_start":ts,
+  "duration_s":int(dur),"exit":int(ex),"peak_rss_kb":num(rss),
+  "vram_before":num(vb),"vram_after":num(va),"files_changed":int(chg),
+  "fallback":fb=="true","auto_rejected":rej=="true",
+  "verdict_line":a["verdict"] is not None,
+  "max_context_tokens":a["max_context_tokens"],"output_tokens":a["output_tokens"],
+  "session":sess or None,"log":log}))' \
+    "$ANALYSIS" "$TASK" "$ROLE" "$ATTEMPT" "$MODEL" "$ACTUAL" "$START_TS" \
     "$DURATION" "$EXIT" "${PEAK_RSS_KB:-0}" "$VRAM_BEFORE" "$VRAM_AFTER" \
-    "${CHANGED:-0}" "$FALLBACK" "$REJECTED" "$(json_escape "$LOG")" >> "$METRICS"
+    "${CHANGED:-0}" "$FALLBACK" "$REJECTED" "$SESSION_JSON" "$LOG" >> "$METRICS"
 fi
 
 echo "Lauf: $ROLE / $TASK (Versuch $ATTEMPT) – ${DURATION}s, exit=$EXIT"
-echo "Tatsaechlich gelaufen: ${ACTUAL:-(keine >-Zeile im Log)}"
+echo "Tatsaechlich gelaufen: ${ACTUAL_MODEL:-${ACTUAL:-(nicht feststellbar)}}"
+if [ "$EXPORTED" = "True" ]; then
+  echo "Verdict-Zeile: ${VERDICT:-FEHLT (ohne Verdict-Zeile - VERIFIKATION entscheidet, orchestrator.md Schritt 7)}"
+else
+  echo "Verdict-Zeile: nicht pruefbar (Sitzung nicht exportierbar)"
+fi
 echo "Log: $LOG"
 
 if [ -n "$PROBLEM" ]; then

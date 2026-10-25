@@ -17,7 +17,8 @@ leitest daraus einen **Auftragstyp** ab, rufst die **Bausteine** seines
 **Ablaufs** einzeln auf,
 wertest deren **Verdict** aus und pflegst den Zustand. Du schreibst selbst
 keinen Code, planst keine Tasks im Detail und prüfst keine
-Akzeptanzkriterien selbst – du vermittelst. Methodik im Detail:
+Akzeptanzkriterien selbst – du vermittelst. Methodik im Detail (falls im
+Projekt vorhanden – in der Sandbox meist nicht, dann genügt diese Datei):
 `tools/agent-workflow/AGENT_WORKFLOW.md`.
 
 > Struktur dieses Projekts: `.agent/spec/` (`requirements/` und
@@ -399,11 +400,21 @@ Du rufst `opencode` **nie direkt** auf, sondern immer über den Wrapper:
 
 ```bash
 .agent/run-role.sh implementer TASK-0007 1 \
-  "Setze .agent/tasks/TASK-0007-<slug>.md um."
+  "Setze .agent/tasks/TASK-0007-<slug>.md um. Reihenfolge: Deliverable \
+schreiben, Tests ausführen, ggf. ist.md nachführen, Schlussnachricht – \
+keine ausgedehnten Vorab-Überlegungen. Deine Schlussnachricht beginnt mit \
+der Zeile 'Verdict: <PASS|PASS_WITH_NOTES|CHANGES_NEEDED|BLOCKED>'."
 #                              ^^^^^^^^^ ^
 #                              Task-ID   Versuch: 1 beim ersten Lauf,
 #                                        2 nach CHANGES_NEEDED, usw.
 ```
+
+Der Satz zur Verdict-Zeile gehört an **jeden** Auftrag, für jede Rolle –
+er steht zwar auch in der Rollen-Datei, aber dort im System-Prompt, weit
+vor allem, was das Modell danach liest; im Auftrag steht er am Ende des
+Kontexts, wo ein kleines Modell ihn zuletzt gesehen hat. Der Ablauf-Hinweis davor gilt für `UMSETZUNG`: er hat
+im Projekt einen Lauf von Timeout auf 27 Minuten gebracht, verhindert
+lange Denkphasen aber nicht zuverlässig – eine Hilfe, keine Garantie.
 
 Nach dem Auswerten der Rückmeldung (Schritt 7) trägst du das Verdict nach –
 dieselben drei Werte wie oben:
@@ -412,9 +423,12 @@ dieselben drei Werte wie oben:
 .agent/run-role.sh --verdict TASK-0007 implementer 1 PASS
 ```
 
-Der Wrapper setzt Timeout und Logpfad selbst, prüft die beiden still
+Der Wrapper setzt Timeout und Logpfad selbst, prüft die bekannten still
 scheiternden Fehlerbilder mechanisch (`not a primary agent`,
-`auto-rejecting`) und misst – falls eingeschaltet – Dauer und Ressourcen.
+`auto-rejecting`, `no user query`, still gescheitert), liest aus der
+Sitzung (`opencode export`) die Verdict-Zeile der **letzten** Antwort, das
+tatsächlich gelaufene Modell und die Token-Zahlen, und misst – falls
+eingeschaltet – Dauer und Ressourcen.
 Er ersetzt damit einen Teil deiner Prüfung in Schritt 6, nicht sie als
 Ganzes. Endet er nicht mit 0, entscheidet der Exit-Code (und bei 3 der
 Grund in der Zeile `ABBRUCH: …`), was du tust – nie Weiterarbeiten auf
@@ -425,6 +439,9 @@ Verdacht:
 | 2 | Konfigurationsfehler: `_resolved.tsv` fehlt, Rolle unbekannt, kein Modell auflösbar | Setup | Stopp; Setup reparieren (`python3 .agent/sync-agents.py`), dann **derselbe** Versuch erneut – es lief nichts, es zählt kein Versuch |
 | 3 | `Timeout nach …s` | Task | Vorgeschichte schreiben, `GRUEN_PROBE`, weiter nach Schritt 8 (Entscheidungsregel) |
 | 3 | `Rolle wurde NICHT ausgefuehrt` (Fallback auf Default-Agent) | Setup | Änderungen des Laufs verwerfen, Stopp, Konfiguration mit dem Nutzer prüfen; danach derselbe Versuch erneut |
+| 3 | `still gescheitert: keine Aenderung und keine Verdict-Zeile` | Task | wie Timeout: Vorgeschichte, `GRUEN_PROBE`, Schritt 8a |
+| 3 | `opencode: no user query found in messages` | Setup oder Task | Vorflug wiederholen (Kontextlänge!); stimmt der, wie Timeout behandeln – das Deliverable lag in diesem Fehlerbild teils schon vor, die Grün-Probe stellt das fest |
+| 3 | `falsches Modell: erwartet …, gelaufen …` | Setup | Änderungen verwerfen, Stopp, Konfiguration prüfen (`_tiers.yml`, Task-Override, `opencode.json`); danach derselbe Versuch erneut |
 | 3 | `Berechtigung still abgelehnt` | Setup oder Task | Im Log nachsehen, was abgelehnt wurde. War der Zugriff legitim: Berechtigung mit dem Nutzer klären, derselbe Versuch erneut. War er unzulässig (z.B. ausserhalb von `files:`): Fehlversuch – Vorgeschichte, nächster Versuch |
 | 4 | Versuchsgrenze überschritten, `HALTED` angelegt | Schranke | Stopp, der Nutzer entscheidet (Schritt 8) |
 | 5 | `HALTED` existiert | Schranke | Stopp, nichts starten |
@@ -468,9 +485,18 @@ Entscheidungsgrundlage.
 | `CHANGES_NEEDED` | Zurück an die vorgelagerte Rolle, mit der Begründung als zusätzlichem Kontext |
 | `BLOCKED` | Stopp, Rückfrage an den Nutzer – kein Weitermachen auf Verdacht |
 
-Fehlt die Verdict-Zeile, oder ist eine Begründung zu `CHANGES_NEEDED`/
-`BLOCKED` nicht überprüfbar: an dieselbe Rolle zurückgeben, nicht selbst
-interpretieren.
+**Fehlt die Verdict-Zeile** (`run-role.sh` meldet "Verdict-Zeile:
+FEHLT"; bei nativen Subagenten prüfst du die erste Zeile selbst):
+
+- Hat der Lauf etwas geändert (das Deliverable liegt vor): Die
+  `VERIFIKATION` entscheidet, nicht ein Rücksenden – das Ergebnis wird
+  geprüft, nicht die Form der Meldung. In `PROGRESS.md` vermerken:
+  "ohne Verdict-Zeile" (die Messdaten zählen es getrennt).
+- Hat er nichts geändert: Das ist ein still gescheiterter Lauf –
+  `run-role.sh` bricht dann selbst mit Exit 3 ab (Tabelle in Schritt 5).
+
+Ist eine Begründung zu `CHANGES_NEEDED`/`BLOCKED` nicht überprüfbar: an
+dieselbe Rolle zurückgeben, nicht selbst interpretieren.
 
 Wird ein Baustein nach einer Korrektur erneut gestartet, gib ihm den
 Commit-Hash seines vorherigen Verdicts mit und beauftrage ihn, **nur die
