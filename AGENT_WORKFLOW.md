@@ -508,6 +508,17 @@ vollständige Rückmeldung, bevor irgendetwas anderes passiert.
 Begründung und der reale Vorfall, der zu dieser Regel führte: siehe
 `DECISIONS.md`, Lehre Nr. 7.
 
+**Erprobt, aber (noch) nicht Teil der Methodik: parallele Bahnen.** In
+Messexperimenten (pwd-transform, 2026-10) liefen Tasks testweise in zwei
+Bahnen parallel, mit eigenen Regeln: Tasks mit Änderungen unter `tests/`
+in eine Bahn (gemeinsame Suite und Freeze-Prüfung), gleiche Datei →
+gleiche Bahn, Doku erst nach Übernahme der Code-Tasks, eigenes
+Arbeitsverzeichnis je Bahn, `HALTED` gilt für alle Bahnen. Die
+Grundregel bleibt bis zur Auswertung bestehen; erst wenn sich zeigt, dass
+Bahnen netto mehr bringen, als Zusammenführen und Prüfen kosten, kommen
+sie als optionaler Betriebsmodus dazu (dann je Bahn ein eigener Klon bzw.
+`git worktree` mit eigenem Branch).
+
 ### Start jeder Session
 
 1. **Lage ermitteln** – mechanisch, nicht aus dem Gedächtnis:
