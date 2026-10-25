@@ -696,7 +696,8 @@ sein.
 
 id: TASK-0023
 title: <kurzer, imperativer Titel>
-status: open            # open | in_progress | done | failed | blocked
+status: open            # open | in_progress | done | failed | blocked | superseded
+superseded_by: []       # nur bei superseded: die ersetzenden Task-IDs
 source: plan-step       # plan-step | review-finding | triage-finding | auftrag
 source_ref: state/IMPLEMENTATION_PLAN.md#schritt-6
 depends_on: []          # andere Task-IDs, die vorher done sein müssen
@@ -719,6 +720,10 @@ test_first: true        # false nur mit Begründung im Kontext-Abschnitt
 <nur was nötig ist: exakte Zeilen-/Snippet-Referenzen, der Finding-Text,
 Verweis auf den relevanten Abschnitt unter spec/architecture/ – nicht die ganze
 Datei, nicht die Konversationshistorie>
+
+## Vorgeschichte
+<normalerweise leer; nach einem gescheiterten Lauf vom Orchestrator
+ergänzt: Versuch, Rolle, Ausgang, was erreicht/offen war, Log-Verweis>
 
 ## Vorgaben aus dem Architektur-Gate
 <vom Architekten befüllt, falls der Baustein lief: welche bestehende
@@ -743,6 +748,29 @@ Freeze-Commit-Hash>
   starten und hoffen.
 - Abhängigkeiten von externer Hardware/Diensten werden vermieden bzw.
   gemockt; Sonderfälle werden eigene, spätere Tasks.
+
+### Lebenszyklus einer Task-Datei, wenn es nicht glatt läuft
+
+- **Vorgeschichte**: Jede Rolle startet ohne Gedächtnis. Scheitert ein
+  Lauf, trägt der Orchestrator in der Task-Datei ein, was passiert ist –
+  der nächste Versuch (und jede Diagnose) liest es dort.
+- **`superseded`**: Wird ein bereits begonnener Task neu geschnitten,
+  bleibt seine Datei als Beleg liegen, mit `status: superseded` und
+  `superseded_by` auf die Nachfolger. Ein `depends_on` auf ihn gilt als
+  erfüllt, sobald alle Nachfolger `done` sind – sonst blockierte ein
+  Neuschnitt alle Folgetasks. Noch nie begonnene Tasks werden dagegen
+  einfach überarbeitet; der Commit ist Beleg genug.
+- **Teil-IDs** `TASK-####.N`: für die Teile eines Neuschnitts und für
+  Tasks, die nachträglich an einer bestimmten Stelle der Reihenfolge
+  stehen müssen (auch Einschub-Tasks). Sortiert wird numerisch je Stufe:
+  `0037` < `0037.1` < `0037.2` < `0038`.
+- **Neuschnitt**: eine Verhaltensfacette pro Teil-Task; bereits
+  eingefrorene Tests werden wörtlich auf die Teile verteilt und per
+  `git diff <freeze-commit>` als unverändert belegt.
+- **Zurückgestellte Findings**: Was aus einem Report bewusst nicht
+  behoben wurde, landet beim Abschluss der Initiative in
+  `state/MEMORY.md`; der Orchestrator fragt bei der nächsten Umsetzung,
+  ob es mitkommt.
 
 ---
 

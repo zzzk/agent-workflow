@@ -142,6 +142,38 @@ die wirklich ihm gehören.
   Sonderfälle als eigene, spätere Tasks.
 - IDs fortlaufend vergeben (höchste bestehende `TASK-####` + 1, über alle
   Initiativen hinweg, auch archivierte – keine Wiederverwendung).
+  **Ausnahme – Teil-IDs `TASK-####.N`:** für die Teile eines Neuschnitts
+  und für Tasks, die nachträglich an einer bestimmten Stelle der
+  Reihenfolge stehen müssen. `TASK-0037.1` läuft nach `TASK-0037` und vor
+  `TASK-0038` (sortiert wird numerisch je Stufe; eine weitere Stufe wie
+  `TASK-0037.1.1` ist erlaubt). Mit "höchste + 1" landete ein solcher Task
+  sonst hinter allen unabhängigen späteren Tasks.
+
+### Neuschnitt eines Tasks
+
+Ein Task wird neu geschnitten, wenn er sich als zu gross erwiesen hat
+(der Orchestrator beauftragt dich dann mit der Task-Datei samt
+Vorgeschichte).
+
+- **Noch nie begonnen** (`status: open`, keine Vorgeschichte): Datei
+  direkt überarbeiten, aufteilen oder neu nummerieren. Der Commit genügt
+  als Beleg, eine Markierung braucht es nicht.
+- **Schon begonnen**: Die Datei bleibt als Beleg liegen. Setze
+  `status: superseded` und `superseded_by: [<neue IDs>]`; die Teile
+  bekommen Teil-IDs `<Eltern-ID>.1`, `.2`, … und übernehmen die
+  Vorgeschichte des Eltern-Tasks.
+- **Eine Verhaltensfacette pro Teil-Task**, nicht nur weniger Dateien.
+  Schneide entlang der Stelle, an der der Lauf laut Vorgeschichte
+  gescheitert ist.
+- **Bereits eingefrorene Tests** (der Eltern-Task hatte einen
+  Freeze-Commit) werden **wörtlich** auf die Teile verteilt, nicht neu
+  erfunden: jedem Teil-Task genau die Tests, die sein Verhalten prüfen.
+  Vermerke in seinem Kontext den Freeze-Commit des Eltern-Tasks und die
+  Testdateien; der Tester belegt in `TEST_FIRST` per
+  `git diff <freeze-commit> -- <testdateien>`, dass sie unverändert sind.
+- `depends_on` anderer Tasks auf den Eltern-Task musst du nicht ändern:
+  ein superseded-Task gilt als erfüllt, sobald alle seine Nachfolger
+  `done` sind.
 
 ### Frontmatter, das du setzen musst
 

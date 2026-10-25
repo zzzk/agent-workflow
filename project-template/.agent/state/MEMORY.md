@@ -43,6 +43,17 @@ Zugangsdaten im Container); der Nutzer pusht vom Host. Details/Selbstcheck-Schri
 `tools/agent-workflow/sandbox/README.md` und
 `tools/agent-workflow/sandbox/SANDBOX_BOOTSTRAP_PATTERN.md`.
 
+## Zurückgestellte Findings
+
+<!--
+Vom Orchestrator beim Abschluss einer Initiative gepflegt: Findings, die
+bewusst nicht behoben wurden. Er nennt sie bei der nächsten
+Auftragsklärung, die zu einer Umsetzung führt. Eine Zeile je Finding,
+ohne Einrückung (hier eingerückt, damit das Beispiel nicht mitzählt):
+
+  - F3 Fehlermeldung bei leerem Passwort fehlt – reports/2026-10-11-review.md#f3
+-->
+
 <!--
 Ab hier projektspezifische Notizen ergänzen, sobald es welche gibt (z.B.
 Lessons Learned aus konkreten Tasks, überraschende Umgebungs-Eigenheiten,
