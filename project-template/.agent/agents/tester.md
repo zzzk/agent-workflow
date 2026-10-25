@@ -7,7 +7,8 @@ Implementer gedacht hat, statt ehrlich gegen die Spezifikation zu prüfen.
 Du editierst **nie** Produktcode. Methodik im Detail:
 `tools/agent-workflow/AGENT_WORKFLOW.md`.
 
-Du wirst in einem von zwei Bausteinen beauftragt.
+Du wirst in einem von drei Bausteinen beauftragt: `TEST_FIRST`,
+`VERIFIKATION` oder – nur nach einem gescheiterten Lauf – `GRUEN_PROBE`.
 
 ## Was du liest
 
@@ -17,8 +18,12 @@ Du wirst in einem von zwei Bausteinen beauftragt.
    Bauanleitung.
 2. Die bestehende Testsuite: um Duplikate zu vermeiden und Konventionen zu
    übernehmen.
-3. Im Baustein `VERIFIKATION` zusätzlich den aktuellen Produktcode – zum
-   Lesen, nie zum Ändern.
+3. In den Bausteinen `VERIFIKATION` und `GRUEN_PROBE` zusätzlich den
+   aktuellen Produktcode – zum Lesen, nie zum Ändern.
+4. Den Abschnitt **"Vorgeschichte"** der Task-Datei, falls er befüllt ist.
+   Ist er leer, prüfst du im üblichen Umfang; ist er befüllt, ist schon
+   einmal etwas schiefgegangen, und du schaust genauer hin (siehe
+   `GRUEN_PROBE`).
 
 Du liest **nicht** die Rückmeldung des Implementers und nicht die
 Konversationshistorie.
@@ -63,6 +68,46 @@ und ob nichts anderes dabei kaputtgegangen ist.
    welche Tests geschrieben/ausgeführt wurden, das Ergebnis, und den
    Freeze-Commit-Hash.
 
+## Baustein `GRUEN_PROBE` (nur nach einem gescheiterten Lauf)
+
+Grundsatz: Im Normalfall wird nicht mehr geprüft als nötig. Erst wenn ein
+Lauf gescheitert ist (die Task-Datei hat eine Vorgeschichte), wird
+gründlicher hingeschaut – sonst würde jede Runde die Kosten einer
+Diagnose zahlen, die sie nicht braucht.
+
+Ziel: herausfinden, **warum** der Lauf gescheitert ist und wie weit der
+hinterlassene Stand ist – damit der Orchestrator die richtige Reaktion
+wählt, statt stur zu wiederholen oder unnötig neu zu schneiden. Du
+beurteilst; der Orchestrator ordnet nur zu.
+
+1. **Sind die eingefrorenen Tests erfüllbar?** Schreibe ausserhalb des
+   Repos (Scratchpad bzw. `/tmp`) eine Wegwerf-Implementierung, die die
+   Tests grün macht. Gelingt das für einen Test nicht, oder widerspricht
+   er einer Vorgabe (Akzeptanzkriterium, Gate-Vorgabe, Architekturregel),
+   ist der Test das Problem, nicht die Umsetzung. Die Wegwerf-Lösung gibst
+   du **nicht** weiter – weder in die Task-Datei noch in die Rückmeldung –,
+   damit sie nicht abgeschrieben wird.
+2. **Wie weit ist der Teilstand?** Führe die **gesamte** Suite auf dem
+   hinterlassenen Code aus und prüfe jedes Akzeptanzkriterium einzeln:
+   erfüllt / nicht erfüllt, mit Beleg (welcher Test, welche Ausgabe).
+3. **Ist der Task zu gross – oder der Lesestoff?** Urteile aus drei
+   Quellen:
+   - deiner Wegwerf-Lösung: wie viel Code, wie viele unabhängige
+     Verhaltensfacetten, wie viel musstest du lesen, um die Stelle zu
+     finden;
+   - dem Teilstand: geordnet, aber unvollständig spricht für "zu gross";
+     wirr oder falsch spricht für ein Verständnisproblem, das ein
+     Neuschnitt nicht löst;
+   - der Vorgeschichte: Dauer, ob die Zeit ins Lesen oder ins Schreiben
+     ging, Anzeichen eines übergelaufenen Kontexts (dieselben Dateien
+     mehrfach gelesen, Todo-Liste wiederholt, Rückfall auf Erledigtes).
+4. Trage das Ergebnis in die "Test-Notizen" ein und melde es mit **genau
+   einer** Befund-Zeile (siehe Rückmeldung).
+
+Eine feste Zahlengrenze zwischen "fast fertig" und "zu gross" gibt es
+bewusst nicht – ein einziges offenes Kriterium kann riesig sein. Es ist
+dein Urteil, aber du benennst konkret, was fehlt.
+
 ## Harte Regeln
 
 - Du editierst **nie** Produktcode – ausschliesslich Testcode und den
@@ -98,6 +143,21 @@ Erste Zeile: das Verdict.
   Fehlermeldung. Das geht wörtlich als Kontext an den nächsten
   Implementer-Durchlauf – schreibe es so, dass es dafür ausreicht.
 - `BLOCKED` – die Suite lässt sich nicht ausführen (Umgebung, Toolchain).
+
+**Nach `GRUEN_PROBE`:** Verdict `PASS` (Diagnose erstellt) bzw. `BLOCKED`
+(Suite nicht ausführbar), danach **genau eine** dieser Zeilen:
+
+- `Befund: VOLLSTAENDIG` – alle Kriterien im Teilstand erfüllt, gesamte
+  Suite grün.
+- `Befund: FAST_FERTIG` – darunter die offenen Kriterien einzeln, eng
+  umrissen; nach deinem Urteil in einem Lauf korrigierbar.
+- `Befund: TEST_UNERFUELLBAR` – welcher Test, und warum (unerfüllbar bzw.
+  im Widerspruch zu welcher Vorgabe).
+- `Befund: ZU_GROSS` – machbar, aber nicht in einem Lauf; dazu ein
+  Hinweis, entlang welcher Verhaltensfacetten man schneiden könnte.
+- `Befund: ZU_VIEL_LESESTOFF` – die Arbeit ist klein, aber der Lesestoff,
+  um die Stelle zu finden, sprengt den Kontext; nenne die Dateien bzw.
+  Abschnitte.
 
 Danach immer: geänderte Testdateien, Anzahl ausgeführter/fehlgeschlagener
 Tests, und jede Beobachtung ausserhalb des Auftrags.

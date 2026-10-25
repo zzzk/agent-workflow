@@ -33,6 +33,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | Zielarchitektur neben Ist-Architektur; `spec/` als Ordner mit Index | Nr. 11, 12 |
 | Agent committet je Task auf `agent/<slug>`, pusht nie | Nr. 13 |
 | Vorgeschichte, `superseded`, Teil-IDs, zurückgestellte Findings | Nr. 14 |
+| `GRUEN_PROBE` und Entscheidungsregel nach gescheitertem Lauf | Nr. 15 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -195,6 +196,18 @@ beides.
     worden. Daraus: Abschnitt "Vorgeschichte", Status `superseded`,
     Teil-IDs `.N`, ein festes Neuschnitt-Muster und die Liste
     zurückgestellter Findings in `MEMORY.md`.
+15. **Ein Timeout ist keine Diagnose.** Die Regel "lokaler Timeout →
+    Neuschnitt" traf im Projekt viermal die falsche Reaktion:
+    TASK-0014.1 kostete einen 90-Minuten-Lauf und einen Neuschnitt, weil
+    Test 7 gar nicht erfüllbar war; bei TASK-0014.4 widersprach ein Test
+    einer Gate-Vorgabe; TASK-0020.1 hatte 15 von 17 Kriterien erfüllt und
+    brauchte nur einen kurzen Korrekturlauf; TASK-0020.2 war vollständig,
+    nur Testlauf und Verdict fehlten. Daraus der Grundsatz "gründlich
+    prüfen erst bei Problemen", die `GRUEN_PROBE` mit fester Befund-Zeile
+    und eine Entscheidungsregel, die der Orchestrator nur noch anwendet.
+    Der fünfte Befund `ZU_VIEL_LESESTOFF` kommt aus den Experimenten:
+    Doku-Tasks an grossen Dateien scheiterten nicht an der Arbeit,
+    sondern am Lesen (siehe Nr. 12) – dort hilft kein Neuschnitt.
 
 ---
 

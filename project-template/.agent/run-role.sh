@@ -197,6 +197,10 @@ sample_loop() {
   echo "$peak" > "$SAMPLE"
 }
 
+# Derselbe Versuch nach einem Setup-Fehler (orchestrator.md, Tabelle der
+# Abbruchgruende): das alte Log nicht ueberschreiben - es ist der Beleg.
+if [ -f "$LOG" ]; then mv "$LOG" "${LOG%.log}.$(date -u +%Y%m%dT%H%M%SZ).log"; fi
+
 START_TS="$(date -u +%FT%TZ)"
 START_S=$(date +%s)
 
@@ -243,7 +247,8 @@ echo "Log: $LOG"
 
 if [ -n "$PROBLEM" ]; then
   echo "ABBRUCH: $PROBLEM" >&2
-  echo "Das Ergebnis dieses Laufs ist NICHT verwertbar - nicht weiterarbeiten." >&2
+  echo "Nicht auf Verdacht weiterarbeiten: Reaktion je Grund siehe" >&2
+  echo "orchestrator.md, Tabelle der Abbruchgruende (Schritt 5)." >&2
   exit 3
 fi
 exit "$EXIT"

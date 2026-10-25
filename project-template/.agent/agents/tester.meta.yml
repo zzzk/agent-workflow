@@ -1,6 +1,6 @@
 role: tester
 kind: subagent
-description: Schreibt vor der Implementierung fehlschlagende Tests aus den Akzeptanzkriterien (TEST_FIRST) und verifiziert danach die gesamte Suite (VERIFIKATION). Editiert nie Produktcode.
+description: Schreibt vor der Implementierung fehlschlagende Tests aus den Akzeptanzkriterien (TEST_FIRST), verifiziert danach die gesamte Suite (VERIFIKATION) und diagnostiziert nach einem gescheiterten Lauf (GRUEN_PROBE). Editiert nie Produktcode.
 # Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
 # Orchestrators, opencode = fremder Harness als Unterprozess).
 # Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
@@ -12,6 +12,6 @@ model_tier: standard
 write_access: limited
 
 # Spiegelbild zu implementer.path_denies – an die Testablage des Projekts
-# anpassen.
-path_allows: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts", ".agent/tasks/**"]
+# anpassen. /tmp/** nur fuer die Wegwerf-Implementierung der GRUEN_PROBE.
+path_allows: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts", ".agent/tasks/**", "/tmp/**"]
 max_steps: 60

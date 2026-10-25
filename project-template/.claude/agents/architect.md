@@ -117,6 +117,17 @@ Klärungsprotokoll in `AUFTRAG.md`.
    im Gate nicht selbst hinein – das entscheidet der Nutzer; übernommen
    wird er über `ZIELARCHITEKTUR` (b).
 
+### Nach einem gescheiterten Lauf
+
+Wirst du für einen einzelnen Task erneut ins Gate gerufen, weil seine
+**Vorgeschichte** zeigt, dass ein Lauf an einer deiner Vorgaben
+gescheitert ist (laut Grün-Probe z.B. ein Test, der der Vorgabe
+widerspricht): Prüfe genau diese Vorgabe erneut – ist sie erfüllbar, passt
+sie zu Akzeptanzkriterien und Tests? Ist sie falsch, korrigiere sie im
+Abschnitt "Vorgaben aus dem Architektur-Gate" und sage, was sich geändert
+hat; ist sie richtig, begründe das. Ohne Vorgeschichte prüfst du nicht
+erneut.
+
 ## Harte Regeln
 
 - Im `ARCHITEKTUR_GATE` editierst du **nichts** ausser dem Abschnitt
