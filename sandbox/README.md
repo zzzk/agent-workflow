@@ -62,6 +62,12 @@ Mountet das Projektverzeichnis nach `/work`, plus `/work/.git` zusätzlich
 heraus — siehe Pattern-Doku Schritt 2). Landet in einer interaktiven
 `bash`-Shell im Container.
 
+Mit `--git-rw` entfällt der read-only-Mount: der Agent committet dann
+selbst (je Task), pusht aber nie – siehe Abschnitt "Commit-Flow" unten.
+Ein bestehender Container behält den Git-Modus, mit dem er angelegt wurde;
+passt der Aufruf nicht dazu, bricht das Skript ab (dann `--new` oder
+`docker rm`).
+
 Der Container heisst `agent-<projektordnername>` und läuft bewusst
 **ohne `--rm`**: nach `exit` bleibt er (gestoppt) erhalten. Ruft man
 `run-sandbox.sh` für dasselbe Projekt erneut auf, wird **derselbe**
@@ -176,8 +182,9 @@ EOF
 ```bash
 cat ~/.claude/settings.json | grep -A2 permissions
 ls /work/.claude/settings*.json 2>&1   # falls vorhanden: sicherstellen, dass dort KEIN bypassPermissions steht
-touch /work/.git/test_readonly 2>&1    # muss fehlschlagen ("Read-only file system")
+touch /work/.git/test_readonly 2>&1    # ohne --git-rw: muss fehlschlagen ("Read-only file system")
 git -C /work log --oneline -3          # muss trotzdem funktionieren
+ls ~/.ssh 2>&1; env | grep -i -e token -e github   # muss leer sein: keine Push-Zugangsdaten
 ```
 
 ## 6. Agent starten
@@ -187,10 +194,56 @@ cd /work
 claude
 ```
 
-## Commit-Flow (Entscheidung für dieses Projekt)
+## Commit-Flow: der Agent committet, nur du pushst
 
-Solange `.git` read-only gemountet ist, committet/pusht der Sandbox-Agent
-**nicht selbst**. Er bereitet den fertigen, getesteten Diff vor und
-vermerkt in `PROGRESS.md` (des jeweiligen Projekts) "bereit zum Commit:
-\<Commit-Message-Entwurf>". Der Host-seitige Agent bzw. der Nutzer sichtet
-den Diff und committet danach ausserhalb der Sandbox.
+Grundsatz: Der Agent hat **lokal volles Git** und committet je Task auf
+einem Branch je Auftrag (`agent/<slug>`) – das ist die Freeze-Grenze der
+Tests, der Wiederherstellungspunkt und die Grundlage dafür, dass
+`git diff` dem Implementer nur den eigenen Task zeigt. **Pushen kann er
+nicht**, weil der Container keine Zugangsdaten bekommt. Damit bleibt das
+Remote geschützt, ohne dass es Branch-Schutzregeln braucht (die GitHub bei
+privaten Repos im Free-Plan ohnehin nicht durchsetzt).
+
+### Einrichten, einmal pro Projekt (auf dem Host)
+
+```bash
+# 1. Eigener Klon nur fuer den Agenten – nicht deine Arbeitskopie
+git clone git@github.com:<owner>/<projekt>.git ~/agent-work/<projekt>
+git -C ~/agent-work/<projekt> config user.name  "Agent (<projekt>)"
+git -C ~/agent-work/<projekt> config user.email "agent@noreply.invalid"
+
+# 2. Sandbox darauf starten, mit beschreibbarem .git
+./run-sandbox.sh --git-rw ~/agent-work/<projekt>
+```
+
+Der eigene Klon ist die eigentliche Sicherung deiner Arbeit: Mit
+beschreibbarem `.git` könnte der Agent im gemounteten Repo auch Branches
+löschen oder Historie umschreiben. In seinem eigenen Klon trifft das nur
+seine eigenen, noch nicht abgeholten Commits – nie deine ungepushten
+Branches oder Stashes.
+
+### Übernehmen und sichern (auf dem Host, jederzeit)
+
+```bash
+# Branch des Agenten nach GitHub sichern – geht auch, waehrend er arbeitet
+git -C ~/agent-work/<projekt> push origin agent/<slug>
+
+# oder direkt in die eigene Arbeitskopie holen, ohne Umweg ueber GitHub
+git -C ~/code/<projekt> fetch ~/agent-work/<projekt> agent/<slug>
+```
+
+Gemergt wird nach `main`/`master` von dir, per PR (Squash oder Merge, wie
+du willst) – damit stören die vielen kleinen Task-Commits nicht.
+
+**Restrisiko:** Commits seit deinem letzten Push bzw. Abholen. Zerstört
+der Agent sein `.git`, sind sie weg. Abhilfe ist der Rhythmus: nach jedem
+Auftrag bzw. jedem Nachtlauf pushen.
+
+### Ohne `--git-rw`
+
+Bleibt `.git` read-only, committet der Agent **nicht selbst**. Er bereitet
+den fertigen, getesteten Diff vor und vermerkt in `PROGRESS.md` "bereit
+zum Commit: \<Commit-Message-Entwurf>"; du sichtest den Diff und
+committest ausserhalb der Sandbox. Die Freeze-Grenze der Tests muss der
+Orchestrator dann ohne Commit festhalten (siehe `orchestrator.md`) – das
+ist der Notbetrieb, nicht der Normalfall.

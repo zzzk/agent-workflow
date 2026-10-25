@@ -2,14 +2,21 @@
 # Startet die Agent-Sandbox für ein Projektverzeichnis.
 # Sicherheits-Hintergrund: SANDBOX_BOOTSTRAP_PATTERN.md in diesem Ordner.
 #
-# Usage: ./run-sandbox.sh [--new] /pfad/zum/projekt [image-name]
+# Usage: ./run-sandbox.sh [--new] [--git-rw] /pfad/zum/projekt [image-name]
 #
 # Wichtig (siehe Pattern-Doku Schritt 1+2):
 # - bypassPermissions wird NICHT hier gesetzt, sondern muss der Agent selbst
 #   user-scoped (~/.claude/settings.json IM Container) anlegen, sobald er
 #   drin ist und Schritt 0 (Selbstcheck) bestanden hat.
-# - .git wird zusätzlich read-only gemountet (spezifischerer Mount NACH dem
-#   allgemeinen Projekt-Mount, damit er darüberliegt).
+# - .git wird standardmässig zusätzlich read-only gemountet (spezifischerer
+#   Mount NACH dem allgemeinen Projekt-Mount, damit er darüberliegt).
+# - --git-rw laesst diesen read-only-Mount weg: der Agent darf dann lokal
+#   committen (Commit je Task, Freeze-Commit). Pushen kann er trotzdem
+#   nicht, weil der Container keine Zugangsdaten bekommt (kein ~/.ssh,
+#   kein Token) - pushen tut nur der Nutzer, vom Host aus. Gedacht fuer
+#   einen EIGENEN Klon des Projekts nur fuer den Agenten, nicht fuer die
+#   eigene Arbeitskopie (dort koennte er sonst ungepushte Branches/Stashes
+#   treffen). Siehe README.md, Abschnitt "Commit-Flow".
 # - Bewusst KEIN --rm: Container bleiben nach `exit` erhalten (nur gestoppt,
 #   nicht gelöscht), damit sich im Nachhinein nachvollziehen lässt, was in
 #   der Sandbox passiert ist (`docker logs`, `docker diff`). Aufräumen ist
@@ -35,12 +42,17 @@ set -euo pipefail
 export MSYS_NO_PATHCONV=1
 
 NEW_CONTAINER=0
-if [ "${1:-}" = "--new" ]; then
-  NEW_CONTAINER=1
-  shift
-fi
+GIT_RW=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --new)    NEW_CONTAINER=1; shift ;;
+    --git-rw) GIT_RW=1; shift ;;
+    --*)      echo "Fehler: unbekannte Option '$1'." >&2; exit 1 ;;
+    *)        break ;;
+  esac
+done
 
-PROJECT_DIR="${1:?Usage: run-sandbox.sh [--new] /pfad/zum/projekt [image-name]}"
+PROJECT_DIR="${1:?Usage: run-sandbox.sh [--new] [--git-rw] /pfad/zum/projekt [image-name]}
 IMAGE_NAME="${2:-agent-sandbox:latest}"
 
 if [ ! -d "$PROJECT_DIR" ]; then
@@ -68,9 +80,20 @@ mount_source_of() {
   docker inspect -f '{{range .Mounts}}{{if eq .Destination "/work"}}{{.Source}}{{end}}{{end}}' "$1" 2>/dev/null
 }
 
+# Git-Modus eines bestehenden Containers: "false" = eigener read-only
+# Mount auf /work/.git, leer = kein eigener Mount (also beschreibbar).
+git_mode_of() {
+  docker inspect -f '{{range .Mounts}}{{if eq .Destination "/work/.git"}}{{.RW}}{{end}}{{end}}' "$1" 2>/dev/null
+}
+
 if [ ! -d "$PROJECT_DIR/.git" ]; then
   echo "Warnung: '$PROJECT_DIR/.git' nicht gefunden — Sandbox startet ohne" >&2
-  echo "read-only Git-Mount. Falls das Projekt ein Git-Repo ist, prüfen." >&2
+  echo "Git-Mount. Falls das Projekt ein Git-Repo ist, prüfen." >&2
+  GIT_MOUNT_ARGS=()
+elif [ "$GIT_RW" = 1 ]; then
+  echo "Git beschreibbar (--git-rw): der Agent darf lokal committen, aber" >&2
+  echo "nicht pushen. Dieses Verzeichnis sollte ein eigener Klon nur fuer den" >&2
+  echo "Agenten sein, nicht deine Arbeitskopie." >&2
   GIT_MOUNT_ARGS=()
 else
   GIT_MOUNT_ARGS=(-v "$PROJECT_DIR/.git:/work/.git:ro")
@@ -86,7 +109,7 @@ if [ "$NEW_CONTAINER" = 1 ]; then
   exec docker run -it \
     --name "$CONTAINER_NAME" \
     -v "$PROJECT_DIR:/work" \
-    "${GIT_MOUNT_ARGS[@]}" \
+    ${GIT_MOUNT_ARGS[@]+"${GIT_MOUNT_ARGS[@]}"} \
     "${HOST_GATEWAY_ARGS[@]}" \
     "$IMAGE_NAME" \
     bash
@@ -100,6 +123,25 @@ if docker container inspect "$BASE_NAME" >/dev/null 2>&1; then
     echo "Mit --new einen zusaetzlichen Container anlegen, oder erst" >&2
     echo "'docker rm $BASE_NAME' aufraeumen." >&2
     exit 1
+  fi
+
+  # Mounts eines Containers stehen bei seiner Erstellung fest. Passt der
+  # Git-Modus nicht zum Aufruf, waere die Wiederverwendung eine stille
+  # Ueberraschung (Agent kann nicht committen bzw. kann es unerwartet).
+  EXISTING_GIT_MODE="$(git_mode_of "$BASE_NAME")"
+  if [ -d "$PROJECT_DIR/.git" ]; then
+    if [ "$GIT_RW" = 1 ] && [ "$EXISTING_GIT_MODE" = "false" ]; then
+      echo "Fehler: Container '$BASE_NAME' hat .git read-only gemountet," >&2
+      echo "aufgerufen wurde mit --git-rw. Mit --new einen neuen Container" >&2
+      echo "anlegen, oder erst 'docker rm $BASE_NAME' aufraeumen." >&2
+      exit 1
+    fi
+    if [ "$GIT_RW" = 0 ] && [ -z "$EXISTING_GIT_MODE" ]; then
+      echo "Fehler: Container '$BASE_NAME' hat .git beschreibbar (--git-rw)," >&2
+      echo "aufgerufen wurde ohne --git-rw. Mit --git-rw starten, mit --new" >&2
+      echo "einen neuen Container anlegen, oder 'docker rm $BASE_NAME'." >&2
+      exit 1
+    fi
   fi
 
   IS_RUNNING="$(docker inspect -f '{{.State.Running}}' "$BASE_NAME")"
@@ -117,7 +159,7 @@ echo "Neuer Container: $BASE_NAME (spaeter: docker logs/diff/start -ai $BASE_NAM
 exec docker run -it \
   --name "$BASE_NAME" \
   -v "$PROJECT_DIR:/work" \
-  "${GIT_MOUNT_ARGS[@]}" \
+  ${GIT_MOUNT_ARGS[@]+"${GIT_MOUNT_ARGS[@]}"} \
   "${HOST_GATEWAY_ARGS[@]}" \
   "$IMAGE_NAME" \
   bash

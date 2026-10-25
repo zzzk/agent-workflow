@@ -31,6 +31,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | `AUFTRAGSKLAERUNG`, `state/AUFTRAG.md`, Modus `REQUIREMENTS` | Nr. 8 |
 | `SPEC_REVIEW` vor dem Planen; Einschub-Tasks mit Protokoll | Nr. 9, 10 |
 | Zielarchitektur neben Ist-Architektur; `spec/` als Ordner mit Index | Nr. 11, 12 |
+| Agent committet je Task auf `agent/<slug>`, pusht nie | Nr. 13 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -167,6 +168,21 @@ beides.
     aus Ordnern mit kleinem Index und Kapiteldateien, und der Orchestrator
     prüft beim Abschluss jeder Initiative, ob eine Datei über ~30 KB
     gewachsen ist.
+13. **Read-only `.git` kostete mehr, als es schützte.** In der Sandbox war
+    `.git` read-only gemountet, damit der Agent nichts zerstören kann.
+    Folgen: keine Freeze-Commits (der Orchestrator behalf sich mit
+    sha256-Snapshots, die einmal eine Datei verpassten, weil per Glob
+    statt per `find` gesammelt); `git diff` zeigte dem lokalen
+    Implementer die Änderungen aller Vortasks und verwirrte seinen
+    Selbst-Check (TASK-0037); und Commit-Punkte, die der Nutzer von Hand
+    setzen musste, kosteten auf gemieteter GPU Leerlauf. Geprüft und
+    verworfen: ein Wächter-Skript für Commits (zu aufwändig einzurichten),
+    GitHub-Branch-Schutz (für private Repos im Free-Plan nicht
+    durchgesetzt), ein Fork (laufender Abgleich). Entschieden: Der Agent
+    arbeitet in einem eigenen Klon mit beschreibbarem `.git` und
+    committet frei, bekommt aber keine Zugangsdaten – pushen tut nur der
+    Nutzer. Das schützt das Remote vollständig; lokal verlierbar sind nur
+    Commits seit dem letzten Push.
 
 ---
 

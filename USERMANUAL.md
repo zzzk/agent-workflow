@@ -398,11 +398,14 @@ Fragerunde. Am Ende stehen die fertigen Requirements – noch kein Code. Existie
 Zwei Dinge gehören **vor** den ersten Task geklärt, sonst bremsen sie
 jeden Lauf.
 
-**Git**: kein Repo → `git init` plus initialer Commit. Bestehendes Repo →
-der Orchestrator fragt, ob auf dem aktuellen Branch weitergearbeitet oder
-ein eigener Branch für die Initiative angelegt wird. Ohne Repo gibt es
-keine nachvollziehbaren Zwischenstände – ein Commit pro verifiziertem Task
-ist Teil der Methodik.
+**Git**: kein Repo → `git init` plus initialer Commit. Jeder Auftrag läuft
+auf einem eigenen Branch `agent/<slug>`; der Agent committet je Task (und
+nach jedem Baustein, der etwas geändert hat), **gepusht wird nur von
+dir**. Ohne Commits gibt es keine Freeze-Grenze für die Tests und keine
+Wiederherstellungspunkte – ein Commit pro verifiziertem Task ist Teil der
+Methodik. Übernehmen kannst du den Branch jederzeit:
+`git push origin agent/<slug>` aus dem Klon des Agenten, oder
+`git fetch <klon-des-agenten> agent/<slug>` in deine Arbeitskopie.
 
 **Berechtigungen**: Muss der Agent bei jedem Dateizugriff einzeln fragen,
 ist "selbständig durchlaufen lassen" nicht möglich.
@@ -410,10 +413,12 @@ ist "selbständig durchlaufen lassen" nicht möglich.
 - **Claude Code**: `/permissions` bzw. `.claude/settings.json`; der Skill
   `fewer-permission-prompts` erzeugt eine passende Allowlist aus deiner
   bisherigen Nutzung. Sub-Agenten erben deinen Berechtigungsmodus.
-- **Sandbox** (empfohlen für volle Freiheit): `sandbox/run-sandbox.sh`,
-  danach die Selbstcheck-Schritte aus `sandbox/README.md`. Achtung: dort
-  ist `.git` read-only gemountet – der Orchestrator bereitet dann Diffs
-  statt Commits vor.
+- **Sandbox** (empfohlen für volle Freiheit): auf einem **eigenen Klon**
+  des Projekts `sandbox/run-sandbox.sh --git-rw <klon>`, danach die
+  Selbstcheck-Schritte aus `sandbox/README.md`. Ohne `--git-rw` ist `.git`
+  read-only gemountet; dann stoppt der Orchestrator und schlägt den
+  Neustart vor (Notbetrieb ohne Commits nur auf deinen ausdrücklichen
+  Wunsch).
 - **OpenCode headless**: `opencode run` **fragt nicht** – ohne `--auto`
   wird jede Berechtigungsanfrage still **abgelehnt** und der Lauf geht
   weiter. Ergebnis wäre ein "erfolgreicher" Lauf, der nichts geschrieben
