@@ -67,7 +67,7 @@ flowchart TB
 
     P & A & I & T & R -.-> O
 
-    F[("<b>.agent/</b><br/>state/AUFTRAG.md<br/>spec/Requirements.md<br/>spec/Architecture.md<br/>tasks/TASK-0001-...md<br/>reports/, PROGRESS.md")]
+    F[("<b>.agent/</b><br/>state/AUFTRAG.md<br/>spec/requirements/<br/>spec/architecture/<br/>tasks/TASK-0001-...md<br/>reports/, PROGRESS.md")]
 
     P & A & I & T & R <--> F
     O <--> F
@@ -92,12 +92,12 @@ flowchart TD
     AU --> M{"Auftragstyp<br/>ergibt sich aus dem Auftrag"}
 
     M -->|"Anforderungen erarbeiten"| RQ["REQUIREMENTS<br/>KLAERUNG je Thema,<br/>bis nichts mehr offen ist,<br/>dann SPEC_REVIEW"]
-    M -->|"neues Feature"| FE["FEATURE<br/>KLAERUNG - SPEC_REVIEW - PLAN -<br/>ARCHITEKTUR_GATE"]
+    M -->|"neues Feature"| FE["FEATURE<br/>KLAERUNG - SPEC_REVIEW -<br/>(ZIELARCHITEKTUR) - PLAN -<br/>ARCHITEKTUR_GATE"]
     M -->|"Report abarbeiten"| FI["FIX<br/>PLAN"]
     M -->|"manuell getestet"| MT["MANUELLER-TEST<br/>TRIAGE"]
     M -->|"nur prüfen"| AD["AUDIT<br/>REVIEW"]
     M -->|"1-2 Dateien"| EA["EINZELAUFTRAG<br/>Task vom Orchestrator"]
-    M -->|"fremder Code, keine Doku"| BO["BOOTSTRAP<br/>MAP"]
+    M -->|"fremder Code, keine Doku"| BO["BOOTSTRAP<br/>MAP - ZIELARCHITEKTUR"]
 
     FE --> TL["Task-Schleife<br/>je Task, siehe Bild 3"]
     FI --> TL
@@ -184,14 +184,16 @@ ein Report, o.ä.) tatsächlich braucht.
    `.agent/tasks/TASK-*.md`-Dateien (Baustein `PLAN`). Braucht mehr
    Kontext/Fähigkeit als die Ausführungsrollen – hier lohnt das stärkste
    verfügbare Modell.
-3. **Architekt** (`architect.md`) – Read-only Gutachter, der
-   den **Plan** gegen `spec/Architecture.md` prüft, **bevor** Code
-   entsteht: passt das Vorhaben in eine bestehende Abstraktion oder
+3. **Architekt** (`architect.md`) – schlägt die **Zielarchitektur** vor
+   (Baustein `ZIELARCHITEKTUR`, der Nutzer entscheidet) und prüft als
+   read-only Gutachter den **Plan** gegen Ziel- und Ist-Architektur unter
+   `spec/architecture/`, **bevor** Code entsteht: passt das Vorhaben in eine bestehende Abstraktion oder
    braucht es wirklich eine neue? Werden Schichtgrenzen verletzt? Kommt
    eine Abhängigkeit dazu, die es schon gibt? Fängt Architektur-Drift
    dann ab, wenn sie noch nichts kostet.
 4. **Implementer** (`implementer.md`) – setzt **genau einen** Task um
-   (Code + ggf. minimale Doku/Architecture-Update), nichts darüber hinaus.
+   (Code + ggf. minimale Doku/Nachführen der Ist-Architektur), nichts
+   darüber hinaus.
    Kennt weder vorherige noch zukünftige Tasks im Detail.
 5. **Tester** (`tester.md`) – unabhängig vom Implementer, kennt nur die
    **Akzeptanzkriterien** des Tasks (nicht die Implementierungs-
@@ -202,10 +204,10 @@ ein Report, o.ä.) tatsächlich braucht.
    gedacht hat, statt echt gegen die Spezifikation zu prüfen.
 6. **Reviewer** (`reviewer.md`) – read-only Auditor, editiert nie
    Produktcode/Tests. Vier Bausteine: `MAP` (Bestandsaufnahme eines
-   bestehenden Codebestands → `spec/Architecture.md`), `SPEC_REVIEW`
+   bestehenden Codebestands → `spec/architecture/ist.md`), `SPEC_REVIEW`
    (Requirements auf Vollständigkeit, Widerspruchsfreiheit und
    Prüfbarkeit prüfen → Report mit Befunden), `REVIEW` (Code + Tests gegen
-   `spec/` prüfen → datierter Report) und `TRIAGE` (Rohmaterial aus
+   `spec/` prüfen, inklusive Ist gegen Soll → datierter Report) und `TRIAGE` (Rohmaterial aus
    manuellem Testen in `.agent/inbox/` → Report).
    Erzeugt selbst keine Tasks – das macht der Planner aus dem Report.
 
@@ -274,11 +276,12 @@ nichts zu tun hätten, werden gar nicht erst gestartet.
 | Baustein | Rolle | Aktivierung | Input | Ergebnis |
 |---|---|---|---|---|
 | `AUFTRAGSKLAERUNG` | Orchestrator | **immer**, als erster Baustein jeder Initiative | Nutzer-Anliegen, Lage im Repo | `state/AUFTRAG.md` + der daraus abgeleitete Auftragstyp |
-| `MAP` | Reviewer | `spec/Architecture.md` fehlt/leer, aber Code existiert | vorhandener Code | `spec/Architecture.md` |
-| `KLAERUNG` | Planner | Anforderung unklar oder `spec/Requirements.md` lückenhaft, oder Befunde aus `SPEC_REVIEW` | `state/AUFTRAG.md`, `spec/`, ggf. Spec-Review-Report | Fragerunde im Klärungsprotokoll **oder** ausformulierte Anforderung in `Requirements.md` |
-| `SPEC_REVIEW` | Reviewer | einmal pro Initiative, nach der letzten `KLAERUNG` (Ablauf `REQUIREMENTS` und `FEATURE`, Ausnahme siehe Teil C) | `spec/Requirements.md`, `spec/Architecture.md` | `reports/<datum>-spec-review.md` mit Befunden – keine Fragen |
+| `MAP` | Reviewer | Ist-Architektur leer, aber Code existiert | vorhandener Code | `spec/architecture/ist.md` |
+| `KLAERUNG` | Planner | Anforderung unklar oder Requirements lückenhaft, oder Befunde aus `SPEC_REVIEW` | `state/AUFTRAG.md`, `spec/`, ggf. Spec-Review-Report | Fragerunde im Klärungsprotokoll **oder** ausformulierte Anforderung unter `spec/requirements/` |
+| `SPEC_REVIEW` | Reviewer | einmal pro Initiative, nach der letzten `KLAERUNG` (Ablauf `REQUIREMENTS` und `FEATURE`, Ausnahme siehe Teil C) | `spec/requirements/`, `spec/architecture/ziel.md` | `reports/<datum>-spec-review.md` mit Befunden – keine Fragen |
+| `ZIELARCHITEKTUR` | Architekt | nach `MAP`; im Ablauf `FEATURE` vor `PLAN`, wenn `ziel.md` leer ist | Requirements, Ist-Architektur, Code | (a) Vorschlagsrunde im Klärungsprotokoll, (b) nach Nutzerentscheid `spec/architecture/ziel.md` |
 | `PLAN` | Planner | immer, ausser bei Einzelauftrag | Anforderung oder Report | `tasks/TASK-*.md` (+ ggf. `state/IMPLEMENTATION_PLAN.md`) |
-| `ARCHITEKTUR_GATE` | Architekt | Plan führt neue Komponente/Schnittstelle/Abhängigkeit ein | Task-Set, `spec/Architecture.md` | Verdict + Vorgaben für Implementer |
+| `ARCHITEKTUR_GATE` | Architekt | Plan führt neue Komponente/Schnittstelle/Abhängigkeit ein | Task-Set, `spec/architecture/` (Ziel und Ist) | Verdict + Vorgaben für Implementer |
 | `TEST_FIRST` | Tester | pro Task, sofern nicht abgewählt | nur Akzeptanzkriterien des Tasks | fehlschlagende Tests + Commit (Freeze-Grenze) |
 | `UMSETZUNG` | Implementer | pro Task | vollständige Task-Datei | Code-Änderung |
 | `VERIFIKATION` | Tester | pro Task, nach `UMSETZUNG` | Akzeptanzkriterien + Testlauf | Verdict + Test-Notizen in der Task-Datei |
@@ -314,7 +317,7 @@ Die beiden Klärungen sind bewusst getrennt:
 | Baustein | Rolle | Klärt | Ergebnis |
 |---|---|---|---|
 | `AUFTRAGSKLAERUNG` | Orchestrator (im Dialog) | *Was für Arbeit, welcher Umfang?* | `state/AUFTRAG.md` + Auftragstyp |
-| `KLAERUNG` | Planner (Subagent, je Runde ein Aufruf) | *Ist diese Anforderung planbar?* | Fragen bzw. Anforderung in `spec/Requirements.md` |
+| `KLAERUNG` | Planner (Subagent, je Runde ein Aufruf) | *Ist diese Anforderung planbar?* | Fragen bzw. Anforderung unter `spec/requirements/` |
 
 ### `SPEC_REVIEW`: ein unabhängiges Auge auf die Anforderungen
 
@@ -323,19 +326,35 @@ beim Tester, beim Architekten oder als Neuschnitt durch den Planner, also
 dann, wenn sie am teuersten sind. Der Planner hat die Anforderungen selbst
 ausformuliert; seine Prüfung wäre eine Selbstauskunft, und Selbstauskunft
 wird in diesem Workflow nicht geglaubt. Deshalb prüft der Reviewer
-`spec/Requirements.md` einmal pro Initiative auf:
+die Requirements (`spec/requirements/`) einmal pro Initiative auf:
 
 - **Prüfbarkeit**: jede Anforderung hat ein prüfbares Kriterium,
 - **Vollständigkeit**: alle sichtbaren Texte sind festgelegt, das
   Fehlerverhalten ist für jede Aktion festgelegt,
 - **Widerspruchsfreiheit**: untereinander und gegenüber
-  `spec/Architecture.md`.
+  der Zielarchitektur (`spec/architecture/ziel.md`).
 
 Er liefert **Befunde, keine Fragen**. Daraus formuliert der Planner in
 einer zusätzlichen `KLAERUNG`-Runde die Fragen an den Nutzer, je mit
 Vorschlag als Default – der Reviewer kennt den Nutzer nicht, der Planner
 kennt das Klärungsprotokoll. Einmal pro Initiative heisst: nach dieser
 Fragerunde folgt kein zweiter `SPEC_REVIEW`, die Schleife ist begrenzt.
+
+### Zielarchitektur und Ist-Architektur
+
+Die Architektur hat zwei Sichten mit verschiedenen Besitzern:
+
+| | Zielarchitektur (top-down, `ziel.md`) | Ist-Architektur (bottom-up, `ist.md`) |
+|---|---|---|
+| Inhalt | Systemkontext, Bausteine/Schichten, Architekturregeln, Entscheidungen, Qualitätsziele | Komponenten wie heute im Code: Zuständigkeit, Schnittstelle, Abhängigkeiten, Invarianten |
+| Wer schreibt | Architekt schlägt vor, der **Nutzer entscheidet** | Reviewer (`MAP`), danach der Implementer je Task |
+| ändert sich | nur durch bewussten Entscheid | mit jedem Task, der einen Vertrag ändert |
+
+Das `ARCHITEKTUR_GATE` misst einen Plan am Soll, der `REVIEW` das Ist am
+Soll; jede Abweichung ist ein Finding, ausser sie steht als bewusst
+akzeptierte Lücke in `abweichungen.md`. Ohne Zielarchitektur gäbe es nur
+die Beschreibung dessen, was zufällig entstanden ist – Gate und Review
+hätten keinen Massstab.
 
 ### Aktivierung: mechanisch, wo es geht
 
@@ -397,9 +416,11 @@ notiert und ein eigener Auftrag.
 
 ```
 BOOTSTRAP (Brownfield, erstmalig)
-  MAP → danach neue AUFTRAGSKLAERUNG (meist REQUIREMENTS oder AUDIT)
+  MAP → ZIELARCHITEKTUR(a: Vorschlag) → Nutzer entscheidet
+      → ZIELARCHITEKTUR(b: in ziel.md übernehmen)
+  → danach neue AUFTRAGSKLAERUNG (meist REQUIREMENTS oder AUDIT)
 
-REQUIREMENTS (Anforderungen erarbeiten – Deliverable ist spec/Requirements.md)
+REQUIREMENTS (Anforderungen erarbeiten – Deliverable ist spec/requirements/)
   je Thema: KLAERUNG(a: Fragerunde) → Nutzer antwortet (Orchestrator)
           → KLAERUNG(b: Ausformulierung)
   bis der Planner "keine offenen Themen" meldet
@@ -408,6 +429,7 @@ REQUIREMENTS (Anforderungen erarbeiten – Deliverable ist spec/Requirements.md)
 
 FEATURE (neue Anforderung umsetzen)
   KLAERUNG → SPEC_REVIEW → bei Befunden: eine KLAERUNG-Runde dazu
+           → ZIELARCHITEKTUR (a, b) – nur wenn ziel.md noch leer ist
            → PLAN → ARCHITEKTUR_GATE
            → [ TEST_FIRST → UMSETZUNG → VERIFIKATION ] pro Task
            → REVIEW
@@ -449,7 +471,7 @@ Agenten:
 2. Der Orchestrator stellt sie dem Nutzer wörtlich und trägt die Antworten
    in dieselbe Runde ein.
 3. `KLAERUNG` (b): ein **frischer** Planner liest das Protokoll,
-   formuliert das Thema in `spec/Requirements.md` aus und meldet als
+   formuliert das Thema unter `spec/requirements/` aus und meldet als
    letzte Zeile `nächstes Thema: <…>` oder `keine offenen Themen`.
 4. Der Orchestrator verzweigt daran: weitere Runde oder fertig. Nach fünf
    Runden ohne Abschluss stoppt er und fragt den Nutzer – eine Klärung,
@@ -478,7 +500,8 @@ Begründung und der reale Vorfall, der zu dieser Regel führte: siehe
 ### Start jeder Session
 
 1. **Lage ermitteln** – mechanisch, nicht aus dem Gedächtnis:
-   `spec/Architecture.md` (leer, aber Code vorhanden?), `.agent/tasks/*.md`
+   `spec/architecture/ist.md` (leer, aber Code vorhanden?), `ziel.md`
+   (leer?), `.agent/tasks/*.md`
    nach `status: open`/`in_progress`, `.agent/inbox/` auf Material,
    `state/AUFTRAG.md` auf einen unterbrochenen Lauf.
    - Offene Tasks → dem Nutzer melden (Anzahl, Titel), fragen ob
@@ -575,11 +598,17 @@ AGENTS.md                        # Projekt-Root, @-importiert agents/orchestrato
 CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
 
 .agent/
-  spec/                          # dauerhaftes Produktwissen (PascalCase –
-                                 # relevant unabhängig von diesem Workflow)
-    Requirements.md              # funktionale Anforderungen, ändert sich selten
-    Architecture.md              # aktuelle Komponenten/Verantwortlichkeiten,
-                                 # lebendig gehalten, keine Historie
+  spec/                          # dauerhaftes Produktwissen – relevant
+                                 # unabhängig von diesem Workflow
+    requirements/                # funktionale Anforderungen, ändern sich selten
+      README.md                  # Index: Kontext, Nicht-Ziele, Stufen, Kapitelliste
+      <bereich>.md               # je Bereich ein Kapitel
+    architecture/
+      README.md                  # Index: welche Sicht steht wo
+      ziel.md                    # Soll (top-down), Nutzer entscheidet
+      ist.md                     # Ist (bottom-up), je Task nachgeführt
+      abweichungen.md            # bewusst akzeptierte Lücke Soll ↔ Ist
+      komponenten/<name>.md      # ausgelagerte Kapitel, erst bei Bedarf
 
   state/                         # veränderlicher Workflow-Zustand (SCREAMING_SNAKE)
     AUFTRAG.md                   # NUR das aktuell geklärte Anliegen samt
@@ -621,11 +650,18 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
 .opencode/agent/                 # generierte Adapter – nicht von Hand editieren
 ```
 
-Die Drei-Stufen-Schreibweise ist bewusst: `PascalCase` = kuratiertes
-Referenzdokument über die Software selbst, `SCREAMING_SNAKE` = einzelner,
-mutierbarer Zustand, `lowercase` = viele gleichartige Instanzen
-(Rollen/Tasks/Reports). Wer eine Datei sieht, weiss am Namen, in welche
+Die Schreibweise ist bewusst: `SCREAMING_SNAKE` = einzelner, mutierbarer
+Zustand, `lowercase` = viele gleichartige Instanzen (Rollen, Tasks,
+Reports, Spec-Kapitel). Wer eine Datei sieht, weiss am Namen, in welche
 Kategorie sie gehört.
+
+**Warum `spec/` aus Ordnern mit Index besteht:** Eine Rolle mit kleinem
+Kontext liest den Index und genau die Kapitel, die ihr Auftrag berührt –
+nicht eine 130-KB-Datei. Wird ein Kapitel grösser als etwa 30 KB (rund
+ein Viertel eines 64k-Kontexts), wird sein grösster eigenständiger Teil
+ausgelagert und im Index eingetragen. Der Orchestrator prüft das beim
+Abschluss jeder Initiative mechanisch (`find .agent/spec -size +30k`) und
+schlägt das Aufteilen als eigenen Auftrag vor.
 
 ### Task-Datei-Format (`.agent/tasks/TASK-####-<slug>.md`)
 
@@ -661,7 +697,7 @@ test_first: true        # false nur mit Begründung im Kontext-Abschnitt
 
 ## Kontext
 <nur was nötig ist: exakte Zeilen-/Snippet-Referenzen, der Finding-Text,
-Verweis auf den relevanten Architecture.md-Abschnitt – nicht die ganze
+Verweis auf den relevanten Abschnitt unter spec/architecture/ – nicht die ganze
 Datei, nicht die Konversationshistorie>
 
 ## Vorgaben aus dem Architektur-Gate

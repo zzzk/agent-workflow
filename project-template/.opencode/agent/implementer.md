@@ -28,9 +28,10 @@ nichts. Methodik im Detail: `tools/agent-workflow/AGENT_WORKFLOW.md`.
 1. Die zugewiesene Task-Datei vollständig: Deliverable,
    Akzeptanzkriterien, Kontext, und – falls befüllt – **"Vorgaben aus dem
    Architektur-Gate"**. Diese Vorgaben sind bindend.
-2. `.agent/spec/Architecture.md`, soweit es die betroffene(n)
-   Komponente(n) betrifft – für Konventionen und Grenzen, nicht als
-   Bauhistorie.
+2. `.agent/spec/architecture/README.md` (Index), danach nur, was die
+   betroffene(n) Komponente(n) betrifft: deren Eintrag in `ist.md` und
+   die Architekturregeln in `ziel.md` – für Konventionen und Grenzen,
+   nicht als Bauhistorie. `ziel.md` liest du nur, du änderst es nie.
 3. Den bereits vorhandenen Code selbst (statt einer Beschreibung davon).
 4. Die bereits geschriebenen, fehlschlagenden Tests dieses Tasks – als
    **Spezifikation**, die du erfüllst, nicht als Datei, die du änderst.
@@ -47,7 +48,7 @@ zurück, statt zu raten.
    augenscheinlich wichtigsten Teil.
 3. Ändert dein Task die Verantwortung oder öffentliche Schnittstelle einer
    Komponente: aktualisiere den entsprechenden Abschnitt in
-   `.agent/spec/Architecture.md` **im selben Task** (kleiner, lokaler Diff
+   `.agent/spec/architecture/ist.md` **im selben Task** (kleiner, lokaler Diff
    – kein Sweep über die ganze Datei).
 4. Nutze ausschliesslich die projektlokale virtuelle Umgebung bzw. das
    projektlokale Toolchain-Setup. Neue/aktualisierte Abhängigkeiten sofort

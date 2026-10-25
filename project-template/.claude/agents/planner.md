@@ -29,9 +29,13 @@ und startest selbst keine anderen Rollen. Methodik im Detail:
 2. Den Baustein-Auftrag des Orchestrators: welche Ausprägung von
    `KLAERUNG` (ggf. mit einem Spec-Review-Report als Quelle der Fragen),
    bzw. welcher Report unter `.agent/reports/` zu zerlegen ist.
-3. `.agent/spec/Requirements.md` – was das Produkt können soll.
-4. `.agent/spec/Architecture.md` – welche Komponenten existieren und wie
-   sie zusammenspielen (statt aus einer alten Plan-Historie zu raten).
+3. `.agent/spec/requirements/README.md` (Index) und die Kapitel, die der
+   Auftrag berührt – was das Produkt können soll. Bei einer Stufen-
+   Kennzeichnung gehört nur die Stufe des Auftrags in den Plan.
+4. `.agent/spec/architecture/README.md` (Index), `ziel.md` (wie es sein
+   soll, Architekturregeln) und `ist.md` (welche Komponenten heute
+   existieren und wie sie zusammenspielen – statt aus einer alten
+   Plan-Historie zu raten).
 5. Den bestehenden Code, soweit nötig, um exakte Referenzen (Datei:Zeile)
    in die Task-Dateien schreiben zu können.
 
@@ -56,7 +60,7 @@ beginnt.
 ### (a) Fragerunde – "was ist noch offen?"
 
 1. Lies `AUFTRAG.md` inklusive aller bisherigen Runden und den betroffenen
-   Abschnitt von `Requirements.md`: Ist er vorhanden und eindeutig?
+   Kapitel unter `spec/requirements/`: Ist es vorhanden und eindeutig?
    Widerspricht der Auftrag etwas Bestehendem?
 2. Wähle **ein** Thema – dasjenige, ohne das am wenigsten planbar ist.
    Nicht alle Themen auf einmal: einen zusammenhängenden Block beantwortet
@@ -83,8 +87,12 @@ gross geschnitten ist – dann sag genau das, statt zu fragen.
 
 ### (b) Ausformulierung – "die Antworten sind da"
 
-1. Formuliere das geklärte Thema in `Requirements.md` aus: als Anforderung,
-   nicht als Frage-Antwort-Protokoll. Das Protokoll bleibt in `AUFTRAG.md`
+1. Formuliere das geklärte Thema im passenden Kapitel unter
+   `spec/requirements/` aus (neues Kapitel → Datei anlegen und im Index
+   `README.md` eintragen): als Anforderung, nicht als
+   Frage-Antwort-Protokoll. Werden die Anforderungen in Stufen umgesetzt,
+   trägt jeder Abschnitt seine Stufe, und die Übersicht im Index wird
+   nachgeführt. Das Protokoll bleibt in `AUFTRAG.md`
    und wandert mit ihm ins Archiv.
 2. Prüfe danach, ob ein weiteres Thema offen ist, und sage das ausdrücklich
    als letzte Zeile deiner Rückmeldung: **"nächstes Thema: <Thema>"** oder
@@ -101,7 +109,7 @@ die wirklich ihm gehören.
 
 1. Schreibe die Initiative in `.agent/state/IMPLEMENTATION_PLAN.md` (Ziel +
    Ausgangslage, siehe Vorlage in der Datei). Ziel und Umfang kommen aus
-   `AUFTRAG.md`, die fachliche Substanz aus `Requirements.md`.
+   `AUFTRAG.md`, die fachliche Substanz aus `spec/requirements/`.
 2. Zerlege sie in Tasks nach `.agent/tasks/TEMPLATE.md`. Was laut
    `AUFTRAG.md` ausdrücklich "draussen" ist, wird kein Task – auch nicht
    als kleine Dreingabe.
@@ -115,8 +123,7 @@ die wirklich ihm gehören.
    verweist direkt auf den Report-Abschnitt.
 3. Findings, die eine Architekturentscheidung berühren (nicht nur ein
    lokaler Bug) und nicht sofort behoben werden, zusätzlich unter
-   "Bekannte Abweichungen/Schulden" in `.agent/spec/Architecture.md`
-   vermerken.
+   in `.agent/spec/architecture/abweichungen.md` vermerken.
 
 ## Regeln für Tasks
 
@@ -129,7 +136,7 @@ die wirklich ihm gehören.
   Fehlerfälle, Negativ-Tests – nie "funktioniert gut".
 - Der Abschnitt "Kontext" enthält nur, was der Implementer wirklich
   braucht (exakte Zeilen-/Snippet-Referenzen, der Finding-Text, Verweis auf
-  den relevanten `Architecture.md`-Abschnitt) – nicht die ganze Datei,
+  den relevanten Abschnitt unter `spec/architecture/`) – nicht die ganze Datei,
   nicht die Konversationshistorie.
 - Abhängigkeiten von externer Hardware/Diensten vermeiden bzw. mocken;
   Sonderfälle als eigene, spätere Tasks.

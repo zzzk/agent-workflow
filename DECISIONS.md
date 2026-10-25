@@ -26,10 +26,11 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | `tests/README.md` + `TEST_OVERVIEW.md` pflegen | Nr. 3 |
 | Unabhängiger `REVIEW` nach Abschluss einer Initiative | Nr. 4 |
 | Akzeptanzkriterien müssen maschinell prüfbar sein | Nr. 5 |
-| `spec/Architecture.md` statt wachsender Plan-Historie | Nr. 6 |
+| Architektur-Doku (heute `spec/architecture/`) statt wachsender Plan-Historie | Nr. 6 |
 | Strikt sequentiell, nie parallel; mechanische Härtung statt Prosa | Nr. 7 |
 | `AUFTRAGSKLAERUNG`, `state/AUFTRAG.md`, Modus `REQUIREMENTS` | Nr. 8 |
 | `SPEC_REVIEW` vor dem Planen; Einschub-Tasks mit Protokoll | Nr. 9, 10 |
+| Zielarchitektur neben Ist-Architektur; `spec/` als Ordner mit Index | Nr. 11, 12 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -147,6 +148,25 @@ beides.
     verbieten, ist der Einschub jetzt unter drei Bedingungen erlaubt
     (gleiches Ziel, Einzelauftrag-Grösse, keine neue Klärung) und wird in
     `AUFTRAG.md` und `PROGRESS.md` vermerkt.
+11. **Die Architektur-Doku beschrieb nur, was zufällig entstanden war.**
+    `Architecture.md` wurde aus dem Code erzeugt (`MAP`) und vom
+    Implementer nachgeführt – reine Ist-Beschreibung. Damit hatten Gate
+    und Review keinen Massstab: eine Abweichung vom gewollten Aufbau war
+    nicht von einer gewollten Änderung zu unterscheiden, und das Gate gab
+    teils Umsetzungsdetails vor, weil Regeln auf Architektur-Ebene fehlten.
+    Deshalb zwei Sichten: die Zielarchitektur (top-down, der Architekt
+    schlägt vor, der Nutzer entscheidet) und die Ist-Architektur
+    (bottom-up, wie bisher). Pflichtregel darin: eine Namenskonvention der
+    Testdateien – Testlisten je Komponente veralteten im Projekt.
+12. **Grosse Spec-Dateien waren die Schwachstelle des lokalen Modells.**
+    Alle fünf Fälle, in denen ein lokaler Lauf (64k Kontext) an die Cloud
+    abgegeben werden musste, waren Doku-Tasks an `Requirements.md`
+    (~130 KB) oder `Architecture.md` (~75 KB). Das Modell las
+    abschnittsweise, plante korrekt – und lief in den Timeout, bevor es
+    schrieb; Code-Tasks brauchten keinen Fallback. Deshalb besteht `spec/`
+    aus Ordnern mit kleinem Index und Kapiteldateien, und der Orchestrator
+    prüft beim Abschluss jeder Initiative, ob eine Datei über ~30 KB
+    gewachsen ist.
 
 ---
 

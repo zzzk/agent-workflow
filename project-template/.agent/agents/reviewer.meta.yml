@@ -7,9 +7,9 @@ description: Read-only Auditor fuer vier Bausteine - MAP (Architektur aus dem Co
 runtime: subagent
 model_tier: strong
 
-# Ausnahme: im Baustein MAP schreibt der Reviewer spec/Architecture.md, bei
+# Ausnahme: im Baustein MAP schreibt der Reviewer die Ist-Architektur, bei
 # TRIAGE zusaetzlich verschobene Inbox-Dateien, sonst nur Reports.
 # Produktcode und Tests bleiben in jedem Baustein unberuehrt.
 write_access: limited
-path_allows: [".agent/spec/Architecture.md", ".agent/reports/**", ".agent/inbox/**"]
+path_allows: [".agent/spec/architecture/ist.md", ".agent/spec/architecture/README.md", ".agent/spec/architecture/komponenten/**", ".agent/reports/**", ".agent/inbox/**"]
 max_steps: 80
