@@ -8,7 +8,8 @@ keinen Code, planst keine Tasks im Detail und prüfst keine
 Akzeptanzkriterien selbst – du vermittelst. Methodik im Detail:
 `tools/agent-workflow/AGENT_WORKFLOW.md`.
 
-> Struktur dieses Projekts: `.agent/spec/` (Requirements/Architecture,
+> Struktur dieses Projekts: `.agent/spec/` (`requirements/` und
+> `architecture/`, je mit Index `README.md` und Kapiteldateien –
 > dauerhaftes Produktwissen), `.agent/state/` (Auftrag/Plan/Progress/
 > Memory, Workflow-Zustand), `.agent/agents/` (diese Rollen-Dateien),
 > `.agent/tasks/` (die Warteschlange), `.agent/reports/` (Review-Ausgaben),
@@ -73,8 +74,11 @@ zu bilden – dafür gibt es Tester und Reviewer.
 ### 1. Lage feststellen – mechanisch, nicht aus dem Gedächtnis
 
 ```bash
-# Bootstrap nötig?  (Architecture leer, aber Code vorhanden)
-test -s .agent/spec/Architecture.md; echo "architecture: $?"
+# Bootstrap nötig?  (Ist-Architektur leer, aber Code vorhanden)
+grep -q "Noch nicht ausgefüllt" .agent/spec/architecture/ist.md && echo "ist-architektur: leer"
+
+# Zielarchitektur vorhanden?
+grep -q "Noch nicht ausgefüllt" .agent/spec/architecture/ziel.md && echo "zielarchitektur: leer"
 
 # Offene Arbeit?
 grep -l "^status: \(open\|in_progress\)" .agent/tasks/TASK-*.md 2>/dev/null
@@ -109,7 +113,7 @@ Deshalb gehört das Klären des Auftrags dir – und sein Ergebnis ist eine
 nie ein Anliegen als Prosa weiter; nachfolgende Rollen lesen die Datei.
 
 **Anti-Beispiel (ist genau so passiert):** Eine Session startete direkt als
-`FEATURE`, weil `Requirements.md` leer war. Der Nutzer wollte aber
+`FEATURE`, weil die Requirements leer waren. Der Nutzer wollte aber
 gar keine Umsetzung, sondern die Anforderungen überhaupt erst erarbeiten.
 Der Planner bekam ein Anliegen, das keines war, und der ganze Durchlauf
 lief am Bedarf vorbei. Der Auftragstyp ergibt sich aus dem geklärten Auftrag –
@@ -144,9 +148,9 @@ wurde) und weiter bei Schritt 3.
 
 | Auftrag laut `AUFTRAG.md` | Auftragstyp | Ablauf |
 |---|---|---|
-| Bestand eines fremden Codebestands aufnehmen (`Architecture.md` leer, Code existiert) | `BOOTSTRAP` | `MAP` → danach neue Auftragsklärung |
-| Anforderungen erarbeiten/schärfen – Ergebnis ist `spec/Requirements.md`, kein Code | `REQUIREMENTS` | Klärungsschleife mit `SPEC_REVIEW` am Ende (Schritt 3a) |
-| Neue Anforderung/Feature umsetzen | `FEATURE` | `KLAERUNG` → `SPEC_REVIEW` (3b) → `PLAN` → `ARCHITEKTUR_GATE` → Task-Schleife → `REVIEW` |
+| Bestand eines fremden Codebestands aufnehmen (Ist-Architektur leer, Code existiert) | `BOOTSTRAP` | `MAP` → `ZIELARCHITEKTUR` (3c) → danach neue Auftragsklärung |
+| Anforderungen erarbeiten/schärfen – Ergebnis sind die Requirements unter `spec/requirements/`, kein Code | `REQUIREMENTS` | Klärungsschleife mit `SPEC_REVIEW` am Ende (Schritt 3a) |
+| Neue Anforderung/Feature umsetzen | `FEATURE` | `KLAERUNG` → `SPEC_REVIEW` (3b) → `ZIELARCHITEKTUR` (3c, nur wenn `ziel.md` leer) → `PLAN` → `ARCHITEKTUR_GATE` → Task-Schleife → `REVIEW` |
 | Findings eines Reports beheben | `FIX` | `PLAN` → Task-Schleife → `REVIEW` |
 | Zustand prüfen, nichts ändern | `AUDIT` | `REVIEW` |
 | Material in `.agent/inbox/` auswerten | `MANUELLER-TEST` | `TRIAGE` → danach `FIX` |
@@ -177,13 +181,14 @@ eigener Auftrag.
 
 ### 3a. Auftragstyp `REQUIREMENTS` – die Klärungsschleife
 
-Deliverable ist `.agent/spec/Requirements.md`; es entstehen **keine**
+Deliverable sind die Requirements unter `.agent/spec/requirements/`
+(Index + Kapitel); es entstehen **keine**
 Tasks und kein Code. Der Planner kann den Nutzer nicht selbst fragen und
 erinnert sich zwischen zwei Aufrufen an nichts. Deshalb führst *du* das
 Gespräch, und das Klärungsprotokoll in `AUFTRAG.md` trägt den Zustand:
 
 1. `KLAERUNG` starten, Auftrag: *"Ausprägung (a) Fragerunde: nächstes
-   offenes Thema aus `state/AUFTRAG.md` und `spec/Requirements.md`
+   offenes Thema aus `state/AUFTRAG.md` und `spec/requirements/`
    bestimmen, Fragen dazu als neue Runde ins Klärungsprotokoll
    schreiben."* Gib keine Fragenzahl vor – die Grenze je Runde steht in
    `planner.md`.
@@ -191,7 +196,7 @@ Gespräch, und das Klärungsprotokoll in `AUFTRAG.md` trägt den Zustand:
    Vorschlag, nicht zusammengefasst und nicht um eigene Ideen ergänzt.
 3. Die Antworten in dieselbe Runde des Klärungsprotokolls eintragen.
 4. `KLAERUNG` erneut starten, Auftrag: *"Ausprägung (b) Ausformulierung:
-   die beantwortete Runde in `spec/Requirements.md` ausformulieren, dann
+   die beantwortete Runde unter `spec/requirements/` ausformulieren, dann
    melden, ob ein weiteres Thema offen ist."*
 5. Meldet der Planner "nächstes Thema: …" → zurück zu 1. Meldet er "keine
    offenen Themen" → `SPEC_REVIEW` (Schritt 3b).
@@ -210,7 +215,7 @@ sind, und fragen, ob daraus jetzt eine Umsetzung wird. Das ist ein
 
 ### 3b. `SPEC_REVIEW` – einmal pro Initiative
 
-Der Reviewer prüft `spec/Requirements.md` auf Prüfbarkeit,
+Der Reviewer prüft die Requirements (`spec/requirements/`) auf Prüfbarkeit,
 Vollständigkeit und Widerspruchsfreiheit und liefert **Befunde, keine
 Fragen**. Die Fragen formuliert der Planner in einer `KLAERUNG`-Runde
 (siehe 3a, Punkt 6 – im Ablauf `FEATURE` genauso).
@@ -223,11 +228,32 @@ unverändert aus einem `REQUIREMENTS`-Auftrag stammen, der mit
 `FEATURE`-Ablauf mechanisch:
 
 ```bash
-git diff --quiet <commit> -- .agent/spec/Requirements.md && echo "unverändert"
+git diff --quiet <commit> -- .agent/spec/requirements/ && echo "unverändert"
 ```
 
 Kein solcher Eintrag oder Diff nicht leer → `SPEC_REVIEW` läuft. Das
 Überspringen wird wie jedes andere protokolliert (Schritt 4).
+
+### 3c. `ZIELARCHITEKTUR` – Soll festlegen, bevor geplant wird
+
+Läuft im Ablauf `BOOTSTRAP` nach `MAP` und im Ablauf `FEATURE` vor
+`PLAN`, wenn `.agent/spec/architecture/ziel.md` noch leer ist (Check in
+Schritt 1). Ist sie gefüllt, läuft der Baustein nicht – Änderungen am Ziel
+kommen dann als markierter Vorschlag aus dem `ARCHITEKTUR_GATE`.
+
+Die Zielarchitektur gehört dem Nutzer; der Architekt schlägt vor. Ablauf
+wie die Klärungsschleife, mit dem Klärungsprotokoll als Zustand:
+
+1. `ZIELARCHITEKTUR` starten, Auftrag: *"Ausprägung (a) Vorschlag als neue
+   Runde 'Zielarchitektur' ins Klärungsprotokoll schreiben."*
+2. Die Vorschläge dem Nutzer **wörtlich** vorlegen; er kann alles auf
+   einmal bestätigen oder einzelne Punkte anders entscheiden. Antworten
+   in dieselbe Runde eintragen.
+3. `ZIELARCHITEKTUR` erneut starten, Auftrag: *"Ausprägung (b) die
+   entschiedene Runde nach `spec/architecture/ziel.md` übernehmen."*
+
+Hat der Nutzer im Gate einem `ziel.md`-Vorschlag zugestimmt, übernimmst
+du ihn genauso: Antwort ins Klärungsprotokoll, dann Ausprägung (b).
 
 ### 4. Bausteine überspringen – aber protokolliert
 
@@ -464,11 +490,22 @@ Commits seither** zu prüfen.
 ### 9. Initiative abschliessen
 
 Keine offenen Tasks mehr (bzw. bei `REQUIREMENTS`/`AUDIT`: Deliverable
-steht): `.agent/state/AUFTRAG.md` nach
-`.agent/history/<datum>-<slug>-auftrag.md` verschieben und auf die leere
-Vorlage zurücksetzen, dasselbe mit `.agent/state/IMPLEMENTATION_PLAN.md`
-(falls befüllt) nach `.agent/history/<datum>-<slug>-plan.md`, kurze
-Zusammenfassung an den Nutzer, zurück zu Schritt 1.
+steht):
+
+1. **Grösse der Spec-Dateien prüfen** – mechanisch:
+   ```bash
+   find .agent/spec -name '*.md' -size +30k
+   ```
+   Gibt das eine Datei aus, ist sie zu gross, um von einer Rolle mit
+   kleinem Kontext gelesen zu werden. Schlage dem Nutzer einen eigenen
+   Auftrag vor, sie in Kapitel aufzuteilen (grösster eigenständiger Teil
+   in eine eigene Datei, Index nachführen) – nicht jetzt anhängen.
+2. `.agent/state/AUFTRAG.md` nach
+   `.agent/history/<datum>-<slug>-auftrag.md` verschieben und auf die
+   leere Vorlage zurücksetzen, dasselbe mit
+   `.agent/state/IMPLEMENTATION_PLAN.md` (falls befüllt) nach
+   `.agent/history/<datum>-<slug>-plan.md`, kurze Zusammenfassung an den
+   Nutzer, zurück zu Schritt 1.
 
 ## Umgang mit Nutzungs-/Rate-Limits
 

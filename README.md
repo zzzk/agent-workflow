@@ -44,7 +44,8 @@ optional mit lokalen Modellen für einzelne Rollen.
 
 ```
 .agent/
-  spec/       Requirements.md, Architecture.md   – dauerhaftes Produktwissen
+  spec/       requirements/, architecture/        – dauerhaftes Produktwissen
+              (je Index README.md + Kapitel; Architektur als Ziel und Ist)
   state/      AUFTRAG.md, IMPLEMENTATION_PLAN.md, PROGRESS.md, MEMORY.md
                                                  – Workflow-Zustand
   agents/     <rolle>.md + <rolle>.meta.yml, _tiers.yml – eine Rolle je Paar
@@ -66,10 +67,14 @@ dort automatisch beim Start lädt (OpenCode bevorzugt `AGENTS.md`).
 Innerhalb von `.agent/` ist die Aufteilung bewusst zweigeteilt:
 
 - **`spec/`** beschreibt *die Software* – bliebe relevant, selbst wenn man
-  morgen aufhört, mit Agenten zu arbeiten. `Requirements.md` (was soll das
-  Tool tun) ändert sich selten; `Architecture.md` (welche Komponente macht
-  was) wird laufend aktuell gehalten, ist aber immer eine Momentaufnahme,
-  keine Historie.
+  morgen aufhört, mit Agenten zu arbeiten. `requirements/` (was soll das
+  Tool tun) ändert sich selten. `architecture/` hat zwei Sichten: die
+  **Zielarchitektur** (`ziel.md`, wie es sein soll – du entscheidest, der
+  Architekt schlägt vor) und die **Ist-Architektur** (`ist.md`, welche
+  Komponente heute was macht – laufend aktuell gehalten, immer eine
+  Momentaufnahme, keine Historie). Beide Ordner haben einen kleinen Index
+  und Kapiteldateien, damit eine Rolle mit kleinem Kontext nur liest, was
+  sie braucht.
 - **`state/`** beschreibt *den aktuellen Arbeitsstand an der Software* –
   nur für dieses Workflow-Tooling relevant. `AUFTRAG.md` hält das
   Teilstück fest, das der Nutzer gerade braucht (Anliegen, Umfang,
@@ -141,7 +146,7 @@ Ab jetzt arbeitet der Agent als Orchestrator (Rolle in
 Abschluss erkennt – festgehalten in `.agent/state/AUFTRAG.md`, woraus sich
 der Auftragstyp ergibt. Bei einem leeren Projekt ist das meist
 `REQUIREMENTS` (Anforderungen Thema für Thema erarbeiten, Ergebnis
-`Requirements.md`, zum Schluss geprüft durch `SPEC_REVIEW`), danach als
+unter `spec/requirements/`, zum Schluss geprüft durch `SPEC_REVIEW`), danach als
 eigener Auftrag `FEATURE`: Klärung → Spec-Review → Plan → Architektur-Gate →
 pro Task die Schleife aus `TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` →
 abschliessender Review. Details: `AGENT_WORKFLOW.md`, Teil C.
@@ -161,12 +166,13 @@ Pfadmuster an die Testablage des Projekts anpassen, dann neu generieren.
 
 ### 2. Architektur erfassen (statt Plan-Historie)
 Baustein `MAP` laufen lassen (Reviewer): liest den bestehenden Code und
-erzeugt `spec/Architecture.md` direkt daraus. Keine Rekonstruktion einer
+erzeugt `spec/architecture/ist.md` direkt daraus; danach schlägt der
+Architekt die Zielarchitektur vor (`ZIELARCHITEKTUR`), und du entscheidest. Keine Rekonstruktion einer
 Bauhistorie nötig – nur der aktuelle Stand zählt.
 
 ### 3. Requirements erfassen
 Eigener Auftrag vom Typ `REQUIREMENTS`: der Orchestrator klärt Thema für
-Thema mit dem Nutzer, der Planner formuliert `spec/Requirements.md` daraus
+Thema mit dem Nutzer, der Planner formuliert die Requirements unter `spec/requirements/` daraus
 aus. Falls bereits eine funktionale Beschreibung existiert (README,
 Tickets), wird sie zum Ausgangsmaterial – ableiten und bestätigen lassen
 statt aus dem Code zu raten.

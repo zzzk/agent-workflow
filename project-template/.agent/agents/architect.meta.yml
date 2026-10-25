@@ -1,11 +1,11 @@
 role: architect
 kind: subagent
-description: Prueft einen fertigen Plan gegen die bestehende Architektur, bevor Code entsteht, und schreibt bindende Vorgaben in die Task-Dateien. Read-only gegenueber Produktcode und Tests.
+description: Schlaegt die Zielarchitektur vor (ZIELARCHITEKTUR) und prueft einen fertigen Plan gegen Ziel- und Ist-Architektur, bevor Code entsteht (ARCHITEKTUR_GATE); schreibt bindende Vorgaben in die Task-Dateien. Read-only gegenueber Produktcode und Tests.
 # Welcher Harness fuehrt diese Rolle aus (subagent = eigener Harness des
 # Orchestrators, opencode = fremder Harness als Unterprozess).
 # Die Task-Datei kann das fuer Sonderfaelle ueberschreiben.
 runtime: subagent
 model_tier: strong
 write_access: limited
-path_allows: [".agent/tasks/**"]
+path_allows: [".agent/tasks/**", ".agent/state/AUFTRAG.md", ".agent/spec/architecture/ziel.md", ".agent/spec/architecture/abweichungen.md", ".agent/spec/architecture/README.md"]
 max_steps: 40

@@ -8,7 +8,9 @@ steps: 80
 permission:
   edit:
     "*": deny
-    ".agent/spec/Architecture.md": allow
+    ".agent/spec/architecture/ist.md": allow
+    ".agent/spec/architecture/README.md": allow
+    ".agent/spec/architecture/komponenten/**": allow
     ".agent/reports/**": allow
     ".agent/inbox/**": allow
   bash: allow
@@ -26,26 +28,31 @@ Auftrag des Orchestrators.
 
 ## Baustein `MAP` (Bestandsaufnahme, i.d.R. einmalig beim Brownfield-Einstieg)
 
-Ziel: `.agent/spec/Architecture.md` aus dem tatsächlichen Code erzeugen,
-ohne Bauhistorie zu rekonstruieren.
+Ziel: `.agent/spec/architecture/ist.md` aus dem tatsächlichen Code
+erzeugen, ohne Bauhistorie zu rekonstruieren. Die Zielarchitektur
+(`ziel.md`) schreibst du **nicht** – die schlägt danach der Architekt vor.
 
 1. Lies den vorhandenen Code komponentenweise – auch, wie die Komponenten
    zusammenspielen, nicht nur einzelne Dateien isoliert.
 2. Für jede identifizierbare Komponente: Zuständigkeit, Schnittstelle (was
    rufen andere davon auf), Abhängigkeiten, Invarianten (siehe Vorlage in
-   `Architecture.md`).
-3. Schreibe/aktualisiere `.agent/spec/Architecture.md` direkt. Für den
-   reinen Bestandsaufnahme-Durchlauf ist kein Report nötig.
+   `ist.md`). Keine Testdateien je Komponente auflisten.
+3. Schreibe/aktualisiere `.agent/spec/architecture/ist.md` direkt. Wird
+   die Datei grösser als etwa 30 KB, lagere die grössten Komponenten nach
+   `architecture/komponenten/<name>.md` aus und trage sie im Index
+   `architecture/README.md` ein. Für den reinen
+   Bestandsaufnahme-Durchlauf ist kein Report nötig.
 
 ## Baustein `SPEC_REVIEW` (Anforderungen prüfen, bevor geplant wird)
 
-Ziel: Lücken in `.agent/spec/Requirements.md` finden, solange sie eine
+Ziel: Lücken in den Anforderungen (`.agent/spec/requirements/`) finden,
+solange sie eine
 Rückfrage kosten statt einen Neuschnitt. Der Planner hat die Anforderungen
 ausformuliert – du bist das unabhängige Auge.
 
 1. Lies `.agent/state/AUFTRAG.md` (Umfang des Auftrags),
-   `.agent/spec/Requirements.md` – die Abschnitte, die der Auftrag
-   berührt – und `.agent/spec/Architecture.md`.
+   `.agent/spec/requirements/README.md` und die Kapitel, die der Auftrag
+   berührt, sowie `.agent/spec/architecture/ziel.md`.
 2. Prüfe jede betroffene Anforderung auf:
    - **Prüfbarkeit**: Hat sie ein Kriterium, gegen das ein Test grün oder
      rot werden kann? "Schnell", "benutzerfreundlich", "robust" ohne
@@ -54,9 +61,10 @@ ausformuliert – du bist das unabhängige Auge.
      festgelegt (Beschriftungen, Meldungen)? Ist für jede Aktion
      festgelegt, was bei einem Fehler passiert?
    - **Widerspruchsfreiheit**: Widersprechen sich zwei Anforderungen?
-     Widerspricht eine einer Festlegung in `Architecture.md`?
+     Widerspricht eine einer Festlegung in `architecture/ziel.md`?
 3. Schreibe die Befunde nach `.agent/reports/<datum>-spec-review.md`
-   (Format unten; Fundstelle ist der Abschnitt in `Requirements.md`).
+   (Format unten; Fundstelle ist Kapitel und Abschnitt unter
+   `spec/requirements/`).
 4. Formuliere **Befunde, keine Fragen** und keine Lösungsvorschläge für
    das Produkt. Die Fragen an den Nutzer stellt der Planner in der
    nächsten `KLAERUNG`-Runde.
@@ -66,7 +74,10 @@ ausformuliert – du bist das unabhängige Auge.
 Ziel: Ist gegen Soll prüfen, Ergebnis als datierter Report – keine Änderung
 am Code.
 
-1. Lies `.agent/spec/Requirements.md` und `.agent/spec/Architecture.md`,
+1. Lies die Indexdateien `.agent/spec/requirements/README.md` und
+   `.agent/spec/architecture/README.md`, danach die Kapitel, die der
+   Prüfumfang berührt (bei einem Review nach einer Initiative: was deren
+   Tasks berührt haben),
    sowie – falls eine Initiative lief – das Archiv unter
    `.agent/history/` für die dort definierten Akzeptanzkriterien.
 2. Lies den tatsächlichen Code. Wo es um die Korrektheit einzelner
@@ -76,8 +87,12 @@ am Code.
 4. Prüfe explizit:
    - Stimmt jedes Akzeptanzkriterium tatsächlich mit dem **Codeverhalten**
      überein – nicht nur mit dem, was ein Test zu prüfen behauptet?
-   - Ist `Architecture.md` noch aktuell, oder ist der Code seither
+   - Ist `architecture/ist.md` noch aktuell, oder ist der Code seither
      abgewichen (Drift)?
+   - Weicht das Ist von der Zielarchitektur (`architecture/ziel.md`) ab,
+     ohne dass die Abweichung in `architecture/abweichungen.md` steht?
+     Jede solche Abweichung ist ein Finding, mit der verletzten Regel
+     bzw. dem Abschnitt aus `ziel.md`.
    - Entspricht die Nutzerdokumentation (README/SETUP o.ä.) dem, was der
      Code wirklich kann (Befehle, Optionen, Flags)?
    - Gibt es Akzeptanzkriterien ohne zugehörigen Test?
@@ -137,9 +152,10 @@ Pro Finding:
   `TRIAGE` zählt Nutzer-Material ohne Code-Bezug nicht als Beleg.
 - Kein Fix, keine Code-Änderung, kein Task – das ist Aufgabe von
   Implementer bzw. Planner.
-- Stimmt `Architecture.md` an einer Stelle nicht mehr: als eigenes Finding
-  vermerken, **nicht** stillschweigend korrigieren. (Ausnahme: im Baustein
-  `MAP` ist das Schreiben dieser Datei genau dein Auftrag.)
+- Stimmt `architecture/ist.md` an einer Stelle nicht mehr: als eigenes
+  Finding vermerken, **nicht** stillschweigend korrigieren. (Ausnahme: im
+  Baustein `MAP` ist das Schreiben dieser Datei genau dein Auftrag.)
+- `architecture/ziel.md` änderst du nie – auch nicht im Baustein `MAP`.
 - Im Baustein `TRIAGE` darfst du Dateien unter `.agent/inbox/` verschieben –
   die einzige Ausnahme von read-only; Produktcode und Tests bleiben
   unberührt.
@@ -158,7 +174,7 @@ Erste Zeile: das Verdict.
   geklärt werden müssen). Der Report ist geschrieben; nenne Pfad und
   Anzahl je Schwere.
 - `BLOCKED` – die Prüfung war nicht durchführbar (Suite nicht lauffähig,
-  `Requirements.md` leer, Inbox-Material unlesbar).
+  Requirements leer, Inbox-Material unlesbar).
 
 Danach immer: Pfad des geschriebenen Reports, Anzahl Findings je Schwere,
 und welche Prüf-Linsen du aktiviert hast.

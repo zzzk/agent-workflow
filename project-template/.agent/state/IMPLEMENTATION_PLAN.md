@@ -2,8 +2,9 @@
 
 > Workflow-Zustand (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
 > Abschnitt "Dateistruktur"), **kein** dauerhaftes Produktwissen – dafür
-> siehe `../spec/Requirements.md` (was das Tool tun soll) und
-> `../spec/Architecture.md` (welche Komponente heute wofür zuständig ist).
+> siehe `../spec/requirements/` (was das Tool tun soll) und
+> `../spec/architecture/` (wie es aufgebaut sein soll und welche
+> Komponente heute wofür zuständig ist).
 >
 > Diese Datei enthält **nur die Initiative, die gerade läuft**. Sobald alle
 > zugehörigen Tasks unter `../tasks/` `done` sind, wird ihr Inhalt nach
@@ -18,7 +19,7 @@
 ## Initiative: <Titel>
 
 - **Ziel**: <ein bis zwei Sätze, was am Ende dieser Initiative anders ist>
-- **Ausgangslage**: <Requirements-Abschnitt(e) bzw. Report, aus dem diese
+- **Ausgangslage**: <Requirements-Kapitel bzw. Report, aus dem diese
   Initiative entstanden ist – plus der Auftrag aus `AUFTRAG.md`, dessen
   Umfang hier nicht überschritten wird>
 

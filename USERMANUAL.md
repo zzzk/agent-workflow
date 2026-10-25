@@ -57,7 +57,7 @@ Das ist der Kern dieses Handbuchs. Alles andere ergibt sich daraus.
 | 1 | **Wo liegen die Tests?** | `.agent/agents/implementer.meta.yml` + `tester.meta.yml` | einmal pro Projekt | **ja** |
 | 2 | **Welche Rolle auf welchem Modell?** | `.agent/agents/_tiers.yml` | einmal, dann bei Bedarf | nein (Standard funktioniert) |
 | 3 | **Lokale Modelle verfügbar machen** | `$OLLAMA_BASE_URL` (Datei `opencode.json` liegt bereit) | nur bei lokalem Betrieb | nein |
-| 4 | **Was soll das Produkt können?** | `.agent/spec/Requirements.md` | vor der ersten Initiative | ja (notfalls im Dialog) |
+| 4 | **Was soll das Produkt können?** | `.agent/spec/requirements/` | vor der ersten Initiative | ja (notfalls im Dialog) |
 | 5 | **Berechtigungsmodus** | `.claude/settings.json` bzw. OpenCode-`permission` | einmal, vor dem ersten Task | faktisch ja |
 | 6 | Schreibrechte / Schritt-Limit einer Rolle | `.agent/agents/<rolle>.meta.yml` | selten | nein |
 | 7 | **Welcher Harness für eine Rolle** | `runtime:` in `.agent/agents/<rolle>.meta.yml` | einmal pro Projekt | nein (Standard funktioniert) |
@@ -380,7 +380,8 @@ wäre, die dir gehört.
 
 ### 4. Requirements
 
-`.agent/spec/Requirements.md` beschreibt, was das Produkt können soll. Du
+`.agent/spec/requirements/` beschreibt, was das Produkt können soll – ein
+Index (`README.md`) und je Bereich eine Kapiteldatei. Du
 musst es nicht vorab ausfüllen: sag dem Orchestrator, dass du die
 Anforderungen erarbeiten willst – das wird ein eigener Auftrag vom Typ
 `REQUIREMENTS`. Er klärt dann Thema für Thema mit dir: je Runde höchstens
@@ -389,7 +390,7 @@ bestätigen musst; danach formuliert der Planner das geklärte Thema aus und
 sagt, ob noch eines offen ist. Zum Schluss prüft der Reviewer die
 Anforderungen unabhängig (`SPEC_REVIEW`: prüfbar, vollständig,
 widerspruchsfrei); findet er Lücken, bekommst du dazu eine letzte
-Fragerunde. Am Ende steht die fertige `Requirements.md` – noch kein Code. Existiert bereits eine Beschreibung
+Fragerunde. Am Ende stehen die fertigen Requirements – noch kein Code. Existiert bereits eine Beschreibung
 (README, Tickets), nenne sie: sie wird zum Ausgangsmaterial im Auftrag.
 
 ### 5. Berechtigungen und Git
@@ -443,8 +444,10 @@ git init
    erste Auftrag meist `REQUIREMENTS` (Anforderungen erarbeiten), danach
    als zweiter Auftrag `FEATURE` (umsetzen).
 
-Den Baustein `MAP` brauchst du hier nicht – `Architecture.md` füllt sich
-schrittweise durch die Implementer.
+Den Baustein `MAP` brauchst du hier nicht – die Ist-Architektur
+(`spec/architecture/ist.md`) füllt sich schrittweise durch die
+Implementer. Die Zielarchitektur (`ziel.md`) schlägt der Architekt vor dem
+ersten Plan vor, und du entscheidest.
 
 ---
 
@@ -468,8 +471,11 @@ cp /pfad/zu/tools/agent-workflow/project-template/.gitattributes .   # falls noc
    tatsächlich liegen, und trage genau das ein.
 2. **Modelle prüfen**, dann `python3 .agent/sync-agents.py`.
 3. **Baustein `MAP` laufen lassen**: der Reviewer liest den bestehenden
-   Code und schreibt `.agent/spec/Architecture.md` daraus. Das ist der
+   Code und schreibt `.agent/spec/architecture/ist.md` daraus. Das ist der
    Bootstrap-Schritt; ohne ihn planen alle nachfolgenden Rollen blind.
+   Danach schlägt der Architekt die Zielarchitektur vor; du bestätigst
+   oder entscheidest anders, auch darüber, welche Abweichung des
+   heutigen Codes bewusst bleiben darf.
 4. **Requirements erfassen**: Auftrag vom Typ `REQUIREMENTS`, aus
    README/Tickets abgeleitet und von dir bestätigt – nicht aus dem Code
    geraten.
@@ -488,7 +494,7 @@ Immer dann, wenn du eine **Quelle** geändert hast:
 | `.agent/agents/<rolle>.meta.yml` (Rechte, Stufe, Limits) | **ja** |
 | `.agent/agents/<rolle>.md` (Rollentext) | **ja** |
 | Neue Rolle ergänzt (Body + `meta.yml`) | **ja** |
-| `Requirements.md`, `Architecture.md`, Tasks, Reports | nein |
+| `spec/requirements/`, `spec/architecture/`, Tasks, Reports | nein |
 | Produktcode | nein |
 
 ```bash
@@ -537,7 +543,7 @@ passieren wird:
 
 | Du sagst … | Auftragstyp | Ablauf |
 |---|---|---|
-| "Lass uns die Anforderungen erarbeiten" | `REQUIREMENTS` | Klärung Thema für Thema → Spec-Review → `spec/Requirements.md`, kein Code |
+| "Lass uns die Anforderungen erarbeiten" | `REQUIREMENTS` | Klärung Thema für Thema → Spec-Review → `spec/requirements/`, kein Code |
 | "Bau Feature X" | `FEATURE` | Klärung → Spec-Review → Plan → Architektur-Gate → Task-Schleife → Review |
 | "Behebe die Findings aus dem Report" | `FIX` | Plan → Task-Schleife → Review |
 | "Prüf mal den Stand" | `AUDIT` | nur Reviewer, keine Änderung |
@@ -604,8 +610,8 @@ Task-Dateien steht.
 | `.agent/tasks/*.md` während ein Task läuft | der Orchestrator führt darüber Buch |
 | `.agent/reports/*` (ältere) | sie sind der Verlauf, nicht der aktuelle Stand |
 
-Gegenstück: Was **du** pflegst, sind `Requirements.md`, `_tiers.yml`, die
-`*.meta.yml` und die Inbox.
+Gegenstück: Was **du** pflegst bzw. entscheidest, sind die Requirements,
+die Zielarchitektur, `_tiers.yml`, die `*.meta.yml` und die Inbox.
 
 ---
 
@@ -640,8 +646,13 @@ mein-projekt/
       <rolle>.md                     # Rollentext (selten anfassen)
       <rolle>.meta.yml               # Rechte, Stufe, Pfade, Limits      ← DU
     spec/
-      Requirements.md                # was das Produkt können soll       ← DU
-      Architecture.md                # gepflegt von MAP/Implementer
+      requirements/                  # was das Produkt können soll       ← DU
+        README.md                    #   Index + Stufen, dann Kapitel je Bereich
+      architecture/
+        README.md                    #   Index
+        ziel.md                      #   Soll – Architekt schlägt vor   ← DU entscheidest
+        ist.md                       #   Ist – gepflegt von MAP/Implementer
+        abweichungen.md              #   bewusst akzeptierte Lücken
     state/                           # PROGRESS, PLAN, MEMORY – gepflegt vom Agenten
     tasks/                           # die Warteschlange – gepflegt vom Agenten
     reports/                         # Review-/Triage-Ergebnisse

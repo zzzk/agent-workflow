@@ -2,8 +2,8 @@
 
 > Workflow-Zustand (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
 > Abschnitt "Dateistruktur"), **kein** dauerhaftes Produktwissen – dafür
-> siehe `../spec/Requirements.md` (was das Produkt insgesamt können soll).
-> Faustregel: `Requirements.md` beschreibt das Produkt, diese Datei das
+> siehe `../spec/requirements/` (was das Produkt insgesamt können soll).
+> Faustregel: die Requirements beschreiben das Produkt, diese Datei das
 > Teilstück, das der Nutzer *jetzt* braucht.
 >
 > Vom Orchestrator im Baustein `AUFTRAGSKLAERUNG` gemeinsam mit dem Nutzer
@@ -40,7 +40,7 @@ und nicht ein naheliegender anderer.>
 
 ## Ausgangsmaterial
 
-<Worauf aufgesetzt wird: Abschnitt in `../spec/Requirements.md`, Report
+<Worauf aufgesetzt wird: Kapitel unter `../spec/requirements/`, Report
 unter `../reports/`, Material in `../inbox/`, ein Ticket – oder
 ausdrücklich "nichts".>
 

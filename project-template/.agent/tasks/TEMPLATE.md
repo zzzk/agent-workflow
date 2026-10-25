@@ -32,7 +32,7 @@ test_first: true          # false nur mit Begründung im Kontext-Abschnitt
 
 <nur was der Implementer wirklich braucht: exakte Zeilen-/Snippet-
 Referenzen, der Finding-Text aus dem Report, Verweis auf den relevanten
-Architecture.md-Abschnitt – nicht die ganze Datei, nicht die
+Abschnitt unter spec/architecture/ – nicht die ganze Datei, nicht die
 Konversationshistorie>
 
 ## Vorgaben aus dem Architektur-Gate
