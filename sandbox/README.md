@@ -225,19 +225,30 @@ Branches oder Stashes.
 ### Übernehmen und sichern (auf dem Host, jederzeit)
 
 ```bash
-# Branch des Agenten nach GitHub sichern – geht auch, waehrend er arbeitet
-git -C ~/agent-work/<projekt> push origin agent/<slug>
-
-# oder direkt in die eigene Arbeitskopie holen, ohne Umweg ueber GitHub
-git -C ~/code/<projekt> fetch ~/agent-work/<projekt> agent/<slug>
+# In DEINER Arbeitskopie: Branch des Agenten holen ...
+cd ~/code/<projekt>
+git fetch ~/agent-work/<projekt> agent/<slug>:agent/<slug>
+# ... ansehen, testen, und von hier aus sichern
+git push origin agent/<slug>
 ```
+
+Das geht auch, während der Agent arbeitet.
+
+**Nie im Klon des Agenten selbst Git aufrufen** (kein `git -C
+~/agent-work/<projekt> push`, auch kein `status` oder `log`). Der Agent hat
+dort Schreibrecht auf `.git` und kann Hooks (z.B. `pre-push`) oder
+Einstellungen wie `core.fsmonitor` ablegen, die Git dann **auf dem Host,
+mit deinen Rechten** ausführt – ein Weg aus der Sandbox heraus. `git fetch`
+aus deiner eigenen Kopie ist sicher: Beim Abholen aus einem fremden Repo
+führt Git dessen Hooks nicht aus und ignoriert die gefährlichen
+Einstellungen darin.
 
 Gemergt wird nach `main`/`master` von dir, per PR (Squash oder Merge, wie
 du willst) – damit stören die vielen kleinen Task-Commits nicht.
 
-**Restrisiko:** Commits seit deinem letzten Push bzw. Abholen. Zerstört
-der Agent sein `.git`, sind sie weg. Abhilfe ist der Rhythmus: nach jedem
-Auftrag bzw. jedem Nachtlauf pushen.
+**Restrisiko:** Commits seit deinem letzten Abholen. Zerstört der Agent
+sein `.git`, sind sie weg. Abhilfe ist der Rhythmus: nach jedem Auftrag
+bzw. jedem Nachtlauf holen und pushen.
 
 ### Ohne `--git-rw`
 

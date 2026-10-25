@@ -60,6 +60,12 @@ Free-Account werden nicht durchgesetzt), Fork, git daemon.
 - **H4 Backup** = dieser Push. Restrisiko: Commits seit dem letzten Push.
   Vorgemerkt als spätere Option: automatischer append-only Abruf durch
   `run-sandbox.sh` (`git fetch` ohne `+`, ohne `--prune`).
+- **H3a Sicherheitskorrektur (bei der Umsetzung 2026-10-24 gefunden):**
+  Nie Git im Klon des Agenten auf dem Host aufrufen (auch nicht push) –
+  der Agent kann dort Hooks/`core.fsmonitor` ablegen, die mit den Rechten
+  des Nutzers liefen. Stattdessen aus der eigenen Kopie `git fetch
+  <klon> agent/<slug>:agent/<slug>`, dann von dort pushen. Gilt
+  sinngemäss auf runpod: root holt per fetch in einen root-eigenen Klon.
 - **H5 Remote-Rechner (runpod o.ä.):** Push-Schlüssel dort nur mit
   Passphrase; kein laufender `ssh-agent`, dessen Socket der Agenten-User
   erreicht; nach Möglichkeit ein Deploy-Key nur für dieses Repo statt des
