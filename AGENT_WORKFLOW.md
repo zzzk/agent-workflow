@@ -173,7 +173,7 @@ ein Report, o.ä.) tatsächlich braucht.
    mit dem Nutzer** (Baustein `AUFTRAGSKLAERUNG` → `state/AUFTRAG.md`),
    leitet daraus den **Auftragstyp** ab (Teil C), ruft die Bausteine seines
    **Ablaufs** der Reihe nach auf, wertet deren **Verdict** aus,
-   pflegt Task-Status und `state/PROGRESS.md`, committet. Schreibt selbst
+   pflegt Task-Status und `state/PROGRESS.md`, committet (pusht nie). Schreibt selbst
    keinen Code und plant selbst keine Schritte. Er ist die **einzige**
    Rolle mit Nutzerkontakt.
 2. **Planner** (`planner.md`), Anforderungen und Planung – die
@@ -529,10 +529,28 @@ Begründung und der reale Vorfall, der zu dieser Regel führte: siehe
    zusätzlichem Kontext. Zurück zu `VERIFIKATION`. **Kein neuer Task
    beginnt, solange dieser nicht grün ist.**
 5. Bei `PASS`: Status auf `done`, Test-Notizen in der Task-Datei, eine
-   Zeile an `state/PROGRESS.md`, Git-Commit (Task-ID + Titel).
+   Zeile an `state/PROGRESS.md`, Git-Commit (Task-ID + Titel) auf dem
+   Branch des Auftrags.
 6. Keine offenen Tasks der Initiative mehr: `state/IMPLEMENTATION_PLAN.md`
    (falls befüllt) nach `history/<datum>-<slug>-plan.md` archivieren und
    zurücksetzen, Zusammenfassung an den Nutzer.
+
+### Git: der Agent committet, nur der Nutzer pusht
+
+Jeder Auftrag, der Dateien ändert, läuft auf einem eigenen Branch
+`agent/<slug>`. Der Orchestrator committet nach jedem Baustein, der etwas
+geändert hat, und nach jedem verifizierten Task; der Tester committet die
+Freeze-Grenze. Das hat drei Gründe: Die Freeze-Grenze ist ein echter
+Commit statt eines Datei-Snapshots; geht ein Lauf schief, ist höchstens
+ein Baustein verloren; und `git diff` zeigt einer Rolle nur, was seit dem
+letzten Baustein passiert ist – nicht die Änderungen aller Vortasks, die
+ein kleines Modell beim Selbst-Check verwirren.
+
+**Gepusht wird nie vom Agenten.** Er bekommt keine Zugangsdaten; der
+Nutzer pusht vom Host aus (auch während der Agent arbeitet) und mergt den
+Branch per PR. In der Sandbox heisst das: eigener Klon nur für den
+Agenten, gestartet mit `run-sandbox.sh --git-rw` (Details:
+`sandbox/README.md`, "Commit-Flow").
 
 ### Delta-fokussierte Wiederholungen
 
@@ -570,9 +588,11 @@ danach eingefroren:
    `BLOCKED`). Eigener Commit; dessen Hash ist die Freeze-Grenze.
 2. `UMSETZUNG`: Der Implementer macht sie grün, ohne Testdateien
    anzufassen.
-3. Der Orchestrator prüft das mechanisch:
+3. Der Orchestrator prüft das mechanisch – gegen den Arbeitsbaum, weil
+   der Implementer nicht committet:
    ```bash
-   git diff <freeze-commit>..HEAD --name-only -- tests/
+   git diff <freeze-commit> --name-only -- tests/
+   git status --porcelain -- tests/
    ```
    Gibt das etwas aus, werden diese Änderungen verworfen und der
    Implementer bekommt den Verstoss als Kontext zurück.

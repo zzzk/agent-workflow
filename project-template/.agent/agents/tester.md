@@ -41,8 +41,10 @@ gibt, den man nachträglich rationalisieren könnte.
    gegenstandslos). Beides melden statt stillschweigend weitergehen.
 4. Ist ein Akzeptanzkriterium nicht prüfbar formuliert: `BLOCKED`, mit der
    konkreten Frage – nicht nach eigenem Ermessen interpretieren.
-5. Committe die Tests separat. Dieser Commit ist die **Freeze-Grenze**;
-   nenne seinen Hash in der Rückmeldung.
+5. Committe **nur die Testdateien** dieses Tasks, mit der Message
+   `<TASK-ID>: Tests (TEST_FIRST)`. Dieser Commit ist die
+   **Freeze-Grenze**; nenne seinen Hash in der Rückmeldung. Gepusht wird
+   nie.
 
 ## Baustein `VERIFIKATION` (nach der Implementierung)
 

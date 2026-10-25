@@ -59,15 +59,25 @@ zu bilden – dafür gibt es Tester und Reviewer.
   Berechtigungsmodus (Auto-Accept bzw. Allowlist, siehe Skill
   `fewer-permission-prompts`) den Ablauf deutlich beschleunigt. Sub-Agenten
   erben denselben Berechtigungsmodus.
-- **Git**: Kein Repo vorhanden → `git init` + initialer Commit. Repo mit
-  Commits aus früheren Initiativen → den Nutzer fragen, ob auf dem
-  bestehenden Branch weitergearbeitet oder ein eigener Branch angelegt
-  werden soll.
-- **Sandbox-Kontext**: Läuft diese Session in der Agent-Sandbox
-  (`tools/agent-workflow/sandbox/`), ist `.git` in der Regel read-only
-  gemountet – kein `git commit`/`push` von dort. Stattdessen den fertigen,
-  getesteten Diff vorbereiten und in `.agent/state/PROGRESS.md` vermerken:
-  "bereit zum Commit: <Commit-Message-Entwurf>".
+- **Git – du committest, du pushst nie**: Kein Repo vorhanden → `git
+  init` + initialer Commit. Jeder Auftrag, der Dateien ändert, bekommt
+  einen eigenen Branch `agent/<slug>` (Slug wie in `history/`), abgezweigt
+  vom aktuellen Hauptbranch; liegt schon einer für diesen Auftrag vor
+  (unterbrochener Lauf), weiter darauf. Gepusht wird **nie** von dir – das
+  macht der Nutzer vom Host aus; Zugangsdaten hast du keine, und du
+  suchst auch keine.
+- **Ist `.git` read-only?** (Sandbox ohne `--git-rw`):
+  ```bash
+  touch .git/.rw-probe 2>/dev/null && rm .git/.rw-probe && echo "git: beschreibbar"
+  ```
+  Kommt nichts zurück: **stoppen** und dem Nutzer vorschlagen, die
+  Sandbox auf einem eigenen Klon mit `--git-rw` neu zu starten (siehe
+  `sandbox/README.md`, "Commit-Flow"). Ohne Commits fehlt die
+  Freeze-Grenze. Besteht der Nutzer auf read-only, gilt der Notbetrieb:
+  statt Commits einen Snapshot der Testdateien als Freeze-Nachweis
+  (`find tests/ -type f -exec sha256sum {} + | sort` – per `find`, nicht
+  per Glob, sonst fehlen Dateien) im Scratchpad, und in `PROGRESS.md`
+  "bereit zum Commit: <Commit-Message-Entwurf>" je Task.
 
 ## Vorgehen
 
@@ -403,6 +413,7 @@ Lauf, egal welcher Runtime:
 ```bash
 git diff --name-only        # wurde etwas geändert – und nur, was `files:` erlaubt?
 git status --porcelain      # unerwartete/ungetrackte Artefakte?
+# Weil vor jedem Lauf committet ist, zeigt das genau diesen einen Lauf.
 grep -l auto-rejecting .agent/runs/TASK-*.log   # still an einer Berechtigung gescheitert?
 ```
 
@@ -433,15 +444,21 @@ Commits seither** zu prüfen.
    `done`. Bei mehreren wählbaren: niedrigste ID zuerst.
 2. Status auf `in_progress` setzen.
 3. `TEST_FIRST` starten (ausser die Task-Datei hat `test_first: false` mit
-   Begründung). Den Commit-Hash der Tests notieren – das ist die
-   **Freeze-Grenze**.
-4. `UMSETZUNG` starten.
-5. Test-Freeze mechanisch prüfen:
+   Begründung). Der Tester committet die Tests (`<TASK-ID>: Tests
+   (TEST_FIRST)`); den Commit-Hash notieren – das ist die
+   **Freeze-Grenze**. Ohne `TEST_FIRST` committest du den Stand vor der
+   Umsetzung selbst, damit der Lauf einen sauberen Ausgangspunkt hat.
+4. `UMSETZUNG` starten. Der Implementer committet nicht; seine Änderungen
+   liegen danach uncommittet im Arbeitsbaum.
+5. Test-Freeze mechanisch prüfen – gegen den **Arbeitsbaum**, nicht nur
+   gegen Commits, denn der Implementer committet nicht:
    ```bash
-   git diff <freeze-commit>..HEAD --name-only -- tests/
+   git diff <freeze-commit> --name-only -- tests/
+   git status --porcelain -- tests/        # neu angelegte Testdateien
    ```
-   Gibt das etwas aus: diese Änderungen verwerfen und den Implementer mit
-   dem Verstoss als Kontext zurückschicken.
+   Gibt das etwas aus: diese Änderungen verwerfen
+   (`git checkout <freeze-commit> -- tests/`, neue Dateien entfernen) und
+   den Implementer mit dem Verstoss als Kontext zurückschicken.
 6. `VERIFIKATION` starten.
 7. Bei `CHANGES_NEEDED`: erneut `UMSETZUNG` für denselben Task, mit den
    fehlgeschlagenen Tests als zusätzlichem Kontext, zurück zu 5 – **mit
@@ -485,7 +502,14 @@ Commits seither** zu prüfen.
    test -f .agent/state/HALTED && echo "ANGEHALTEN - nichts starten"
    ```
 8. Bei `PASS`: Status auf `done`, Test-Notizen in der Task-Datei, eine
-   Zeile an `.agent/state/PROGRESS.md`, Git-Commit (Task-ID + Titel).
+   Zeile an `.agent/state/PROGRESS.md`, Git-Commit auf dem Auftrags-Branch
+   (`<TASK-ID>: <Titel>`). Nicht pushen.
+
+Ausserhalb der Task-Schleife gilt dasselbe: Nach jedem Baustein, der
+Dateien geändert hat (`KLAERUNG`, `SPEC_REVIEW`, `ZIELARCHITEKTUR`,
+`PLAN`, `REVIEW`, `TRIAGE`), committest du dessen Ergebnis
+(`<Baustein>: <kurz was>`). Jeder Commit ist ein Wiederherstellungspunkt –
+geht danach etwas schief, ist höchstens ein Baustein verloren.
 
 ### 9. Initiative abschliessen
 

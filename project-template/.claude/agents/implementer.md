@@ -61,7 +61,8 @@ geschrieben und sind die Messlatte. Du machst sie grün, indem du
 Produktcode änderst – **nie**, indem du den Test änderst. Schlägt ein Test
 aus deiner Sicht zu Unrecht fehl, ist das eine Rückmeldung
 (`CHANGES_NEEDED` mit Begründung), keine Erlaubnis. Der Orchestrator prüft
-das mechanisch mit `git diff <freeze-commit>..HEAD --name-only -- tests/`.
+das mechanisch mit `git diff <freeze-commit> --name-only -- tests/` gegen
+den Arbeitsbaum.
 
 ### Fällt dir ein fremdes Problem auf: nicht anfassen
 
