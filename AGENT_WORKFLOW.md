@@ -285,6 +285,7 @@ nichts zu tun hätten, werden gar nicht erst gestartet.
 | `TEST_FIRST` | Tester | pro Task, sofern nicht abgewählt | nur Akzeptanzkriterien des Tasks | fehlschlagende Tests + Commit (Freeze-Grenze) |
 | `UMSETZUNG` | Implementer | pro Task | vollständige Task-Datei | Code-Änderung |
 | `VERIFIKATION` | Tester | pro Task, nach `UMSETZUNG` | Akzeptanzkriterien + Testlauf | Verdict + Test-Notizen in der Task-Datei |
+| `GRUEN_PROBE` | Tester | nur nach einem gescheiterten Lauf (Task hat eine Vorgeschichte) | Task-Datei mit Vorgeschichte, Teilstand, Tests | Diagnose + genau eine `Befund:`-Zeile |
 | `REVIEW` | Reviewer | nach Abschluss einer Initiative, oder auf Wunsch | `spec/`, Code, Testlauf | `reports/<datum>-review.md` |
 | `TRIAGE` | Reviewer | `.agent/inbox/` enthält Material | Inbox-Rohmaterial + Code | `reports/<datum>-triage.md` |
 
@@ -552,6 +553,37 @@ Branch per PR. In der Sandbox heisst das: eigener Klon nur für den
 Agenten, gestartet mit `run-sandbox.sh --git-rw` (Details:
 `sandbox/README.md`, "Commit-Flow").
 
+### Scheitern: erst diagnostizieren, dann reagieren
+
+**Grundsatz: gründlich prüfen erst, wenn etwas schiefging.** Im Normalfall
+wird nicht mehr geprüft als nötig. Hat eine Task-Datei aber eine
+Vorgeschichte, schauen die Rollen genauer hin: der Tester mit der
+Grün-Probe, der Planner schneidet beim Neuschnitt entlang der Stelle, an
+der es scheiterte, und der Architekt prüft eine Gate-Vorgabe erneut, an
+der ein Lauf gescheitert ist. So zahlt nur der problematische Task die
+Kosten der Diagnose.
+
+Ein Timeout hat sehr verschiedene Ursachen, und jede braucht eine andere
+Reaktion. Die **Grün-Probe** (`GRUEN_PROBE`) des Testers klärt zwei Fragen:
+Sind die eingefrorenen Tests überhaupt erfüllbar (per
+Wegwerf-Implementierung ausserhalb des Repos, die nicht weitergegeben
+wird)? Und wie weit ist der hinterlassene Stand? Der Tester urteilt, der
+Orchestrator ordnet nach einer festen Regel zu:
+
+| Befund | Reaktion |
+|---|---|
+| `VOLLSTAENDIG` | Grün-Probe zählt als Verifikation, Task `done` |
+| `TEST_UNERFUELLBAR` | Nutzer entscheidet, dann derselbe Task mit korrigiertem Test |
+| `FAST_FERTIG` | nächster Versuch auf dem Teilstand, mit Korrekturliste |
+| `ZU_GROSS` | Neuschnitt in Teil-Tasks |
+| `ZU_VIEL_LESESTOFF` | Wegweiser auf die Fundstellen, danach grösseres Modell; immer ein Strukturbefund ("Datei aufteilen") |
+
+Neu geschnitten oder das Modell gewechselt wird nur vor der
+Versuchsgrenze; ist die Initiative angehalten (`HALTED`), entscheidet der
+Nutzer. Welcher Abbruchgrund des Wrappers welche Reaktion auslöst
+(Setup-Fehler, Timeout, abgelehnte Berechtigung), steht als Tabelle in
+`orchestrator.md`, Schritt 5.
+
 ### Delta-fokussierte Wiederholungen
 
 Wird ein Baustein nach einer Korrektur erneut gestartet, bekommt er den
@@ -743,9 +775,9 @@ Freeze-Commit-Hash>
 - Jeder Task hat konkrete, prüfbare Akzeptanzkriterien (keine vagen
   Beschreibungen wie "funktioniert gut").
 - Jeder Task lässt das Repo lauffähig und grün zurück.
-- Läuft eine Rolle deutlich länger als erwartet oder meldet, der Task sei
-  zu gross: **stoppen und neu schneiden**, nicht denselben Auftrag erneut
-  starten und hoffen.
+- Scheitert ein Lauf (Timeout, ohne Ergebnis): nicht denselben Auftrag
+  erneut starten und hoffen, sondern erst diagnostizieren – siehe
+  "Scheitern: erst diagnostizieren, dann reagieren" (Teil C).
 - Abhängigkeiten von externer Hardware/Diensten werden vermieden bzw.
   gemockt; Sonderfälle werden eigene, spätere Tasks.
 

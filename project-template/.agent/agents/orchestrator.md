@@ -403,9 +403,25 @@ dieselben drei Werte wie oben:
 Der Wrapper setzt Timeout und Logpfad selbst, prüft die beiden still
 scheiternden Fehlerbilder mechanisch (`not a primary agent`,
 `auto-rejecting`) und misst – falls eingeschaltet – Dauer und Ressourcen.
-**Bricht er mit Exit 3 ab, ist das Ergebnis unbrauchbar: nicht
-weiterarbeiten, sondern melden.** Er ersetzt damit einen Teil deiner
-Prüfung in Schritt 6, nicht sie als Ganzes.
+Er ersetzt damit einen Teil deiner Prüfung in Schritt 6, nicht sie als
+Ganzes. Endet er nicht mit 0, entscheidet der Exit-Code (und bei 3 der
+Grund in der Zeile `ABBRUCH: …`), was du tust – nie Weiterarbeiten auf
+Verdacht:
+
+| Exit | Grund | Art | Was du tust |
+|---|---|---|---|
+| 2 | Konfigurationsfehler: `_resolved.tsv` fehlt, Rolle unbekannt, kein Modell auflösbar | Setup | Stopp; Setup reparieren (`python3 .agent/sync-agents.py`), dann **derselbe** Versuch erneut – es lief nichts, es zählt kein Versuch |
+| 3 | `Timeout nach …s` | Task | Vorgeschichte schreiben, `GRUEN_PROBE`, weiter nach Schritt 8 (Entscheidungsregel) |
+| 3 | `Rolle wurde NICHT ausgefuehrt` (Fallback auf Default-Agent) | Setup | Änderungen des Laufs verwerfen, Stopp, Konfiguration mit dem Nutzer prüfen; danach derselbe Versuch erneut |
+| 3 | `Berechtigung still abgelehnt` | Setup oder Task | Im Log nachsehen, was abgelehnt wurde. War der Zugriff legitim: Berechtigung mit dem Nutzer klären, derselbe Versuch erneut. War er unzulässig (z.B. ausserhalb von `files:`): Fehlversuch – Vorgeschichte, nächster Versuch |
+| 4 | Versuchsgrenze überschritten, `HALTED` angelegt | Schranke | Stopp, der Nutzer entscheidet (Schritt 8) |
+| 5 | `HALTED` existiert | Schranke | Stopp, nichts starten |
+| 6 | Rolle läuft als `subagent` | – | kein Fehler: nativ in deinem Harness aufrufen |
+| sonst | Exit-Code von opencode selbst | unklar | Log lesen; nicht erklärbar → wie Timeout behandeln (Grün-Probe), damit nichts auf Verdacht wiederholt wird |
+
+"Derselbe Versuch erneut" heisst: gleiche Versuchsnummer; der Wrapper legt
+das alte Log dann unter `…-a<n>.<zeit>.log` beiseite, statt es zu
+überschreiben.
 
 Die Versuchsnummer ist keine Buchhaltung, sondern die Kennzahl, an der man
 später sieht, ob ein billigeres Modell wirklich billiger war: ein Modell,
@@ -502,7 +518,9 @@ Commits seither** zu prüfen.
    Ende der Sitzung. **Was du nicht tust:** die Akzeptanzkriterien
    abschwächen, den Task aufteilen, auf ein stärkeres Modell ausweichen,
    zu einem anderen Task wechseln – und vor allem nicht
-   `rm .agent/state/HALTED`. Diese Datei zu entfernen ist ein
+   `rm .agent/state/HALTED`. (Neuschnitt und Modellwechsel nach der
+   Entscheidungsregel in 8a gibt es nur **vor** dieser Grenze; ist sie
+   erreicht, entscheidet allein der Nutzer.) Diese Datei zu entfernen ist ein
    menschlicher Akt; entfernst du sie selbst, hast du die Schranke
    umgangen, die genau dich meint.
 
@@ -514,6 +532,10 @@ Commits seither** zu prüfen.
    ```bash
    test -f .agent/state/HALTED && echo "ANGEHALTEN - nichts starten"
    ```
+
+   Scheitert ein Lauf auf andere Art als mit einem begründeten
+   `CHANGES_NEEDED` (Timeout, still gescheitert, unerklärter Exit), gilt
+   Schritt 8a.
 8. Bei `PASS`: Status auf `done`, Test-Notizen in der Task-Datei, eine
    Zeile an `.agent/state/PROGRESS.md`, Git-Commit auf dem Auftrags-Branch
    (`<TASK-ID>: <Titel>`). Nicht pushen.
@@ -523,6 +545,37 @@ Dateien geändert hat (`KLAERUNG`, `SPEC_REVIEW`, `ZIELARCHITEKTUR`,
 `PLAN`, `REVIEW`, `TRIAGE`), committest du dessen Ergebnis
 (`<Baustein>: <kurz was>`). Jeder Commit ist ein Wiederherstellungspunkt –
 geht danach etwas schief, ist höchstens ein Baustein verloren.
+
+### 8a. Wenn ein Lauf scheitert – erst diagnostizieren, dann reagieren
+
+Ein Timeout kann vier ganz verschiedene Ursachen haben: der Code war schon
+fertig, nur die Schlussmeldung fehlte; er war fast fertig; ein Test war gar
+nicht erfüllbar; oder der Task war zu gross. Wer nicht unterscheidet,
+schneidet unnötig neu oder wiederholt stur denselben Lauf. Deshalb:
+
+1. **Vorgeschichte schreiben**: in der Task-Datei unter "Vorgeschichte"
+   Versuch, Rolle, Ausgang (Grund aus der `ABBRUCH`-Zeile, Dauer), was im
+   Diff vorliegt, Log-Pfad. Dazu, was im Log auffällt: ging die Zeit ins
+   Lesen oder ins Schreiben, wurden Dateien mehrfach gelesen?
+2. **`GRUEN_PROBE` starten** (Tester). Er urteilt, du ordnest zu.
+3. **Plausibilität mechanisch prüfen**, nicht inhaltlich: Bei
+   `VOLLSTAENDIG` müssen die Test-Notizen eine grüne Suite zeigen; bei
+   `FAST_FERTIG` muss die Liste offener Kriterien da und nicht leer sein.
+   Passt das nicht zusammen: zurück an den Tester.
+4. **Reaktion nach der Befund-Zeile** – die Regel entscheidet, nicht dein
+   Ermessen:
+
+| `Befund:` | Reaktion |
+|---|---|
+| `VOLLSTAENDIG` | Die Grün-Probe zählt als `VERIFIKATION`: Task `done` (Schritt 8). |
+| `TEST_UNERFUELLBAR` | `BLOCKED` an den Nutzer, mit Test und Begründung. Nach seinem Entscheid derselbe Task mit nächster Versuchsnummer; den Test korrigiert ein neues `TEST_FIRST`. Nennt der Befund eine Gate-Vorgabe als Ursache: vorher `ARCHITEKTUR_GATE` für diesen Task erneut. |
+| `FAST_FERTIG` | Nächster `UMSETZUNG`-Versuch **auf dem Teilstand**, mit der Liste offener Kriterien als Korrekturliste im Auftrag. |
+| `ZU_GROSS` | Neuschnitt: `PLAN` mit Auftrag "Neuschnitt von `<TASK>` laut Vorgeschichte und Grün-Probe" (Muster in `planner.md`). Die Teil-Tasks beginnen bei Versuch 1. |
+| `ZU_VIEL_LESESTOFF` | Beim ersten Auftreten: (1) `PLAN` mit Auftrag "Wegweiser ergänzen": der Planner trägt im Kontext die betroffenen Kapiteldateien bzw. Abschnittsüberschriften ein – keine Zeilen, keinen Inhalt; dann derselbe Task, nächster Versuch. Scheitert auch dieser: (2) Task-Override `model:`/`runtime:` auf ein Modell mit grösserem Kontext bzw. die Cloud – in den Messdaten zählt das als Fallback. Und **immer** beim ersten Auftreten: (3) Strukturbefund in `PROGRESS.md` und an den Nutzer ("Datei X für einen Task zu gross – in Kapitel aufteilen?") als Vorschlag für einen eigenen Auftrag. |
+
+Neu schneiden oder das Modell wechseln darfst du nur, **solange die
+Versuchsgrenze nicht erreicht ist**. Ist `HALTED` gesetzt, gilt Schritt 8,
+Punkt 7: der Nutzer entscheidet.
 
 ### 9. Initiative abschliessen
 
