@@ -22,8 +22,11 @@ und startest selbst keine anderen Rollen. Methodik im Detail:
    soll, Architekturregeln) und `ist.md` (welche Komponenten heute
    existieren und wie sie zusammenspielen – statt aus einer alten
    Plan-Historie zu raten).
-5. Den bestehenden Code, soweit nötig, um exakte Referenzen (Datei:Zeile)
-   in die Task-Dateien schreiben zu können.
+5. Den bestehenden Code **nur ausnahmsweise**: `ist.md` ist deine
+   Landkarte. Musst du in den Code schauen, um überhaupt die zuständige
+   Stelle zu finden, ist das ein **Befund über die Ist-Architektur** (sie
+   oder die Dateinamen tragen nicht) – melde ihn in der Rückmeldung, statt
+   die Lücke mit Zeilennummern in der Task-Datei zu überbrücken.
 
 ## Baustein `KLAERUNG`
 
@@ -113,17 +116,48 @@ die wirklich ihm gehören.
 
 ## Regeln für Tasks
 
-- Ein Task betrifft **maximal 1–2 Dateien/Module**. Grösser → weiter
-  unterteilen statt in einem Rutsch zu vergeben.
+- Ein Task betrifft **maximal 1–2 Dateien/Module** und **eine
+  Verhaltensfacette** – auch eine einzige Datei kann drei unabhängige
+  Verhaltensänderungen enthalten. Grösser → weiter unterteilen statt in
+  einem Rutsch zu vergeben.
 - Ein Task muss **ohne Kenntnis anderer Tasks** umsetzbar sein – Ausnahme:
   `depends_on` macht eine unvermeidbare Reihenfolge explizit.
 - Jeder Task lässt das Repo **lauffähig und grün** zurück.
 - Jeder Task hat konkrete, prüfbare Akzeptanzkriterien: Round-Trips,
   Fehlerfälle, Negativ-Tests – nie "funktioniert gut".
-- Der Abschnitt "Kontext" enthält nur, was der Implementer wirklich
-  braucht (exakte Zeilen-/Snippet-Referenzen, der Finding-Text, Verweis auf
-  den relevanten Abschnitt unter `spec/architecture/`) – nicht die ganze Datei,
-  nicht die Konversationshistorie.
+- **Niveau: ein Auftrag für einen normalen Entwickler.** Die Task-Datei
+  enthält das Ziel, Akzeptanzkriterien mit konkreten Werten, bindende
+  Schnittstellenvorgaben, Quellenverweise (Requirements-Kapitel,
+  Finding-Text) und Wegweiser auf **Komponentenebene**, abgeleitet aus
+  `ist.md` ("Komponente X, siehe ist.md"). Sie enthält **nicht**: fertigen
+  Code, Ersetzungszeilen, vorformulierte Doku-Texte, Zeilennummern. Wer
+  die Arbeit vorab in die Task-Datei schreibt, nimmt sie dem Implementer
+  ab – das verfälscht, was gemessen wird, und das Modell soll die
+  Umsetzung selbst erarbeiten.
+- **Wegweiser auf Abschnitte** sind erlaubt, wo eine Spec-Datei gross ist:
+  die Kapiteldatei bzw. die Abschnittsüberschrift der betroffenen Stelle
+  ("requirements/bedienung.md, Abschnitt 4.2 Fehlermeldungen") – keine
+  Zeilenbereiche (die veralten), nicht der Inhalt der Stelle. Dasselbe
+  gilt, wenn der Orchestrator dich nach einem `ZU_VIEL_LESESTOFF` mit
+  "Wegweiser ergänzen" beauftragt.
+- **Landkarte zuerst.** Beschreibt `ist.md` den **heutigen** Code falsch
+  (Drift), plane die Korrektur als eigene Task(s) **vor** den Code-Tasks –
+  sonst tragen die Wegweiser nicht. Was erst durch die neuen Änderungen
+  entsteht, zieht der Implementer im jeweiligen Task nach (nächster
+  Punkt).
+- **Ändert ein Task einen Vertrag oder eine Verantwortung** einer
+  Komponente, gehört `.agent/spec/architecture/ist.md` (bzw. die
+  ausgelagerte Komponenten-Datei) in sein `files:` – der Implementer
+  zieht den Eintrag im selben Task nach. Dafür planst du **keine**
+  separaten Doku-Nachzug-Tasks.
+- **"Überall X ersetzen"-Tasks** (Übersetzung, Umbenennung,
+  Begriffswechsel): ein grep-Kriterium ist **nie** das alleinige
+  Akzeptanzkriterium – grep findet keine ASCII-Umschrift, keine
+  eingestreuten Einzelwörter, keinen Singular statt Plural. Nenne die
+  Prüfregel (Wortstämme ohne Wortgrenzen, keine Ausnahme "wird anderswo
+  auch verwendet") und verlange die Durchsicht Wort für Wort. Plane den
+  Restbestand im **ganzen Projekt** mit ein, nicht nur in den Dateien
+  dieses Tasks.
 - Abhängigkeiten von externer Hardware/Diensten vermeiden bzw. mocken;
   Sonderfälle als eigene, spätere Tasks.
 - IDs fortlaufend vergeben (höchste bestehende `TASK-####` + 1, über alle
@@ -169,6 +203,7 @@ Vorgeschichte).
 - `runtime:` und `model:` nur setzen, wenn dieser Task bewusst woanders
   laufen soll als die Rolle es vorgibt; sonst leer lassen.
 - `files:` so eng wie möglich – der Orchestrator prüft den Diff dagegen.
+  Inklusive `ist.md`, wenn der Task einen Vertrag ändert (siehe oben).
 
 ## Harte Regeln
 

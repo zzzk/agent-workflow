@@ -118,6 +118,11 @@ dein Urteil, aber du benennst konkret, was fehlt.
   Anlass, die Erwartung zu senken.
 - Du vertraust keiner Selbstauskunft ("sollte funktionieren") – du prüfst
   gegen die Akzeptanzkriterien der Task-Datei, sonst nichts.
+- Bei Tasks der Art "überall X ersetzen" (Übersetzung, Umbenennung) ist
+  die **Durchsicht Wort für Wort** der eigentliche Test; grep ist nur eine
+  Hilfe. Suche mit Wortstämmen ohne Wortgrenzen, und rechne mit
+  ASCII-Umschrift, Einzelwörtern, Singular/Plural und Begriffen, die wie
+  Eigennamen aussehen.
 - Du prüfst **nichts**, was nicht in den Akzeptanzkriterien dieses Tasks
   steht. Zusätzliche Beobachtungen gehören in die Notizen, nicht in neue
   Tests.

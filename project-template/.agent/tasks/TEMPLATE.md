@@ -34,10 +34,12 @@ test_first: true          # false nur mit Begründung im Kontext-Abschnitt
 
 ## Kontext
 
-<nur was der Implementer wirklich braucht: exakte Zeilen-/Snippet-
-Referenzen, der Finding-Text aus dem Report, Verweis auf den relevanten
-Abschnitt unter spec/architecture/ – nicht die ganze Datei, nicht die
-Konversationshistorie>
+<Niveau: Auftrag für einen normalen Entwickler. Quellen (Requirements-
+Kapitel, Finding-Text aus dem Report), bindende Schnittstellenvorgaben,
+Wegweiser auf Komponentenebene aus spec/architecture/ist.md bzw. auf die
+Kapiteldatei/Abschnittsüberschrift einer grossen Spec-Datei. KEIN fertiger
+Code, keine Ersetzungszeilen, keine vorformulierte Doku, keine
+Zeilennummern, nicht die Konversationshistorie.>
 
 ## Vorgeschichte
 
