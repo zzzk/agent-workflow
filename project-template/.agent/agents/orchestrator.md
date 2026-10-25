@@ -328,33 +328,23 @@ Repos** liegt: ein lokaler Modell-Server auf dem Host. Ist er nicht
 erreichbar, scheitert der Lauf nicht sauber, sondern liefert ein leeres
 oder halbes Ergebnis mit einer Verbindungsmeldung tief im Log – und du
 würdest anfangen, den Fehler in der Task-Datei zu suchen. Deshalb einmal
-pro Session, **bevor** der erste fremde Lauf startet:
+pro Session, **bevor** der erste fremde Lauf startet – und erneut, wenn
+ein Lauf mit `no user query found in messages` endete:
 
 ```bash
-ROLE=implementer                                     # die Rolle des Tasks
-MODEL="$(awk -F'\t' -v r="$ROLE" '$1==r {print $3}' .agent/agents/_resolved.tsv)"
-
-command -v opencode >/dev/null || echo "FEHLT: opencode nicht installiert"
-
-case "$MODEL" in
-  ollama/*|lmstudio/*)
-    # Bewusst elif-Kette statt drei unabhaengiger Pruefungen: die Ursachen
-    # bauen aufeinander auf. Ist die Variable leer, sind "nicht erreichbar"
-    # und "Modell fehlt" Folgemeldungen und verdecken nur den Grund.
-    BASE="${OLLAMA_BASE_URL%/v1}"
-    if [ -z "$BASE" ]; then
-      echo "FEHLT: \$OLLAMA_BASE_URL ist leer"
-    elif ! curl -fsS --max-time 5 "$BASE/api/version" >/dev/null 2>&1; then
-      echo "FEHLT: $BASE nicht erreichbar"
-    elif ! curl -fsS --max-time 5 "$BASE/api/tags" 2>/dev/null \
-         | grep -q "\"${MODEL#*/}\""; then
-      echo "FEHLT: Modell ${MODEL#*/} nicht geladen"
-    fi
-    ;;
-esac
+.agent/vorflug.sh implementer [TASK-ID]   # Rolle des Tasks; mit Task-ID gilt ein model:-Override
 ```
 
-Meldet der Check nichts, ist alles bereit. Andernfalls gilt:
+Das Skript prüft nicht nur, ob der Server erreichbar und das Modell da
+ist, sondern lädt es und prüft dann **Kontextlänge** (mindestens `num_ctx`
+aus `opencode.json`) und **GPU-Anteil** (100 %) – "geladen" allein sagt
+nichts: mit zu kleinem Kontext schneidet Ollama still den Anfang ab, und
+teilweise auf der CPU dauert ein Lauf ein Vielfaches. Bei
+OpenAI-kompatiblen Servern (LM Studio, Firmen-Server; Präfix `lmstudio/`
+oder `openai-compat/`, Variablen `OPENAI_COMPAT_BASE_URL`,
+`OPENAI_COMPAT_API_KEY`) sagt es ausdrücklich, was dort nicht prüfbar ist.
+
+Endet es mit Exit 0, ist alles bereit. Steht irgendwo `FEHLT`, gilt:
 
 **Du kannst das nicht selbst reparieren, und du versuchst es auch nicht.**
 Der Modell-Server läuft auf dem Host – bewusst, wegen der Grafikkarte –
@@ -368,7 +358,9 @@ Befehl, den der Nutzer braucht:
 | `opencode nicht installiert` | Image ohne OpenCode – Sandbox neu bauen (`docker build`) und mit `--new` starten |
 | `$OLLAMA_BASE_URL ist leer` | Auf dem Host `export OLLAMA_BASE_URL=http://localhost:11434/v1`; in der Sandbox setzt das Image sie – fehlt sie dort, ist das Image veraltet |
 | `... nicht erreichbar` | Ollama läuft nicht, **oder** es wurde ohne die Variable gestartet: `OLLAMA_HOST=0.0.0.0 ollama serve`. Ein blosses `ollama serve` bindet nur an `127.0.0.1` und ist aus der Sandbox nicht erreichbar. Läuft es bereits: **neu starten**, die Variable wird nur beim Start gelesen |
-| `Modell ... nicht geladen` | `ollama pull <modell>` (Name aus `.agent/agents/_tiers.yml`) |
+| `Modell ... nicht vorhanden` | `ollama pull <modell>` (Name aus `.agent/agents/_tiers.yml`) |
+| `Kontextlaenge … < num_ctx …` | Ollama mit `OLLAMA_CONTEXT_LENGTH=<num_ctx>` **neu** starten. Auf dem Mac prüfen, ob zwei Server laufen (Ollama-App **und** `ollama serve` im Terminal) – dann antwortet womöglich der mit den falschen Einstellungen |
+| `Modell nur zu …% auf der GPU` | Kontext verkleinern (`num_ctx` und `OLLAMA_CONTEXT_LENGTH`) oder ein kleineres Modell; Apple Silicon: die GPU darf ab Werk nur rund 2/3 des RAM belegen – `sudo sysctl iogpu.wired_limit_mb=<MB>` |
 
 Danach den Check wiederholen, nicht auf Verdacht weiterlaufen.
 
@@ -439,6 +431,35 @@ Verdacht:
 "Derselbe Versuch erneut" heisst: gleiche Versuchsnummer; der Wrapper legt
 das alte Log dann unter `…-a<n>.<zeit>.log` beiseite, statt es zu
 überschreiben.
+
+**Lange Läufe beobachten:** `.agent/monitor.sh` zeigt alle 30 s Rolle,
+Task, Laufzeit gegen Timeout und ob das Log noch wächst, und endet mit
+dem Lauf. Mit dem Monitor-Werkzeug deines Harness (falls vorhanden)
+startest du es nach jedem `run-role.sh`-Aufruf im Hintergrund, statt
+selbst zu pollen. Es läuft immer nur eine Instanz.
+
+#### Betriebsmodus "lokal mit Cloud-Fallback" (optional)
+
+Steht in `AUFTRAG.md` unter "Betriebsmodus" `lokal-mit-cloud-fallback`
+(Default: `normal`), dann gilt zusätzlich: Der **letzte erlaubte Versuch**
+(`AGENT_MAX_ATTEMPTS`, Default 3) einer Rolle, die lokal läuft, geht an
+die Cloud – damit ein Messlauf über Nacht nicht an einem einzelnen Task
+hängen bleibt. Vorher gilt Schritt 8a wie immer (Grün-Probe,
+Entscheidungsregel); der Fallback ersetzt nur den letzten Versuch.
+
+1. In der Task-Datei `runtime: subagent` setzen (Überschreibung) und das
+   in der Vorgeschichte vermerken.
+2. Den Fallback in den Messdaten festhalten – sonst sieht die Auswertung
+   einen erfolgreichen Task und nicht, dass das lokale Modell ihn nicht
+   geschafft hat:
+   ```bash
+   .agent/run-role.sh --cloud-fallback TASK-0007 implementer 3 "Grund"
+   ```
+3. Den Baustein nativ aufrufen (Schritt 5, `runtime: subagent`).
+
+Im Modus `normal` gibt es keinen automatischen Fallback: ein Wechsel auf
+die Cloud ist dann eine Kostenentscheidung des Nutzers (bzw. die geregelte
+Reaktion auf `ZU_VIEL_LESESTOFF` in Schritt 8a).
 
 Die Versuchsnummer ist keine Buchhaltung, sondern die Kennzahl, an der man
 später sieht, ob ein billigeres Modell wirklich billiger war: ein Modell,
@@ -621,7 +642,12 @@ steht):
    `.agent/state/MEMORY.md` unter "Zurückgestellte Findings" eintragen –
    je Zeile `- <Finding-ID> <Kurztitel> – reports/<datei>#<anker>`. Sie
    gehen nicht verloren, nur weil der Report liegen bleibt.
-3. `.agent/state/AUFTRAG.md` nach
+3. **Messdaten sichern**: `.agent/export.sh` – legt eine Momentaufnahme
+   (Messdaten, Gesprächsprotokolle, opencode-Datenbank) unter
+   `.agent/runs/export-<zeit>/` ab. Dasselbe **vor jedem Compact** einer
+   langen Session: danach sind die Rohdaten sonst nicht mehr
+   rekonstruierbar.
+4. `.agent/state/AUFTRAG.md` nach
    `.agent/history/<datum>-<slug>-auftrag.md` verschieben und auf die
    leere Vorlage zurücksetzen, dasselbe mit
    `.agent/state/IMPLEMENTATION_PLAN.md` (falls befüllt) nach

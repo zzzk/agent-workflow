@@ -37,6 +37,7 @@ Anweisung – und beim Erklären gegenüber Menschen ebenso.
 | Task-Niveau "normaler Entwickler"; `ist.md` in `files:`; grep ist kein Test | Nr. 16 |
 | Gate nur Schnittstellen/Verantwortungen; Kriterien auf Wirksamkeit prüfen; `not ok` zählt | Nr. 17 |
 | Wörtliche Verdict-Zeile, Prüfung nur in der letzten Antwort; still gescheiterte Läufe | Nr. 18 |
+| Vorflug prüft Kontext und GPU-Anteil; Monitor ohne Prozesssuche; Export, ntfy | Nr. 19 |
 
 Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
 
@@ -260,6 +261,19 @@ beides.
     Rollen-Dateien verwiesen auf `tools/agent-workflow/AGENT_WORKFLOW.md`,
     das in der Sandbox nicht existiert – der Implementer versuchte es zu
     lesen; die Subagenten-Rollen sind jetzt in sich vollständig.
+19. **"Modell geladen" heisst nicht "bereit".** Die Kontextlänge wurde
+    zweimal verfehlt (TASK-0003; nach einem OS-Update erneut, als ein
+    zweiter Ollama-Server mit Standard-Einstellungen antwortete), und auf
+    einer RTX 3090 passten 131k/262k Kontext nicht in den
+    Grafikspeicher – Teile liefen auf der CPU. Der Vorflug prüft deshalb
+    beides, und jeder Lauf hält Kontext und GPU-Anteil fest. Aus dem
+    Betrieb unbeaufsichtigter Läufe kamen drei Werkzeuge: ein Monitor, der
+    den Lauf über eine Statusdatei statt per `pgrep` findet (der frühere
+    Behelf fand sich selbst, und alte Instanzen liefen weiter); ein Export
+    der Messdaten vor jedem Compact; und eine Handy-Benachrichtigung über
+    einen Hook, weil dem Nutzer bei Commit-Punkten und `HALTED` die
+    Nachricht fehlte. opencode bricht ausserdem nach 300 s ohne erste
+    Antwort ab (`headerTimeout`) – bei grossem Kontext lokal zu kurz.
 
 ---
 

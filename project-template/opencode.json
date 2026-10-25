@@ -5,7 +5,9 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (lokal)",
       "options": {
-        "baseURL": "{env:OLLAMA_BASE_URL}"
+        "baseURL": "{env:OLLAMA_BASE_URL}",
+        "headerTimeout": 1800000,
+        "chunkTimeout": 1800000
       },
       "models": {
         "qwen3.8:27b": {

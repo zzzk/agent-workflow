@@ -3,5 +3,21 @@
     "type": "command",
     "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/statusline.sh\"",
     "padding": 0
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/notify.sh\" \"Eingabe noetig\"" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/notify.sh\" \"Agent hat angehalten\"" }
+        ]
+      }
+    ]
   }
 }

@@ -82,6 +82,19 @@ if [ "${1:-}" = "--verdict" ]; then
   exit 0
 fi
 
+# --- Fallback vermerken (Betriebsmodus lokal-mit-cloud-fallback) ----------
+# Der Cloud-Lauf selbst geht nicht durch diesen Wrapper (nativer Aufruf im
+# Harness des Orchestrators). Ohne diese Zeile saehe die Auswertung nur
+# einen erfolgreichen Task - und nicht, dass das lokale Modell ihn nicht
+# geschafft hat.
+if [ "${1:-}" = "--cloud-fallback" ]; then
+  [ "${AGENT_METRICS:-1}" != "0" ] || exit 0
+  printf '{"type":"cloud_fallback","task":%s,"role":%s,"attempt":%s,"reason":%s,"ts":%s}\n' \
+    "$(json_escape "${2:?task}")" "$(json_escape "${3:?rolle}")" "${4:?versuch}" \
+    "$(json_escape "${5:-}")" "$(json_escape "$(date -u +%FT%TZ)")" >> "$METRICS"
+  exit 0
+fi
+
 # --- Modus: nur aufloesen, nichts ausfuehren ------------------------------
 # Damit der Orchestrator VOR dem Aufruf weiss, ob eine Rolle in seinen
 # eigenen Harness gehoert oder hierher - ohne raten zu muessen.
@@ -179,6 +192,23 @@ except Exception: print("null")' 2>/dev/null || echo "null"
 }
 VRAM_BEFORE="$(vram_now)"
 
+# Kontextlaenge und GPU-Anteil des geladenen Modells (Ollama /api/ps):
+# "geladen" allein sagt nichts - mit zu kleinem Kontext oder teilweise auf
+# der CPU laeuft ein Lauf, aber anders als gemessen werden soll. Je Lauf
+# festgehalten, damit sich Ausreisser spaeter erklaeren lassen.
+loaded_info() {
+  [ -n "${OLLAMA_BASE_URL:-}" ] || { echo "null null"; return; }
+  curl -fsS --max-time 3 "${OLLAMA_BASE_URL%/v1}/api/ps" 2>/dev/null \
+    | python3 -c 'import sys,json
+n=sys.argv[1].split("/",1)[-1]
+try:
+    ms=[m for m in json.load(sys.stdin).get("models",[]) if n in (m.get("name"),m.get("model"))]
+    m=ms[0]
+    pct=round(100*m.get("size_vram",0)/m["size"]) if m.get("size") else "null"
+    print(m.get("context_length","null"), pct)
+except Exception: print("null null")' "$MODEL" 2>/dev/null || echo "null null"
+}
+
 # Ressourcen des opencode-Prozesses mitschreiben. Bewusst nur Peak-RSS und
 # CPU-Zeit: der Prozess ist im Mischbetrieb ein duenner HTTP-Client, die
 # eigentliche Last liegt bei Ollama auf dem Host (dafuer .agent/sample-host.sh).
@@ -208,6 +238,11 @@ START_TS="$(date -u +%FT%TZ)"
 START_S=$(date +%s)
 START_MS=$(( START_S * 1000 ))
 
+# Statusdatei fuer .agent/monitor.sh: wer laeuft, seit wann, wohin wird
+# geloggt. Der Monitor liest NUR diese Datei und prueft die PID - er sucht
+# keine Prozesse per Muster (pgrep fand sich frueher selbst).
+CURRENT="$RUNS_DIR/current.json"
+
 # --model nur bei einem Task-Override: ohne das Flag gilt die model-Zeile
 # der generierten Rollen-Datei, und genau die ist der Normalfall.
 MODEL_ARGS=()
@@ -220,6 +255,10 @@ ATTACH_ARGS=()
 timeout "$TIMEOUT" opencode run ${ATTACH_ARGS[@]+"${ATTACH_ARGS[@]}"} \
   --agent "$ROLE" --dir . --auto ${MODEL_ARGS[@]+"${MODEL_ARGS[@]}"} "$PROMPT" > "$LOG" 2>&1 &
 RUN_PID=$!
+python3 -c 'import json,sys; print(json.dumps(dict(zip(
+  ["pid","role","task","attempt","start","start_s","timeout_s","log","model"], sys.argv[1:]))))' \
+  "$RUN_PID" "$ROLE" "$TASK" "$ATTEMPT" "$START_TS" "$START_S" "$TIMEOUT" "$LOG" "$MODEL" > "$CURRENT"
+trap 'rm -f "$CURRENT"' EXIT
 sample_loop "$RUN_PID" &
 SAMPLE_PID=$!
 wait "$RUN_PID"; EXIT=$?
@@ -228,6 +267,7 @@ PEAK_RSS_KB="$(cat "$SAMPLE" 2>/dev/null || echo 0)"; rm -f "$SAMPLE"
 
 DURATION=$(( $(date +%s) - START_S ))
 VRAM_AFTER="$(vram_now)"
+read -r LOADED_CTX GPU_PCT <<< "$(loaded_info)"
 
 # --- Mechanische Pruefung der beiden stillen Fehlerbilder -----------------
 FALLBACK=false; REJECTED=false; PROBLEM=""
@@ -311,7 +351,7 @@ fi
 
 if [ "${AGENT_METRICS:-1}" != "0" ]; then
   python3 -c 'import json,sys
-(a,task,role,attempt,model,actual,ts,dur,ex,rss,vb,va,chg,fb,rej,sess,log)=sys.argv[1:]
+(a,task,role,attempt,model,actual,ts,dur,ex,rss,vb,va,chg,fb,rej,sess,log,lctx,gpu)=sys.argv[1:]
 a=json.loads(a)
 num=lambda v: json.loads(v) if v not in ("","null") else None
 print(json.dumps({"type":"run","task":task,"role":role,"attempt":int(attempt),
@@ -321,10 +361,12 @@ print(json.dumps({"type":"run","task":task,"role":role,"attempt":int(attempt),
   "fallback":fb=="true","auto_rejected":rej=="true",
   "verdict_line":a["verdict"] is not None,
   "max_context_tokens":a["max_context_tokens"],"output_tokens":a["output_tokens"],
+  "loaded_context_length":num(lctx),"gpu_percent":num(gpu),
   "session":sess or None,"log":log}))' \
     "$ANALYSIS" "$TASK" "$ROLE" "$ATTEMPT" "$MODEL" "$ACTUAL" "$START_TS" \
     "$DURATION" "$EXIT" "${PEAK_RSS_KB:-0}" "$VRAM_BEFORE" "$VRAM_AFTER" \
-    "${CHANGED:-0}" "$FALLBACK" "$REJECTED" "$SESSION_JSON" "$LOG" >> "$METRICS"
+    "${CHANGED:-0}" "$FALLBACK" "$REJECTED" "$SESSION_JSON" "$LOG" \
+    "$LOADED_CTX" "$GPU_PCT" >> "$METRICS"
 fi
 
 echo "Lauf: $ROLE / $TASK (Versuch $ATTEMPT) – ${DURATION}s, exit=$EXIT"

@@ -39,7 +39,8 @@ Implementierung läuft (falls verfügbar) in der Agent-Sandbox aus
 `tools/agent-workflow/sandbox/` (Docker, `bypassPermissions` user-scoped).
 Normalfall: eigener Klon nur für den Agenten, gestartet mit `--git-rw` –
 der Agent committet je Task auf `agent/<slug>`, pusht aber nie (keine
-Zugangsdaten im Container); der Nutzer pusht vom Host. Details/Selbstcheck-Schritte: siehe
+Zugangsdaten im Container); der Nutzer holt den Branch per `git fetch` in
+seine eigene Kopie und pusht von dort. Details/Selbstcheck-Schritte: siehe
 `tools/agent-workflow/sandbox/README.md` und
 `tools/agent-workflow/sandbox/SANDBOX_BOOTSTRAP_PATTERN.md`.
 
