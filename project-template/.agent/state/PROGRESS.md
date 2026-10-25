@@ -1,6 +1,6 @@
 # Progress
 
-> Workflow-Zustand (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`).
+> Workflow-Zustand.
 > Append-only, chronologisches Log, vom Orchestrator nach jedem
 > abgeschlossenen Task ergänzt. Der massgebliche Status eines einzelnen
 > Tasks steht in dessen Frontmatter unter `../tasks/TASK-####-<slug>.md`

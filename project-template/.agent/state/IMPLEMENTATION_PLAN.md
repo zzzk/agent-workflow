@@ -1,7 +1,6 @@
 # Implementation Plan – aktuell laufende Initiative
 
-> Workflow-Zustand (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
-> Abschnitt "Dateistruktur"), **kein** dauerhaftes Produktwissen – dafür
+> Workflow-Zustand, **kein** dauerhaftes Produktwissen – dafür
 > siehe `../spec/requirements/` (was das Tool tun soll) und
 > `../spec/architecture/` (wie es aufgebaut sein soll und welche
 > Komponente heute wofür zuständig ist).

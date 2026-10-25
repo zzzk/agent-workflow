@@ -83,17 +83,19 @@ n=sys.argv[1]
 try:
     ms=[m for m in json.load(sys.stdin).get("models",[]) if m.get("name")==n or m.get("model")==n]
     m=ms[0] if ms else {}
-    print(m.get("context_length",""), m.get("size",""), m.get("size_vram",""))
-except Exception: print("","","")' "$NAME")"
+    # "-" statt Leerstring: read verschluckt leere Felder, dann rutschten
+    # die Werte eine Spalte nach links.
+    print(m.get("context_length","-"), m.get("size","-"), m.get("size_vram","-"))
+except Exception: print("- - -")' "$NAME")"
       EXP="$(expected_ctx ollama "$NAME")"
-      if [ -z "$CTX" ]; then
+      if [ "$CTX" = "-" ]; then
         hint "context_length nicht in /api/ps (aeltere Ollama-Version?) - nicht pruefbar"
       elif [ -n "$EXP" ] && [ "$CTX" -lt "$EXP" ]; then
         fehlt "Kontextlaenge $CTX < num_ctx $EXP aus opencode.json - Ollama mit OLLAMA_CONTEXT_LENGTH=$EXP neu starten (laeuft womoeglich ein zweiter Server, z.B. App und Terminal?)"
       else
         ok "Kontextlaenge $CTX${EXP:+ (erwartet >= $EXP)}"
       fi
-      if [ -z "$SIZE" ] || [ -z "$VRAM" ]; then
+      if [ "$SIZE" = "-" ] || [ "$VRAM" = "-" ] || [ "$SIZE" = "0" ]; then
         hint "GPU-Anteil nicht feststellbar"
       elif [ "$VRAM" != "$SIZE" ]; then
         PCT=$(( VRAM * 100 / SIZE ))

@@ -1,7 +1,6 @@
 # Auftrag – aktuell laufendes Anliegen
 
-> Workflow-Zustand (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
-> Abschnitt "Dateistruktur"), **kein** dauerhaftes Produktwissen – dafür
+> Workflow-Zustand, **kein** dauerhaftes Produktwissen – dafür
 > siehe `../spec/requirements/` (was das Produkt insgesamt können soll).
 > Faustregel: die Requirements beschreiben das Produkt, diese Datei das
 > Teilstück, das der Nutzer *jetzt* braucht.
@@ -22,7 +21,7 @@
 <Was der Nutzer will, in seinen Worten. Nicht umgedeutet, nicht schon
 gelöst.>
 
-## Art der Arbeit
+## Auftragstyp
 
 <Genau ein Auftragstyp: REQUIREMENTS | FEATURE | FIX | AUDIT |
 MANUELLER-TEST | EINZELAUFTRAG | BOOTSTRAP – plus ein Satz, warum dieser

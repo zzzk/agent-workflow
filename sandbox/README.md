@@ -213,10 +213,11 @@ privaten Repos im Free-Plan ohnehin nicht durchsetzt).
 ### Einrichten, einmal pro Projekt (auf dem Host)
 
 ```bash
-# 1. Eigener Klon nur fuer den Agenten – nicht deine Arbeitskopie
-git clone git@github.com:<owner>/<projekt>.git ~/agent-work/<projekt>
-git -C ~/agent-work/<projekt> config user.name  "Agent (<projekt>)"
-git -C ~/agent-work/<projekt> config user.email "agent@noreply.invalid"
+# 1. Eigener Klon nur fuer den Agenten – nicht deine Arbeitskopie.
+#    Die Identitaet gleich beim Klonen setzen: danach rufst du in diesem
+#    Klon nie mehr Git auf (siehe unten).
+git clone -c user.name="Agent (<projekt>)" -c user.email="agent@noreply.invalid" \
+  git@github.com:<owner>/<projekt>.git ~/agent-work/<projekt>
 
 # 2. Sandbox darauf starten, mit beschreibbarem .git
 ./run-sandbox.sh --git-rw ~/agent-work/<projekt>

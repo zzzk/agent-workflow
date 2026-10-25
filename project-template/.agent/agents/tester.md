@@ -49,6 +49,15 @@ gibt, den man nachträglich rationalisieren könnte.
    (`waitUntil` o.ä., mit Timeout), nie mit einer festen Anzahl Ticks
    oder Millisekunden – feste Wartezeiten machen Tests wackelig: mal
    grün, mal rot, je nach Last.
+**Sonderfall Teil-Task eines Neuschnitts:** Nennt der Kontext einen
+Freeze-Commit des Eltern-Tasks und die übernommenen Testdateien, schreibst
+du **keine** neuen Tests. Du belegst nur, dass diese Dateien unverändert
+sind (`git diff <freeze-commit> -- <testdateien>` muss leer sein), prüfst,
+dass sie für diesen Teil-Task fehlschlagen, und meldest den Freeze-Commit
+des Eltern-Tasks als Freeze-Grenze – kein eigener Commit. Fehlt einem
+Akzeptanzkriterium des Teil-Tasks ein übernommener Test, gilt für dieses
+Kriterium der Normalfall (Punkte 1–6).
+
 6. Committe **nur die Testdateien** dieses Tasks, mit der Message
    `<TASK-ID>: Tests (TEST_FIRST)`. Dieser Commit ist die
    **Freeze-Grenze**; nenne seinen Hash in der Rückmeldung. Gepusht wird

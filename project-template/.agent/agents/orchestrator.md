@@ -74,11 +74,8 @@ zu bilden – dafür gibt es Tester und Reviewer.
   Kommt nichts zurück: **stoppen** und dem Nutzer vorschlagen, die
   Sandbox auf einem eigenen Klon mit `--git-rw` neu zu starten (siehe
   `sandbox/README.md`, "Commit-Flow"). Ohne Commits fehlt die
-  Freeze-Grenze. Besteht der Nutzer auf read-only, gilt der Notbetrieb:
-  statt Commits einen Snapshot der Testdateien als Freeze-Nachweis
-  (`find tests/ -type f -exec sha256sum {} + | sort` – per `find`, nicht
-  per Glob, sonst fehlen Dateien) im Scratchpad, und in `PROGRESS.md`
-  "bereit zum Commit: <Commit-Message-Entwurf>" je Task.
+  Freeze-Grenze der Tests, und es gibt keinen Wiederherstellungspunkt –
+  einen Ersatzbetrieb ohne Commits gibt es bewusst nicht mehr.
 
 ## Vorgehen
 
@@ -243,10 +240,12 @@ Fragen**. Die Fragen formuliert der Planner in einer `KLAERUNG`-Runde
 
 Im Ablauf `FEATURE` entfällt `SPEC_REVIEW`, wenn die Requirements
 unverändert aus einem `REQUIREMENTS`-Auftrag stammen, der mit
-`SPEC_REVIEW` abgeschlossen wurde. Dafür hältst du nach jedem
-`SPEC_REVIEW` in `.agent/state/PROGRESS.md` den Commit fest
-(`SPEC_REVIEW <Verdict> – Requirements-Stand <commit>`) und prüfst im
-`FEATURE`-Ablauf mechanisch:
+`SPEC_REVIEW` abgeschlossen wurde. Dafür hältst du **am Ende** eines
+`REQUIREMENTS`-Auftrags mit `SPEC_REVIEW` – also nach der letzten
+`KLAERUNG`-Runde, die dessen Befunde ausformuliert hat – in
+`.agent/state/PROGRESS.md` den Commit fest
+(`REQUIREMENTS abgeschlossen mit SPEC_REVIEW – Requirements-Stand <commit>`)
+und prüfst im `FEATURE`-Ablauf mechanisch:
 
 ```bash
 git diff --quiet <commit> -- .agent/spec/requirements/ && echo "unverändert"
@@ -410,14 +409,16 @@ Sitzung (`opencode export`) die Verdict-Zeile der **letzten** Antwort, das
 tatsächlich gelaufene Modell und die Token-Zahlen, und misst – falls
 eingeschaltet – Dauer und Ressourcen.
 Er ersetzt damit einen Teil deiner Prüfung in Schritt 6, nicht sie als
-Ganzes. Endet er nicht mit 0, entscheidet der Exit-Code (und bei 3 der
+Ganzes. Die Prüfung auf `auto-rejecting` sucht noch im ganzen Log und
+kann deshalb fälschlich anschlagen, wenn das Modell den Begriff nur zitiert
+(offen: `TODO.md`, Nr. 6) – im Zweifel die Stelle im Log ansehen. Endet er nicht mit 0, entscheidet der Exit-Code (und bei 3 der
 Grund in der Zeile `ABBRUCH: …`), was du tust – nie Weiterarbeiten auf
 Verdacht:
 
 | Exit | Grund | Art | Was du tust |
 |---|---|---|---|
 | 2 | Konfigurationsfehler: `_resolved.tsv` fehlt, Rolle unbekannt, kein Modell auflösbar | Setup | Stopp; Setup reparieren (`python3 .agent/sync-agents.py`), dann **derselbe** Versuch erneut – es lief nichts, es zählt kein Versuch |
-| 3 | `Timeout nach …s` | Task | Vorgeschichte schreiben, `GRUEN_PROBE`, weiter nach Schritt 8 (Entscheidungsregel) |
+| 3 | `Timeout nach …s` | Task | Vorgeschichte schreiben, `GRUEN_PROBE`, weiter nach Schritt 8a (Entscheidungsregel) |
 | 3 | `Rolle wurde NICHT ausgefuehrt` (Fallback auf Default-Agent) | Setup | Änderungen des Laufs verwerfen, Stopp, Konfiguration mit dem Nutzer prüfen; danach derselbe Versuch erneut |
 | 3 | `still gescheitert: keine Aenderung und keine Verdict-Zeile` | Task | wie Timeout: Vorgeschichte, `GRUEN_PROBE`, Schritt 8a |
 | 3 | `opencode: no user query found in messages` | Setup oder Task | Vorflug wiederholen (Kontextlänge!); stimmt der, wie Timeout behandeln – das Deliverable lag in diesem Fehlerbild teils schon vor, die Grün-Probe stellt das fest |
@@ -428,6 +429,11 @@ Verdacht:
 | 6 | Rolle läuft als `subagent` | – | kein Fehler: nativ in deinem Harness aufrufen |
 | sonst | Exit-Code von opencode selbst | unklar | Log lesen; nicht erklärbar → wie Timeout behandeln (Grün-Probe), damit nichts auf Verdacht wiederholt wird |
 
+Stehen mehrere Gründe in einer `ABBRUCH`-Zeile (durch `;` getrennt),
+gehen Setup-Gründe vor: erst die Konfiguration reparieren, dann denselben
+Versuch wiederholen – ein Timeout mit falschem Modell sagt nichts über den
+Task.
+
 "Derselbe Versuch erneut" heisst: gleiche Versuchsnummer; der Wrapper legt
 das alte Log dann unter `…-a<n>.<zeit>.log` beiseite, statt es zu
 überschreiben.
@@ -435,8 +441,10 @@ das alte Log dann unter `…-a<n>.<zeit>.log` beiseite, statt es zu
 **Lange Läufe beobachten:** `.agent/monitor.sh` zeigt alle 30 s Rolle,
 Task, Laufzeit gegen Timeout und ob das Log noch wächst, und endet mit
 dem Lauf. Mit dem Monitor-Werkzeug deines Harness (falls vorhanden)
-startest du es nach jedem `run-role.sh`-Aufruf im Hintergrund, statt
-selbst zu pollen. Es läuft immer nur eine Instanz.
+startest du `.agent/monitor.sh --wait` **vor** dem `run-role.sh`-Aufruf
+– es wartet auf den Lauf und meldet sich, wenn er endet; nachher
+gestartet fände es keinen Lauf mehr. Es läuft immer nur eine Instanz
+(`--replace` ersetzt eine alte).
 
 #### Betriebsmodus "lokal mit Cloud-Fallback" (optional)
 
@@ -477,8 +485,10 @@ Lauf, egal welcher Runtime:
 ```bash
 git diff --name-only        # wurde etwas geändert – und nur, was `files:` erlaubt?
 git status --porcelain      # unerwartete/ungetrackte Artefakte?
-# Weil vor jedem Lauf committet ist, zeigt das genau diesen einen Lauf.
-grep -l auto-rejecting .agent/runs/TASK-*.log   # still an einer Berechtigung gescheitert?
+# Zeigt alles seit dem letzten Commit – also auch Task-Status und einen
+# Teilstand früherer Versuche. Was GENAU dieser Lauf geändert hat, zählt
+# run-role.sh selbst (Vorher/Nachher-Vergleich, files_changed in den
+# Messdaten).
 ```
 
 plus die Task-Datei selbst: hat die Rolle ihren Abschnitt gefüllt? Bei
@@ -493,6 +503,13 @@ Entscheidungsgrundlage.
 | `PASS_WITH_NOTES` | Weiter; Notizen in die Task-Datei bzw. den Plan übernehmen. Empfiehlt das `ARCHITEKTUR_GATE` eine **zusätzliche** Abhängigkeit, trägst du sie selbst in `depends_on` ein und vermerkst das in `PROGRESS.md` – alles andere an Reihenfolge (Abhängigkeit entfernen, umbauen) geht an den Planner |
 | `CHANGES_NEEDED` | Zurück an die vorgelagerte Rolle, mit der Begründung als zusätzlichem Kontext |
 | `BLOCKED` | Stopp, Rückfrage an den Nutzer – kein Weitermachen auf Verdacht |
+
+**Nennt der Planner Kandidaten für `architecture/abweichungen.md`**
+(Findings, die eine Architekturentscheidung berühren und nicht jetzt
+behoben werden): den Nutzer fragen. Akzeptiert er die Abweichung bewusst,
+trägst du sie mit Beleg in `.agent/spec/architecture/abweichungen.md`
+ein; ist sie nur aufgeschoben, kommt sie in die Liste zurückgestellter
+Findings (`MEMORY.md`, Schritt 9).
 
 **Fehlt die Verdict-Zeile** (`run-role.sh` meldet "Verdict-Zeile:
 FEHLT"; bei nativen Subagenten prüfst du die erste Zeile selbst):
@@ -522,7 +539,10 @@ Commits seither** zu prüfen.
 3. `TEST_FIRST` starten (ausser die Task-Datei hat `test_first: false` mit
    Begründung). Der Tester committet die Tests (`<TASK-ID>: Tests
    (TEST_FIRST)`); den Commit-Hash notieren – das ist die
-   **Freeze-Grenze**. Ohne `TEST_FIRST` committest du den Stand vor der
+   **Freeze-Grenze**. Bei einem **Teil-Task aus einem Neuschnitt**, dessen
+   Tests wörtlich vom Eltern-Task übernommen sind, schreibt der Tester
+   keine neuen Tests, sondern belegt nur, dass sie unverändert sind; die
+   Freeze-Grenze ist dann der Freeze-Commit des Eltern-Tasks. Ohne `TEST_FIRST` committest du den Stand vor der
    Umsetzung selbst, damit der Lauf einen sauberen Ausgangspunkt hat.
 4. `UMSETZUNG` starten. Der Implementer committet nicht; seine Änderungen
    liegen danach uncommittet im Arbeitsbaum.

@@ -1,7 +1,6 @@
 # Requirements: <Projektname>
 
-> Dauerhaftes Produktwissen (siehe `tools/agent-workflow/AGENT_WORKFLOW.md`,
-> Teil E "Dateistruktur") – beschreibt nur die funktionalen Anforderungen,
+> Dauerhaftes Produktwissen – beschreibt nur die funktionalen Anforderungen,
 > keine Bauanleitung und keinen Workflow-Zustand. Für die aktuell laufende
 > Initiative siehe `../../state/IMPLEMENTATION_PLAN.md`, für das Teilstück,
 > das der Nutzer gerade braucht, `../../state/AUFTRAG.md`, für die

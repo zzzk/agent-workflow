@@ -243,6 +243,28 @@ START_MS=$(( START_S * 1000 ))
 # keine Prozesse per Muster (pgrep fand sich frueher selbst).
 CURRENT="$RUNS_DIR/current.json"
 
+# Fingerabdruck des Arbeitsbaums vor dem Lauf: je Pfad, den git status
+# meldet, ein Inhalts-Hash. Nach dem Lauf verglichen ergibt das genau die
+# Dateien, die DIESER Lauf angefasst hat - auch wenn vorher schon
+# Uncommittetes herumlag (Task-Status, Teilstand eines frueheren Versuchs).
+tree_snapshot() {
+  git status --porcelain=v1 -uall -z 2>/dev/null | python3 -c 'import sys,json,hashlib,os
+raw=sys.stdin.buffer.read().split(b"\0")
+out={}
+i=0
+while i < len(raw):
+    e=raw[i]; i+=1
+    if len(e) < 4: continue
+    st=e[:2].decode(); p=e[3:].decode("utf-8","replace")
+    if st[0] in "RC": i+=1          # Umbenennung: Quellpfad folgt
+    try:
+        h=hashlib.sha256(open(p,"rb").read()).hexdigest() if os.path.isfile(p) else "-"
+    except Exception: h="?"
+    out[p]=st+":"+h
+print(json.dumps(out))'
+}
+SNAP_BEFORE="$(tree_snapshot)"
+
 # --model nur bei einem Task-Override: ohne das Flag gilt die model-Zeile
 # der generierten Rollen-Datei, und genau die ist der Normalfall.
 MODEL_ARGS=()
@@ -338,9 +360,11 @@ if [ -n "$ACTUAL_MODEL" ] && [ "$ACTUAL_MODEL" != "$MODEL" ]; then
   PROBLEM="${PROBLEM:+$PROBLEM; }falsches Modell: erwartet $MODEL, gelaufen $ACTUAL_MODEL"
 fi
 
-# Aenderungen dieses Laufs: vor jedem Lauf ist committet (orchestrator.md),
-# also gehoert alles im Arbeitsbaum zu diesem Lauf.
-CHANGED=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+# Aenderungen dieses Laufs: Vergleich mit dem Fingerabdruck von vorher.
+SNAP_AFTER="$(tree_snapshot)"
+CHANGED="$(python3 -c 'import json,sys
+a=json.loads(sys.argv[1] or "{}"); b=json.loads(sys.argv[2] or "{}")
+print(sum(1 for p in set(a)|set(b) if a.get(p)!=b.get(p)))' "$SNAP_BEFORE" "$SNAP_AFTER" 2>/dev/null || echo 0)"
 
 # "Still gescheitert": exit 0, nichts geaendert, keine Verdict-Zeile - der
 # Lauf sieht erfolgreich aus und hat nichts getan (TASK-0073 V1: Log endet
@@ -351,7 +375,7 @@ fi
 
 if [ "${AGENT_METRICS:-1}" != "0" ]; then
   python3 -c 'import json,sys
-(a,task,role,attempt,model,actual,ts,dur,ex,rss,vb,va,chg,fb,rej,sess,log,lctx,gpu)=sys.argv[1:]
+(a,task,role,attempt,model,actual,ts,dur,ex,rss,vb,va,chg,fb,rej,sess,log,lctx,gpu,prob)=sys.argv[1:]
 a=json.loads(a)
 num=lambda v: json.loads(v) if v not in ("","null") else None
 print(json.dumps({"type":"run","task":task,"role":role,"attempt":int(attempt),
@@ -362,11 +386,12 @@ print(json.dumps({"type":"run","task":task,"role":role,"attempt":int(attempt),
   "verdict_line":a["verdict"] is not None,
   "max_context_tokens":a["max_context_tokens"],"output_tokens":a["output_tokens"],
   "loaded_context_length":num(lctx),"gpu_percent":num(gpu),
+  "problem":prob or None,"wrapper_exit":3 if prob else int(ex),
   "session":sess or None,"log":log}))' \
     "$ANALYSIS" "$TASK" "$ROLE" "$ATTEMPT" "$MODEL" "$ACTUAL" "$START_TS" \
     "$DURATION" "$EXIT" "${PEAK_RSS_KB:-0}" "$VRAM_BEFORE" "$VRAM_AFTER" \
     "${CHANGED:-0}" "$FALLBACK" "$REJECTED" "$SESSION_JSON" "$LOG" \
-    "$LOADED_CTX" "$GPU_PCT" >> "$METRICS"
+    "$LOADED_CTX" "$GPU_PCT" "$PROBLEM" >> "$METRICS"
 fi
 
 echo "Lauf: $ROLE / $TASK (Versuch $ATTEMPT) – ${DURATION}s, exit=$EXIT"

@@ -39,7 +39,7 @@ step() { echo; echo "=== $*"; }
 
 step "1/8 Systempakete"
 apt-get update -qq
-apt-get install -y -qq git openssh-client curl ca-certificates tmux procps >/dev/null
+apt-get install -y -qq git openssh-client curl ca-certificates tmux procps sudo >/dev/null
 
 step "2/8 Node 22"
 if ! node --version 2>/dev/null | grep -q '^v22'; then

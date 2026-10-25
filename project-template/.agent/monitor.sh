@@ -93,6 +93,8 @@ for l in open(p):
         last=d
 if not last: raise SystemExit(1)
 v="ja" if last.get("verdict_line") else "FEHLT"
-print("Lauf beendet: exit=%s, %ss, Verdict-Zeile %s, %s Datei(en) geaendert" % (
-    last.get("exit"), last.get("duration_s"), v, last.get("files_changed")))
+print("Lauf beendet: run-role exit=%s, %ss, Verdict-Zeile %s, %s Datei(en) geaendert%s" % (
+    last.get("wrapper_exit", last.get("exit")), last.get("duration_s"), v,
+    last.get("files_changed"),
+    (" - ABBRUCH: " + last["problem"]) if last.get("problem") else ""))
 PY

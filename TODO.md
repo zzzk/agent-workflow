@@ -55,7 +55,7 @@ statt sie dort zu wiederholen. Z.B. in `sync-agents.py` einen Platzhalter
 im Body ersetzen:
 
 ```
-git diff <freeze-commit>..HEAD --name-only -- {{TEST_PATHS}}
+git diff <freeze-commit> --name-only -- {{TEST_PATHS}}
 ```
 
 → ersetzt durch die `path_denies` des Implementers, als `git`-Pathspecs
@@ -118,7 +118,7 @@ Das gehört in den Baustein `AUFTRAGSKLAERUNG` selbst (nicht erst in
 `KLAERUNG`/`PLAN`), weil die Antwort **alle** nachgelagerten Bausteine
 betrifft und sonst wie hier nachträglich durchgezogen werden muss.
 
-## 2. Modus `REQUIREMENTS`: dieselbe Frage am Einstieg
+## 2. Auftragstyp `REQUIREMENTS`: dieselbe Frage am Einstieg
 
 **Beobachtung**: Der Nutzer wünscht sich ausdrücklich, dass auch beim
 Start einer `REQUIREMENTS`-Klärungsschleife (Abschnitt 3a in
@@ -137,6 +137,12 @@ festgehalten wird, damit es nicht wie hier pro Initiative neu verhandelt
 werden muss).
 
 ## 3. Kleinere Beobachtung: Ort für "später wiederaufzugreifen"-Notizen
+
+> **Erledigt (Rückfluss 2026-10):** Bewusst vertagte Findings stehen jetzt
+> unter "Zurückgestellte Findings" in `state/MEMORY.md` (der Orchestrator
+> fragt bei der nächsten Umsetzung nach); bewusst akzeptierte
+> Abweichungen in `spec/architecture/abweichungen.md`. Text unten nur
+> noch als Herkunft.
 
 **Beobachtung**: Für "Entfernung von `pwdHash.html` in einer späteren
 Iteration" gab es keinen offensichtlichen dauerhaften Ablageort ausser

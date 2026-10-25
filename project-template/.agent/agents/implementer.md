@@ -35,7 +35,8 @@ unvollständig: melde das zurück, statt zu raten.
    Komponente (dann steht `ist.md` in `files:`): aktualisiere den
    entsprechenden Abschnitt in
    `.agent/spec/architecture/ist.md` **im selben Task** (kleiner, lokaler Diff
-   – kein Sweep über die ganze Datei).
+   – kein Sweep über die ganze Datei). Ist es der erste Eintrag, entferne
+   die Zeile "Noch nicht ausgefüllt." und den Platzhalter-Hinweis darunter.
 4. Nutze ausschliesslich die projektlokale virtuelle Umgebung bzw. das
    projektlokale Toolchain-Setup. Neue/aktualisierte Abhängigkeiten sofort
    installieren und in der Manifest-Datei eintragen.

@@ -52,7 +52,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-PROJECT_DIR="${1:?Usage: run-sandbox.sh [--new] [--git-rw] /pfad/zum/projekt [image-name]}
+PROJECT_DIR="${1:?Usage: run-sandbox.sh [--new] [--git-rw] /pfad/zum/projekt [image-name]}"
 IMAGE_NAME="${2:-agent-sandbox:latest}"
 
 if [ ! -d "$PROJECT_DIR" ]; then
