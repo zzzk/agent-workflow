@@ -192,7 +192,8 @@ beides.
     `git fetch` in seine eigene Kopie und pusht von dort – nie Git im Klon
     des Agenten aufrufen, denn dort könnte der Agent Hooks oder
     `core.fsmonitor` ablegen, die Git mit den Rechten des Nutzers auf dem
-    Host ausführen würde.
+    Host ausführen würde. Abgelöst durch Lehre 20: Der Klon liegt
+    inzwischen nur noch in einem Docker-Volume.
 14. **Der Task-Lebenszyklus kannte nur den Normalfall.** Im Projekt
     wurden Tasks mehrfach neu geschnitten (TASK-0010, -0013 bis -0017),
     und dabei fehlte jedes Mal dasselbe: Der alte Task stand als `open`
@@ -274,6 +275,27 @@ beides.
     einen Hook, weil dem Nutzer bei Commit-Punkten und `HALTED` die
     Nachricht fehlte. opencode bricht ausserdem nach 300 s ohne erste
     Antwort ab (`headerTimeout`) – bei grossem Kontext lokal zu kurz.
+20. **Gesperrte Stellen ziehen immer die nächste nach sich.** Der Klon
+    von Hand (Lehre 13) war dem Nutzer zu umständlich, und in einem
+    Projekt (wiki-assistent) lief die Sandbox deshalb mit beschreibbarem
+    `.git` direkt auf dem Ordner, in dem der Nutzer mit VS Code arbeitet.
+    Vorgeschlagen war, die Gefahrenstellen einzeln zu sperren: `.git/hooks`
+    leer und `.git/config` read-only. Getestet (Git 2.39, Marker-Datei
+    als Beweis) liefen trotzdem Programme beim `git status` des Nutzers:
+    über `.git/commondir`, das Git auf eine fremde Config umlenkt, und
+    über einen Submodul-Eintrag mit verschachteltem Repo. Über ein
+    verschachteltes Repo, das VS Code von selbst öffnet, und über
+    `.vscode/`, `.envrc` usw. ginge es auch mit read-only `.git` – also
+    auch im bisherigen Betrieb, und dort sofort, ohne Commit. Eine
+    Sperrliste wird nie fertig. Entschieden: kein geteilter Ordner mehr.
+    Der Klon des Agenten liegt nur in einem Docker-Volume;
+    `git fetch agent` spricht mit einem `git-upload-pack` in einem
+    Wegwerf-Container (ebenfalls getestet: aus einem präparierten Repo
+    lief beim Holen nichts). Was der Agent liefert, kommt nur als Commit
+    und wird erst beim Auschecken aktiv – vorher prüft `review-branch.sh`.
+    Branch-Schutz auf GitHub hätte das Remote zusätzlich gesichert, wird
+    aber bei privaten Repos im Free-Plan nicht durchgesetzt; deshalb
+    pusht auch weiterhin nur der Nutzer.
 
 ---
 

@@ -570,13 +570,15 @@ ein Baustein verloren; und `git diff` zeigt einer Rolle nur, was seit dem
 letzten Baustein passiert ist – nicht die Änderungen aller Vortasks, die
 ein kleines Modell beim Selbst-Check verwirren.
 
-**Gepusht wird nie vom Agenten.** Er bekommt keine Zugangsdaten; der
-Nutzer holt den Branch per `git fetch` in seine eigene Arbeitskopie (auch
-während der Agent arbeitet), pusht von dort und mergt per PR – Git im Klon
-des Agenten aufzurufen wäre unsicher, weil der Agent dort Hooks ablegen
-kann, die mit den Rechten des Nutzers liefen. In der Sandbox heisst das: eigener Klon nur für den
-Agenten, gestartet mit `run-sandbox.sh --git-rw` (Details:
-`sandbox/README.md`, "Commit-Flow").
+**Gepusht wird nie vom Agenten.** Er bekommt keine Zugangsdaten. In der
+Sandbox arbeitet er in einem eigenen Klon, der nur in einem Docker-Volume
+liegt; einen geteilten Ordner mit dem Host gibt es nicht. Der Nutzer holt
+per `git fetch agent` in sein eigenes Repo (auch während der Agent
+arbeitet), prüft mit `review-branch.sh`, pusht von dort und mergt per PR.
+Die Gegenstelle des Fetch läuft in einem Wegwerf-Container – Hooks und
+Config des Agenten-Repos erreichen den Rechner des Nutzers nie. Material
+geht umgekehrt als Branch `nutzer/<name>` per `git push agent` zum
+Agenten (Bild und Details: `sandbox/README.md`, "Commit-Flow").
 
 ### Scheitern: erst diagnostizieren, dann reagieren
 

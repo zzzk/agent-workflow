@@ -443,12 +443,12 @@ ist "selbständig durchlaufen lassen" nicht möglich.
 - **Claude Code**: `/permissions` bzw. `.claude/settings.json`; der Skill
   `fewer-permission-prompts` erzeugt eine passende Allowlist aus deiner
   bisherigen Nutzung. Sub-Agenten erben deinen Berechtigungsmodus.
-- **Sandbox** (empfohlen für volle Freiheit): auf einem **eigenen Klon**
-  des Projekts `sandbox/run-sandbox.sh --git-rw <klon>`, danach die
-  Selbstcheck-Schritte aus `sandbox/README.md`. Ohne `--git-rw` ist `.git`
-  read-only gemountet; dann stoppt der Orchestrator und schlägt den
-  Neustart vor (Notbetrieb ohne Commits nur auf deinen ausdrücklichen
-  Wunsch).
+- **Sandbox** (empfohlen für volle Freiheit): `sandbox/run-sandbox.sh
+  <projekt>`, danach die Selbstcheck-Schritte aus `sandbox/README.md`.
+  Der Agent arbeitet in einem eigenen Klon in einem Docker-Volume und
+  committet dort; du holst mit `git fetch agent` in dein Repo und prüfst
+  vor jedem Auschecken oder Push mit `sandbox/review-branch.sh`
+  (Bild und Ablauf: `sandbox/README.md`, "Commit-Flow").
 - **OpenCode headless**: `opencode run` **fragt nicht** – ohne `--auto`
   wird jede Berechtigungsanfrage still **abgelehnt** und der Lauf geht
   weiter. Ergebnis wäre ein "erfolgreicher" Lauf, der nichts geschrieben

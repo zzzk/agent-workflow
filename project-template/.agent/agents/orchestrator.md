@@ -66,16 +66,24 @@ zu bilden – dafür gibt es Tester und Reviewer.
   vom aktuellen Hauptbranch; liegt schon einer für diesen Auftrag vor
   (unterbrochener Lauf), weiter darauf. Gepusht wird **nie** von dir – das
   macht der Nutzer vom Host aus; Zugangsdaten hast du keine, und du
-  suchst auch keine.
-- **Ist `.git` read-only?** (Sandbox ohne `--git-rw`):
+  suchst auch keine. In der Sandbox holt der Nutzer deine Commits per
+  `git fetch agent` – jeder Commit ist dort der Stand, den er sieht.
+- **Lieferungen des Nutzers**: In der Sandbox schiebt der Nutzer Material
+  als Branch `nutzer/<name>` (z.B. `nutzer/inbox`) oder einen neueren
+  Basisstand (`main`) in dein Repo. Vor jeder Auftragsklärung:
+  `git branch --list 'nutzer/*'` und `git log --oneline -1 main`. Neue
+  Lieferungen nennst du dem Nutzer und klärst, ob sie in diesen Auftrag
+  gehören bzw. worauf der Auftrags-Branch abzweigt.
+- **Kannst du committen?**
   ```bash
   touch .git/.rw-probe 2>/dev/null && rm .git/.rw-probe && echo "git: beschreibbar"
   ```
-  Kommt nichts zurück: **stoppen** und dem Nutzer vorschlagen, die
-  Sandbox auf einem eigenen Klon mit `--git-rw` neu zu starten (siehe
+  Kommt nichts zurück, läuft die Sandbox im früheren Betrieb mit
+  geteiltem Ordner (`run-sandbox.sh --shared`): **stoppen** und dem
+  Nutzer vorschlagen, ohne `--shared` neu zu starten (siehe
   `sandbox/README.md`, "Commit-Flow"). Ohne Commits fehlt die
   Freeze-Grenze der Tests, und es gibt keinen Wiederherstellungspunkt –
-  einen Ersatzbetrieb ohne Commits gibt es bewusst nicht mehr.
+  einen Ersatzbetrieb ohne Commits gibt es bewusst nicht.
 
 ## Vorgehen
 

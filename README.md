@@ -127,15 +127,18 @@ cp -r tools/agent-workflow/project-template/. /pfad/zum/neuen-projekt/
 cd /pfad/zum/neuen-projekt
 git init
 python3 .agent/sync-agents.py
+git add -A && git commit -m "Agent-Workflow eingerichtet"
 ```
 
 ### 2. Sandbox starten (optional, empfohlen für "volle Freiheit" ohne Rückfragen)
 ```bash
 tools/agent-workflow/sandbox/run-sandbox.sh /pfad/zum/neuen-projekt
 ```
-Danach innerhalb der Sandbox die Selbstcheck-/Bootstrap-Schritte aus
-`sandbox/README.md` durchgehen (Schritt 0–5), bevor der eigentliche Agent
-gestartet wird. Ohne Sandbox: normal `claude` im Projektordner starten,
+Der Agent arbeitet dort in einem eigenen Klon (Docker-Volume) und
+committet; seine Resultate holst du mit `git fetch agent` in dein Repo
+(Bild und Ablauf: `sandbox/README.md`, "Commit-Flow"). Danach innerhalb
+der Sandbox die Selbstcheck-/Bootstrap-Schritte aus `sandbox/README.md`
+durchgehen (Schritt 0–5), bevor der eigentliche Agent gestartet wird. Ohne Sandbox: normal `claude` im Projektordner starten,
 läuft dann im üblichen, rückfragenden Berechtigungsmodus.
 
 ### 3. Orchestrator starten

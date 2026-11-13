@@ -227,3 +227,28 @@ fahren; liest der Implementer die Task und versucht ein Read auf einen
 fremden Task, muss dieser abgelehnt werden. Dann Default umstellen.
 
 **Aufgefallen**: TASK-0066 V1 (pwd-transform) las fünf fremde Task-Dateien.
+
+---
+
+## 8. Sandbox ohne geteilten Ordner: an echtem Docker prüfen
+
+**Wo**: `sandbox/run-sandbox.sh`, `sandbox/agent-remote.sh`.
+
+**Warum offen**: Gebaut und getestet am 2026-11-02 ohne Docker, mit einem
+Stellvertreter, der Volumes als Ordner nachbildet; der Git-Teil (Remote,
+Fetch und Push über eigenes `uploadpack`/`receivepack`, idempotenter
+Erststart) lief mit echtem Git. Nicht geprüft ist, was nur Docker zeigt.
+
+**Vorgehen** (einmal auf dem Mac, Docker Desktop):
+- Erststart auf einem Test-Repo: Volume angelegt, `chown` nötig oder
+  nicht, Branch im Container ausgecheckt.
+- `git fetch agent` und `git push agent HEAD:nutzer/inbox` über
+  `docker run -i` ohne `-t`: Protokoll binär sauber, keine
+  Docker-Meldungen auf stdout.
+- Fetch-Knopf in VS Code (erwartet: nutzt die Remote-Config).
+- Fetch bei gestoppter Sandbox; `docker rm` + Neustart auf
+  bestehendem Volume; `--new`.
+- Alter Container ohne Label wird als "früherer Betrieb" erkannt
+  (`<no value>` wird bereits wie leer behandelt).
+
+**Aufgefallen**: Umbau auf Klon im Volume (DECISIONS, Lehre 20).

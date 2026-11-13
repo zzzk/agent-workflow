@@ -131,6 +131,15 @@ Claude Code dort das separate, unangetastete Host-`~/.claude/settings.json`
 
 ## Schritt 2: Git-Isolation — `.git` read-only in die Sandbox mounten
 
+> **Abgelöst (2026-11-02).** `run-sandbox.sh` teilt keinen Ordner mehr
+> mit dem Host: Der Agent arbeitet in einem eigenen Klon in einem
+> Docker-Volume und committet dort frei; Resultate kommen nur per
+> `git fetch agent` zum Nutzer (`README.md`, "Commit-Flow"). Grund:
+> Auch mit read-only `.git` konnte der Agent über den geteilten
+> Arbeitsordner Code auf dem Host zur Ausführung bringen
+> (`DECISIONS.md`, Lehre 20). Der folgende Text beschreibt den früheren
+> Betrieb, den es als `run-sandbox.sh --shared` noch gibt.
+
 **Gewähltes Pattern** (von den drei geprüften Optionen): dasselbe, einzelne
 Repo bleibt bestehen (kein zweites/verschachteltes "Git-in-Git"), aber
 `.git` wird beim Sandbox-Start zusätzlich **read-only** über den normalen
@@ -242,14 +251,13 @@ zweifelsfrei bestätigen kann, welches Feld ursächlich für die Anzeige beim
 2. `~/.claude/settings.json` (NICHT `/work/.claude/...`) um
    `permissions.defaultMode: "bypassPermissions"` ergänzen (mergen, nicht
    überschreiben).
-3. Prüfen, ob `.git` bereits read-only gemountet ist (Schritt 3,
-   `touch`-Test). Falls nicht und der Host-seitige Mount-Befehl anpassbar
-   ist: dem Nutzer den `-v ...:/work/.git:ro`-Zusatz vorschlagen (kann vom
-   Agenten selbst nicht von innen umgesetzt werden — das ist ein
-   Host-seitiger Docker-Start-Parameter).
-4. Commit/Push bleiben, solange `.git` read-only ist, ein bewusster,
-   separater Schritt ausserhalb der Sandbox (siehe Schritt 2, Konsequenz
-   für Orchestrator-Workflow).
+3. Prüfen, dass `/work` der eigene Klon im Volume ist
+   (`git -C /work remote -v` leer, `.git` beschreibbar – `README.md`,
+   Selbstcheck Schritt 5). Ist `.git` read-only, läuft die Sandbox im
+   früheren Betrieb (`--shared`): keine Commits möglich, dem Nutzer den
+   Neustart ohne `--shared` vorschlagen.
+4. Committen darf der Agent; pushen kann er nicht (keine Zugangsdaten)
+   und versucht es nicht. Der Nutzer holt per `git fetch agent`.
 5. Eigene Host-`~/.claude/settings.json` auf `tui`/`statusLine`/
    `totalTokensReminder` prüfen und dieselben Werte in die user-scoped
    `~/.claude/settings.json` der Sandbox übernehmen (Schritt 4), damit
