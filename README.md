@@ -17,13 +17,17 @@ optional mit lokalen Modellen für einzelne Rollen.
 - **`USERMANUAL.md`** – das Benutzerhandbuch: Projekt anlegen oder
   übernehmen, Entscheidungen und ihre Dateien, Modellwahl (auch lokal),
   Betrieb im Alltag, Fehlerbilder.
-- **`AGENT_WORKFLOW.md`** – die Methodik: drei Diagramme als Überblick,
-  dann sechs Rollen (Orchestrator, Planner (Anforderungen und Planung),
-  Architekt, Implementer, Tester, Reviewer), der Baustein-Katalog und die
-  Auftragstypen, deren Ablauf der Orchestrator je nach geklärtem Auftrag
-  aus Bausteinen zusammensetzt (statt einer festen Pipeline), und die Task-Warteschlange als Übergabe-Format zwischen
-  kontextfreien Läufen. **Hier anfangen, wenn du verstehen oder erklären
-  willst.**
+- **`AGENT_WORKFLOW.md`** – die Methodik zum Lesen am Stück: die Idee in
+  fünf Sätzen, ein Beispielablauf, die Auftragstypen, deren Ablauf der
+  Orchestrator je nach geklärtem Auftrag aus Bausteinen zusammensetzt
+  (statt einer festen Pipeline), und sechs Bilder – Ablauf, Task-Schleife,
+  Rollen und Artefakte, Lebenszyklus eines Tasks, Ausnahmen, Git-Fluss –
+  dazu die sechs Rollen (Orchestrator, Planner (Anforderungen und
+  Planung), Architekt, Implementer, Tester, Reviewer) und die Schranken.
+  **Hier anfangen, wenn du verstehen oder erklären willst.**
+- **`AGENT_WORKFLOW_REFERENZ.md`** – zum Nachschlagen: Baustein-Katalog,
+  Verdict- und Rollen-Vertrag, Abläufe im Detail, Test-Freeze, Scheitern
+  und Grün-Probe, Dateistruktur, Task-Format und Grössenregeln.
 - **`HARNESS.md`** – Referenz: was Claude Code und OpenCode je können, der
   Generator für die Rollen-Adapter, und wie eine Rolle in einem fremden
   Harness oder auf einem lokalen Modell läuft.
@@ -152,7 +156,8 @@ der Auftragstyp ergibt. Bei einem leeren Projekt ist das meist
 unter `spec/requirements/`, zum Schluss geprüft durch `SPEC_REVIEW`), danach als
 eigener Auftrag `FEATURE`: Klärung → Spec-Review → Plan → Architektur-Gate →
 pro Task die Schleife aus `TEST_FIRST` → `UMSETZUNG` → `VERIFIKATION` →
-abschliessender Review. Details: `AGENT_WORKFLOW.md`, Teil C.
+abschliessender Review. Details: `AGENT_WORKFLOW.md`, "Auftragstypen", und
+`AGENT_WORKFLOW_REFERENZ.md`, Abschnitt 3.
 
 ## Ablauf für ein bestehendes (Brownfield) Projekt
 

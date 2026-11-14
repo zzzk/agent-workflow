@@ -111,8 +111,8 @@ Die Gruppierung darunter nennt die Herkunft, nicht die Wichtigkeit.
      bestätigt werden muss ("nur dieser eine Task, nichts committet, nichts
      ersatzlos gelöscht").
    - **Wo der Harness mechanisch erzwingen kann, wird nicht auf
-     Instruktionsbefolgung vertraut** – aus dieser Erkenntnis ist Teil D
-     (Mechanische Härtung) in `AGENT_WORKFLOW.md` entstanden: Werkzeug-Allowlists, Pfad-Denies,
+     Instruktionsbefolgung vertraut** – aus dieser Erkenntnis ist die
+     mechanische Härtung entstanden (heute `AGENT_WORKFLOW.md`, "Schranken"): Werkzeug-Allowlists, Pfad-Denies,
      Schritt-Obergrenzen, Diff-basierte Prüfung statt Selbstauskunft.
 
 ### Aus dem Betrieb von v3 (→ v3.1)
@@ -363,7 +363,7 @@ Betrieb sichtbar wurden:
    Hauptschleife für "Anforderung → Tasks → Umsetzung", mit Review als
    Anhängsel. Tatsächlich anfallende Arbeit sieht oft anders aus: ein
    einzelner Bugfix, ein reines Audit, das Auswerten manueller Tests. Der
-   Baustein-Katalog (Teil B der Methodik) macht die Zusammensetzung explizit, statt
+   Baustein-Katalog (heute `AGENT_WORKFLOW_REFERENZ.md`, Abschnitt 2) macht die Zusammensetzung explizit, statt
    jeden Sonderfall als Abweichung von der einen Schleife zu behandeln.
 2. **Rückmeldungen waren Prosa.** Der Orchestrator musste interpretieren,
    ob eine Rolle zufrieden war – eine Fehlerquelle genau bei den kleinen

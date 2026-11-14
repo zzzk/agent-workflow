@@ -99,7 +99,7 @@ Was der Generator **nicht** heilen kann: Claude Code kennt keine
 pfadbeschränkten Schreibrechte. Wo die Absicht eine braucht (Implementer
 darf `tests/**` nicht anfassen), schreibt der Generator die Regel dort als
 Text in den System-Prompt und verlässt sich zusätzlich auf die
-Diff-Prüfung des Orchestrators (`AGENT_WORKFLOW.md`, Teil D). In OpenCode
+Diff-Prüfung des Orchestrators (`AGENT_WORKFLOW.md`, "Schranken"). In OpenCode
 wird dieselbe Absicht
 zu einer echten `permission`-Regel.
 

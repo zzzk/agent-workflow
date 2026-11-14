@@ -129,7 +129,7 @@ def claude_adapter(meta, tiers, body):
     # Absicht eine braucht, wird sie hier als Regel in den System-Prompt
     # geschrieben - schwaecher als eine Durchsetzung, aber besser als
     # nichts. Mechanisch abgesichert wird sie zusaetzlich durch die
-    # Diff-Pruefung des Orchestrators (AGENT_WORKFLOW.md, Teil D).
+    # Diff-Pruefung des Orchestrators (AGENT_WORKFLOW.md, "Schranken").
     if write_access == "limited" and allows:
         lines.append("> **Schreibrechte:** Du darfst ausschliesslich unter diesen Pfaden")
         lines.append("> schreiben: `{}`. Alles andere liest du nur.".format("`, `".join(allows)))

@@ -78,10 +78,10 @@ Zusammen mit Claude; die Host-Befehle machst du.
 
 ## D. Neufassung AGENT_WORKFLOW
 
-- [ ] **D1** Zwei offene Fragen entscheiden (`input/AGENT_WORKFLOW_NEU.md`,
+- [x] **D1** Zwei offene Fragen entscheiden (`input/AGENT_WORKFLOW_NEU.md`,
   "Offene Fragen an den Nutzer"): eine Datei oder zwei? Was passiert
   danach mit dem Bericht?
-- [ ] **D2** Claude schreibt die Neufassung auf `agent/<slug>` und
+- [x] **D2** Claude schreibt die Neufassung auf `agent/<slug>` und
   committet.
 - [ ] **D3** Host: `git fetch agent-1`, `review-branch.sh`, lesen, pushen
   (`git push origin agent-1/<slug>:refs/heads/agent/<slug>`), PR.

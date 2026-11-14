@@ -11,7 +11,8 @@ praktisch.
 ---
 
 > **Andere Fragen, andere Datei:** wie der Workflow funktioniert und warum
-> – `AGENT_WORKFLOW.md` (mit Diagrammen); welcher Harness was kann und wie
+> – `AGENT_WORKFLOW.md` (mit Diagrammen), Einzelheiten zum Nachschlagen in
+> `AGENT_WORKFLOW_REFERENZ.md`; welcher Harness was kann und wie
 > Rollen auf anderen/lokalen Modellen laufen – `HARNESS.md`; warum eine
 > Regel existiert – `DECISIONS.md`.
 
