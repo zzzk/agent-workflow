@@ -252,3 +252,22 @@ Erststart) lief mit echtem Git. Nicht geprüft ist, was nur Docker zeigt.
   (`<no value>` wird bereits wie leer behandelt).
 
 **Aufgefallen**: Umbau auf Klon im Volume (DECISIONS, Lehre 20).
+
+> **Teilweise geprüft (2026-11-14, Mac, Docker Desktop):** Erststart mit
+> `--new` neben einem stehenden alten Container (Volume angelegt, Branch
+> hineingeschoben, Remote `agent-1`); `git fetch agent-1` und
+> `git push agent-1 HEAD:nutzer/inbox` über `docker run -i`, ohne
+> Docker-Meldungen im Protokoll; `review-branch.sh`; Fetch eines neuen
+> Commits bei gestoppter Sandbox. Bewusst weggelassen: Fetch-Knopf in
+> VS Code (ruft dieselbe Git-CLI auf; die Kommandozeile genügt).
+> **Noch offen:** `docker rm` + Neustart auf bestehendem Volume; Erkennung
+> eines alten Containers ohne Label; Push nach `nutzer/inbox` mit neuen
+> Objekten (getestet nur das Anlegen des Branches auf einen vorhandenen
+> Commit; die Objektübertragung in der Gegenrichtung lief).
+> **Nebenbefunde:** Im Image fehlte `less`; Git nahm `more` (util-linux
+> 2.38), das am Ende kurzer Ausgaben wartet – `git branch` schien zu
+> hängen. Behoben im Dockerfile. – Ein Agent-Branch entstand auf einem
+> Test-Branch statt auf der Basis, weil im Container zwischendurch von
+> Hand umgeschaltet wurde; der Testcommit kam per Fast-Forward mit. Lehre:
+> vor `git switch -c` den aktuellen Branch prüfen (Agent), vor dem Merge
+> `git log --oneline <basis>..<agent-branch>` lesen (Nutzer).

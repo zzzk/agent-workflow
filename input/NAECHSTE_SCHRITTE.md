@@ -63,17 +63,17 @@ Arbeitsliste zum Abhaken. Wenn alles erledigt ist: Datei löschen.
 
 Zusammen mit Claude; die Host-Befehle machst du.
 
-- [ ] **C1** Claude committet im Container etwas Kleines auf einem
+- [x] **C1** Claude committet im Container etwas Kleines auf einem
   Branch `agent/test`.
-- [ ] **C2** Host: `git fetch agent-1` → `agent-1/test` erscheint, keine
+- [x] **C2** Host: `git fetch agent-1` → `agent-1/test` erscheint, keine
   Docker-Meldungen im Git-Protokoll.
-- [ ] **C3** Host: `sandbox/review-branch.sh agent-1/test` läuft.
-- [ ] **C4** Host: `git push agent-1 HEAD:nutzer/inbox` → im Container
+- [x] **C3** Host: `sandbox/review-branch.sh agent-1/test` läuft.
+- [x] **C4** Host: `git push agent-1 HEAD:nutzer/inbox` → im Container
   sichtbar mit `git branch --list 'nutzer/*'`.
-- [ ] **C5** VS Code: Fetch-Knopf holt ebenfalls von `agent-1`.
-- [ ] **C6** Container verlassen (`exit`), dann Host: `git fetch agent-1`
+- [x] **C5** VS Code: Fetch-Knopf holt ebenfalls von `agent-1`. (weggelassen, Kommandozeile genügt)
+- [x] **C6** Container verlassen (`exit`), dann Host: `git fetch agent-1`
   geht trotzdem (Sandbox gestoppt).
-- [ ] **C7** Ergebnis in TODO.md Nr. 8 eintragen, Test-Branches
+- [x] **C7** Ergebnis in TODO.md Nr. 8 eintragen, Test-Branches
   aufräumen.
 
 ## D. Neufassung AGENT_WORKFLOW
