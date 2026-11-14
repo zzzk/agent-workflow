@@ -23,6 +23,8 @@ FROM node:22-slim
 # sudo: der Agent läuft als Non-Root-User (siehe unten), braucht aber weiterhin
 # Rückfragen-frei apt-get etc. innerhalb des Containers (Sandbox-Grenze bleibt
 # der Container selbst, siehe SANDBOX_BOOTSTRAP_PATTERN.md Schritt 0).
+# less: Pager für Git. Ohne less nimmt Git `more` (util-linux 2.38), das am
+# Ende kurzer Ausgaben wartet – `git branch` & Co. scheinen zu hängen.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        git \
@@ -34,6 +36,7 @@ RUN apt-get update \
        jq \
        bc \
        procps \
+       less \
        sudo \
     && rm -rf /var/lib/apt/lists/*
 
