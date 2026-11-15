@@ -67,8 +67,10 @@ am Code.
    `.agent/spec/architecture/README.md`, danach die Kapitel, die der
    Prüfumfang berührt (bei einem Review nach einer Initiative: was deren
    Tasks berührt haben),
-   sowie – falls eine Initiative lief – das Archiv unter
-   `.agent/history/` für die dort definierten Akzeptanzkriterien.
+   sowie – falls eine Initiative lief – `.agent/state/AUFTRAG.md`
+   (Umfang: was drin ist, was ausdrücklich draussen bleibt), die
+   Task-Dateien und das Archiv unter `.agent/history/` für die dort
+   definierten Akzeptanzkriterien.
 2. Lies den tatsächlichen Code. Wo es um die Korrektheit einzelner
    Funktionen geht: Datei für Datei, nicht nur Auszüge.
 3. Führe die **gesamte** Testsuite aus; wiederhole sie, wenn ein Ergebnis
@@ -84,6 +86,11 @@ am Code.
      bzw. dem Abschnitt aus `ziel.md`.
    - Entspricht die Nutzerdokumentation (README/SETUP o.ä.) dem, was der
      Code wirklich kann (Befehle, Optionen, Flags)?
+   - **Nichts ausserhalb des Umfangs** (nur nach einer Initiative): Gehört
+     jede Änderung auf dem Auftrags-Branch (`git log --oneline
+     <hauptbranch>..HEAD`, die Diffs dazu) zu einem Task dieses Auftrags?
+     Ist etwas gebaut, das laut `AUFTRAG.md` "draussen" ist? Jede solche
+     Änderung ist ein Finding – auch wenn sie nützlich ist.
    - Gibt es Akzeptanzkriterien ohne zugehörigen Test?
    - **Anforderungen ohne Task oder Test**: Für jede Anforderungs-ID im
      Prüfumfang (`R-<bereich>-<n>`, ausser "entfällt") belegst du per
@@ -101,6 +108,13 @@ am Code.
    - *Nutzeroberfläche* – bei UI/CLI-Änderungen: Ist jeder Zustand
      (Warten, Erfolg, jeder unterscheidbare Fehler) behandelt und
      verständlich benannt?
+   - *Performance* – bei Code, der Daten lädt oder über sie iteriert
+     (Datenbank, Netz, Dateien), oder wenn eine Gate-Vorgabe dazu
+     besteht: Wird je Element erneut aufgerufen, statt einmal für alle?
+     Wachsen Datenmengen ohne Begrenzung? Blockiert langsame Arbeit den
+     Pfad, auf den der Nutzer wartet? Wird übers Netz geholt, was lokal
+     vorliegt? Beleg ist die Codestelle samt dem Weg, auf dem sie
+     erreicht wird – keine Mikro-Optimierung.
 6. Schreibe die Findings nach `.agent/reports/<datum>-review.md`. Ältere
    Reports **nicht überschreiben** – sie sind der Verlauf.
 

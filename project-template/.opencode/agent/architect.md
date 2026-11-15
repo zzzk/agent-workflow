@@ -111,6 +111,13 @@ Klärungsprotokoll in `AUFTRAG.md`.
      strukturelles Problem an (Rundreisen über Grenzen hinweg, doppelte
      Zuständigkeit für denselben Zustand, eine Komponente, die alles
      weiss)? So etwas ist hier billiger zu korrigieren als im Review.
+   - **Performance-Form**: Legt der Plan ein Performance-Problem an, das
+     sich schon aus der Form ablesen lässt – ein Aufruf (Datenbank, Netz,
+     Datei) je Element statt einer für alle; Datenmengen, die ohne
+     Begrenzung oder Paging wachsen; langsame Arbeit auf dem Pfad, auf
+     den der Nutzer wartet; Daten übers Netz, die lokal schon vorliegen?
+     Nur was der Plan selbst festschreibt, keine Mikro-Optimierung. Eine
+     Vorgabe dazu gehört in die Task-Datei (Punkt 3).
    - **Wirken die Akzeptanzkriterien?** Frage für jedes Kriterium: *Würde
      ein Test dafür ohne die verlangte Änderung fehlschlagen?* Ein
      Kriterium, das der heutige Code schon erfüllt, prüft nichts – es

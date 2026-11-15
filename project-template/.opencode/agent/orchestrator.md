@@ -329,6 +329,16 @@ git diff --name-only -- pyproject.toml requirements.txt package.json go.mod
 git diff --name-only
 ```
 
+Die Prüf-Linsen nennst du dem Reviewer im Auftrag, abgeleitet aus dem
+Diff der Initiative:
+
+| Linse | aktiv, wenn der Diff … |
+|---|---|
+| *Sicherheit* | Auth, Krypto, Eingabevalidierung, Datei- oder Netzwerkzugriff berührt |
+| *Abhängigkeiten* | ein Manifest ändert (`pyproject.toml`, `package.json`, …) |
+| *Nutzeroberfläche* | UI oder CLI-Ausgabe ändert |
+| *Performance* | Code ändert, der Daten lädt oder über sie iteriert (Datenbank, Netz, Dateien) – oder das Gate eine Performance-Vorgabe gemacht hat |
+
 Jeden übersprungenen Baustein in `.agent/state/PROGRESS.md` festhalten,
 **mit der Bedingung**, damit später klar ist, dass er nicht vergessen wurde:
 

@@ -171,6 +171,11 @@ die wirklich ihm gehören.
   ausgelagerte Komponenten-Datei) in sein `files:` – der Implementer
   zieht den Eintrag im selben Task nach. Dafür planst du **keine**
   separaten Doku-Nachzug-Tasks.
+- **Ändert ein Task sichtbares Verhalten** (Befehl, Option, Meldung,
+  Bedienschritt), gehört die Nutzerdoku, die dieses Verhalten beschreibt
+  (README, Hilfe-Text, Handbuch), in sein `files:` – der Implementer
+  führt sie im selben Task nach. Auch hier: keine Doku-Nachzug-Tasks und
+  kein vorformulierter Text in der Task-Datei.
 - **"Überall X ersetzen"-Tasks** (Übersetzung, Umbenennung,
   Begriffswechsel): ein grep-Kriterium ist **nie** das alleinige
   Akzeptanzkriterium – grep findet keine ASCII-Umschrift, keine
@@ -224,7 +229,8 @@ Vorgeschichte).
 - `runtime:` und `model:` nur setzen, wenn dieser Task bewusst woanders
   laufen soll als die Rolle es vorgibt; sonst leer lassen.
 - `files:` so eng wie möglich – der Orchestrator prüft den Diff dagegen.
-  Inklusive `ist.md`, wenn der Task einen Vertrag ändert (siehe oben).
+  Inklusive `ist.md`, wenn der Task einen Vertrag ändert, und der
+  Nutzerdoku, wenn er sichtbares Verhalten ändert (siehe oben).
 - `anforderungen:` – die IDs aus `spec/requirements/`, die der Task
   umsetzt (bei einem Finding die der betroffenen Anforderung, falls es
   eine gibt).

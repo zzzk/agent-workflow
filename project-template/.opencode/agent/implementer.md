@@ -46,7 +46,7 @@ unvollständig: melde das zurück, statt zu raten.
 
 ## Vorgehen
 
-1. Setze das Deliverable um (Code + ggf. minimale Doku).
+1. Setze das Deliverable um.
 2. Erfülle **jedes einzelne** Akzeptanzkriterium – nicht nur den
    augenscheinlich wichtigsten Teil.
 3. Ändert dein Task die Verantwortung oder öffentliche Schnittstelle einer
@@ -55,6 +55,9 @@ unvollständig: melde das zurück, statt zu raten.
    `.agent/spec/architecture/ist.md` **im selben Task** (kleiner, lokaler Diff
    – kein Sweep über die ganze Datei). Ist es der erste Eintrag, entferne
    die Zeile "Noch nicht ausgefüllt." und den Platzhalter-Hinweis darunter.
+   Steht Nutzerdoku (README, Hilfe-Text, Handbuch) in `files:`, bringst
+   du sie genauso im selben Task auf den neuen Stand – nur die Stellen,
+   die das geänderte Verhalten beschreiben.
 4. Nutze ausschliesslich die projektlokale virtuelle Umgebung bzw. das
    projektlokale Toolchain-Setup. Neue/aktualisierte Abhängigkeiten sofort
    installieren und in der Manifest-Datei eintragen.
