@@ -46,6 +46,13 @@ Stand bleibt bewusst) · **verwerfen**.
 | J17 | Zurückgestellte Findings in `MEMORY.md` | Backlog-Register: eine Datei je offenem Punkt, mechanisch geprüft | Liste in `MEMORY.md`, `abweichungen.md` | genügt bisher; Register erst bei Bedarf || **geändert** (2026-11-15): Variante b) – eigene Datei `state/BACKLOG.md` für alles "später" (zurückgestellte Findings, notierte Aufträge, fremde Probleme); `MEMORY.md` nur noch Projektnotizen |
 | J18 | Abschluss-Rückmeldung | PR-Beschreibung ist die dauerhafte Geschichte (alle Verdicts, SKIPPED mit Grund, Runden) | Zusammenfassung an den Nutzer, `history/`, `PROGRESS.md` | bleibt; kleine Ergänzung möglich: Zusammenfassung so formulieren, dass sie als PR-Beschreibung taugt || **ergänzt** (2026-11-15): Zusammenfassung zusätzlich als `history/<datum>-<slug>-zusammenfassung.md`, als PR-Beschreibung verwendbar; Push/PR weiter durch den Menschen |
 
+
+## E. Ergänzung des Nutzers
+
+| Nr. | Punkt | Entscheid |
+|---|---|---|
+| J19 | Workflow-Punkte getrennt vom Projekt-Backlog | **übernehmen** (2026-11-15): `BACKLOG.md` nur für das Projekt. Was am Workflow selbst auffällt (Regel unklar oder widersprüchlich, Werkzeug fehlt, Harness-Eigenheit), bekommt einen eigenen Ort `state/FRAMEWORK_RUECKFLUSS.md` (Name wie im Projekt pwd-transform) und fliesst von dort in dieses Repo zurück (`input/`). |
+
 ## Umsetzungsplan
 
 Auf einem Branch `agent/journey-hero-abgleich`, je Paket ein Commit.
@@ -53,7 +60,7 @@ Normativ sind die Rollen-Dateien: zuerst sie ändern, danach
 `python3 .agent/sync-agents.py` (Adapter unter `.claude/agents/`,
 `.opencode/agent/` neu erzeugen, nie von Hand), zuletzt die Doku.
 
-### Paket 1 – Backlog und Zusammenfassung (J17, J18)
+### Paket 1 – Backlog, Rückfluss, Zusammenfassung (J17, J18, J19)
 
 - Neu `project-template/.agent/state/BACKLOG.md` (Vorlage): eine Zeile je
   Punkt, `- <Art> <Kurztitel> – <Quelle>`; Arten: `finding`
@@ -76,6 +83,14 @@ Normativ sind die Rollen-Dateien: zuerst sie ändern, danach
   entfernen, Verweis auf `BACKLOG.md`.
 - Übergang für bestehende Projekte: Hinweis in `USERMANUAL.md`
   (Abschnitt aus `MEMORY.md` nach `BACKLOG.md` verschieben).
+
+- J19: Neu `project-template/.agent/state/FRAMEWORK_RUECKFLUSS.md`
+  (Vorlage). Alle Rollen: Workflow-Auffälligkeiten als Zeile
+  `Workflow: …` in der Rückmeldung; der Orchestrator überträgt sie (und
+  eigene) mit Datum, Rolle, Beleg. Beim Abschluss nennt er neue Einträge
+  (ersetzt den heutigen Hinweis "falls AGENT_WORKFLOW.md ergänzt werden
+  sollte"). Rückweg: Nutzer legt die Datei hier unter `input/` ab
+  (`USERMANUAL.md`).
 
 ### Paket 2 – Anforderungen schärfen (J2, J3, J6)
 
