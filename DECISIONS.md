@@ -361,8 +361,9 @@ Rolle:
 **Geprüft, nicht gebaut** (J7): Pfad-Sperren per `PreToolUse`-Hook im
 Frontmatter eines Claude-Code-Subagenten greifen nicht (getestet
 2026-11-15, `HARNESS.md`). Ein Hook in `.claude/settings.json`, der die
-Rolle am Feld `agent_type` erkennt, funktioniert; ob er gebaut wird, ist
-offen (`TODO.md`, Nr. 11).
+Rolle am Feld `agent_type` erkennt, funktioniert, wird aber nicht gebaut
+(Entscheid des Nutzers): Schreiben über die Shell fängt er nicht ab, die
+Diff-Prüfung des Orchestrators bleibt ohnehin nötig (`TODO.md`, Nr. 11).
 
 **Zurückgestellt** (J9): E2E-Tests mit Screenshots je geändertem
 Bildschirm – nur für UI-Projekte sinnvoll, Entscheid am ersten solchen

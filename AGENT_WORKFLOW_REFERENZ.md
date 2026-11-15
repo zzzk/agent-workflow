@@ -768,7 +768,7 @@ sein. Massgeblich ist die Vorlage
 ---
 id: TASK-0023
 title: <kurzer, imperativer Titel>
-status: open            # open | in_progress | done | failed | blocked | superseded
+status: open            # open | in_progress | done | blocked | superseded
 superseded_by: []       # nur bei superseded: die ersetzenden Task-IDs
 source: plan-step       # plan-step | review-finding | triage-finding | auftrag
 source_ref: state/IMPLEMENTATION_PLAN.md#schritt-6

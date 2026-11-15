@@ -200,7 +200,7 @@ die normale Task-Schleife. Details: `USERMANUAL.md`, Teil 3 und Teil 5.
   eine Regel im System-Prompt plus die Diff-Prüfung des Orchestrators. Ein
   `PreToolUse`-Hook im Frontmatter eines Subagenten greift nicht (geprüft
   2026-11-15); ein Hook in `.claude/settings.json`, der die Rolle am Feld
-  `agent_type` erkennt, schon – Entscheid offen (`TODO.md`, Nr. 11).
+  `agent_type` erkennt, schon – bewusst nicht gebaut (`TODO.md`, Nr. 11).
 - **Prüf-Linsen ausbauen.** Sicherheits-, Abhängigkeits-, UI- und
   Performance-Perspektiven laufen als Linsen innerhalb des
   Reviewer-Bausteins `REVIEW`.

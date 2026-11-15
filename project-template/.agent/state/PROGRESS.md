@@ -12,10 +12,9 @@
 ## Verlauf
 
 <!--
-Ein Eintrag pro abgeschlossenem (oder fehlgeschlagenem) Task, kurz:
+Ein Eintrag pro abgeschlossenem Task, kurz:
 
 ### TASK-0001 – <Titel>
-- Status: done | failed
 - Ergebnis: welche Dateien geändert, Testergebnis
 - Notizen: Annahmen/Abweichungen, falls welche nötig waren und warum
 

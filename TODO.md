@@ -318,7 +318,11 @@ Projekt ab.
 
 ---
 
-## 11. Pfad-Sperren in Claude Code per Hook – Entscheid offen
+## 11. Pfad-Sperren in Claude Code per Hook – entschieden: nicht bauen
+
+> **Entschieden (2026-11-15, Nutzer):** wird nicht gebaut. Es bleibt bei
+> der Regel im Prompt plus der Diff-Prüfung des Orchestrators. Text unten
+> als Beleg, falls die Frage wiederkommt.
 
 **Wo**: `project-template/.agent/sync-agents.py` (Claude-Adapter),
 `project-template/.claude/settings.json`, `HARNESS.md`.
