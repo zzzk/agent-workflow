@@ -271,3 +271,26 @@ Erststart) lief mit echtem Git. Nicht geprüft ist, was nur Docker zeigt.
 > Hand umgeschaltet wurde; der Testcommit kam per Fast-Forward mit. Lehre:
 > vor `git switch -c` den aktuellen Branch prüfen (Agent), vor dem Merge
 > `git log --oneline <basis>..<agent-branch>` lesen (Nutzer).
+
+---
+
+## 9. Agent pusht selbst (Remote-Hosts) – zurückgestellt
+
+**Wo**: `sandbox/`, Git-Abschnitt in `AGENT_WORKFLOW_REFERENZ.md`.
+
+**Warum offen**: Anforderung 4 aus der Git-Übergabe (2026-11-02): Läuft
+der Agent auf einem entfernten Rechner (runpod o.ä.), soll er evtl.
+selbst pushen, damit Resultate ohne Umweg ankommen. Sicher geht das nur,
+wenn der Server `main` schützt und der Agent nur `agent/*` pushen darf.
+GitHub setzt Branch-Schutz und Rulesets bei privaten Repos im Free-Plan
+nicht durch; GitLab (Protected Branches auch im Free-Tier) oder ein
+bezahlter GitHub-Plan schon.
+
+**Mögliche Lösung**: je Projekt ein Deploy-Key bzw. Token mit Schreibrecht
+nur auf `agent/*`, serverseitig erzwungen; bis dahin Push nur durch den
+Menschen. Ebenfalls zurückgestellt (Empfehlung: nein): ein optionaler
+"Prüfpunkt"-Modus, in dem der Agent vor Commits in Klärungsbausteinen
+anhält.
+
+**Aufgefallen**: Git-Übergabe aus dem Projekt wiki-assistent,
+Entwurf B' (2026-11-02).
