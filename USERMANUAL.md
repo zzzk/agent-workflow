@@ -611,6 +611,10 @@ wandert nach `.agent/history/<datum>-<slug>-auftrag.md`.
 - `.agent/tasks/TASK-*.md` – Status, Akzeptanzkriterien, Test-Notizen.
 - `.agent/reports/<datum>-*.md` – Review- und Triage-Ergebnisse, nie
   überschrieben.
+- `.agent/state/BACKLOG.md` – was für später liegen bleibt.
+- `.agent/history/<datum>-<slug>-zusammenfassung.md` – je abgeschlossener
+  Initiative: Auftrag, Ergebnis, Verdicts, übersprungene Bausteine,
+  Testergebnis. Taugt unverändert als Beschreibung eines Pull Requests.
 - `.agent/runs/*.log` – Rohprotokolle fremder Harness-Läufe (nicht
   versioniert; Protokoll für dich, nicht Entscheidungsgrundlage des
   Orchestrators).
@@ -627,6 +631,27 @@ Der übliche Zyklus, wenn du den Stand prüfen lässt:
 4. Danach ein erneuter `REVIEW` zur Bestätigung – als **neuer**, datierter
    Report. Alte Reports werden nie überschrieben, damit sich der Zustand
    über die Zeit nachvollziehen lässt.
+
+### Backlog und Rückfluss ins Framework
+
+Zwei Dateien sammeln, was nicht in den laufenden Auftrag gehört:
+
+- `.agent/state/BACKLOG.md` – **das Projekt**: zurückgestellte Findings,
+  Anliegen, die einen eigenen Auftrag brauchen, fremde Probleme, die eine
+  Rolle bemerkt und nicht angefasst hat. Der Orchestrator nennt die
+  Einträge bei der nächsten Auftragsklärung; du entscheidest, was
+  mitkommt.
+- `.agent/state/FRAMEWORK_RUECKFLUSS.md` – **der Workflow selbst**: eine
+  Regel ist unklar, ein Werkzeug verhält sich anders als beschrieben.
+  Der Orchestrator nennt neue Einträge beim Abschluss. Lege die Datei
+  dann im Repo `agent-workflow` unter `input/` ab, damit die Punkte dort
+  verarbeitet werden, und entferne die übernommenen Einträge im Projekt.
+
+**Bestehende Projekte** (aus einer Vorlage vor 2026-11): die beiden
+Dateien aus `project-template/.agent/state/` kopieren und die Zeilen aus
+dem Abschnitt "Zurückgestellte Findings" in `.agent/state/MEMORY.md` als
+`- finding …` nach `BACKLOG.md` verschieben, den Abschnitt danach
+entfernen.
 
 ### Unbeaufsichtigte Läufe (z.B. über Nacht)
 
@@ -728,12 +753,13 @@ mein-projekt/
         ziel.md                      #   Soll – Architekt schlägt vor   ← DU entscheidest
         ist.md                       #   Ist – gepflegt von MAP/Implementer
         abweichungen.md              #   bewusst akzeptierte Lücken
-    state/                           # PROGRESS, PLAN, MEMORY – gepflegt vom Agenten
+    state/                           # AUFTRAG, PLAN, PROGRESS, MEMORY, BACKLOG,
+                                     # FRAMEWORK_RUECKFLUSS – gepflegt vom Agenten
     tasks/                           # die Warteschlange – gepflegt vom Agenten
     reports/                         # Review-/Triage-Ergebnisse
     inbox/                           # dein Rohmaterial aus manuellem Testen ← DU
     runs/                            # Logs fremder Läufe (nicht versioniert)
-    history/                         # archivierte Pläne
+    history/                         # archivierte Aufträge, Pläne, Zusammenfassungen
 
   .claude/settings.json              # Statuszeile, Hooks fuer notify.sh
   .claude/notify.sh                  # Handy-Benachrichtigung (nur mit NTFY_TOPIC)

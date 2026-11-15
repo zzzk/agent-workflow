@@ -206,3 +206,9 @@ Nachricht, nur am Anfang.
 
 Danach immer: geänderte Testdateien, Anzahl ausgeführter/fehlgeschlagener
 Tests, und jede Beobachtung ausserhalb des Auftrags.
+
+Fällt dir am **Workflow selbst** etwas auf – eine Regel dieser Datei ist
+unklar oder widerspricht einer anderen, ein Werkzeug fehlt oder verhält
+sich anders als beschrieben –, schreib je eine Zeile
+`Workflow: <Beobachtung> – <Beleg>` ans Ende. Das ist kein Befund zum
+Projekt; der Orchestrator sammelt diese Zeilen getrennt.

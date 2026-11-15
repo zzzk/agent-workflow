@@ -12,7 +12,8 @@ Projekt vorhanden – in der Sandbox meist nicht, dann genügt diese Datei):
 > Struktur dieses Projekts: `.agent/spec/` (`requirements/` und
 > `architecture/`, je mit Index `README.md` und Kapiteldateien –
 > dauerhaftes Produktwissen), `.agent/state/` (Auftrag/Plan/Progress/
-> Memory, Workflow-Zustand), `.agent/agents/` (diese Rollen-Dateien),
+> Memory/Backlog/Rückfluss, Workflow-Zustand), `.agent/agents/` (diese
+> Rollen-Dateien),
 > `.agent/tasks/` (die Warteschlange), `.agent/reports/` (Review-Ausgaben),
 > `.agent/inbox/` (Rohmaterial aus manuellem Testen), `.agent/runs/` (Logs
 > fremder Harness-Läufe), `.agent/history/` (archivierte Aufträge/Pläne).
@@ -36,8 +37,8 @@ Projekt vorhanden – in der Sandbox meist nicht, dann genügt diese Datei):
   unabhängiger Tester gezielt gegen TASK-0003s eigene Akzeptanzkriterien
   geprüft hatte (der lief ja nie, TASK-0003 war offiziell noch gar nicht
   begonnen). Fällt während eines Tasks ein weiteres, fremdes Problem auf:
-  **nicht anfassen**, nur notieren – der Planner entscheidet, ob daraus ein
-  eigener Task wird.
+  **nicht anfassen**, nur in `.agent/state/BACKLOG.md` notieren – ob und
+  wann daraus ein Task wird, entscheidet eine spätere Auftragsklärung.
 
 ## Was du liest
 
@@ -47,7 +48,9 @@ Projekt vorhanden – in der Sandbox meist nicht, dann genügt diese Datei):
    bestimmen (nicht den Inhalt als Bauanleitung).
 3. `.agent/state/PROGRESS.md` – die letzten Einträge, um den Stand
    aufzunehmen.
-4. Die Rückmeldungen der Bausteine, die du gestartet hast.
+4. `.agent/state/BACKLOG.md` – was für später notiert ist; du pflegst
+   diese Datei, ebenso `.agent/state/FRAMEWORK_RUECKFLUSS.md`.
+5. Die Rückmeldungen der Bausteine, die du gestartet hast.
 
 Du liest **nicht** Produktcode, um dir selbst ein Urteil über Korrektheit
 zu bilden – dafür gibt es Tester und Reviewer.
@@ -109,8 +112,8 @@ grep -q "Noch kein Auftrag aktiv" .agent/state/AUFTRAG.md; echo "frei: $?"
 ```
 
 ```bash
-# Zurückgestellte Findings aus früheren Initiativen?
-sed -n '/^## Zurückgestellte Findings/,/^## /p' .agent/state/MEMORY.md | grep '^- '
+# Für später Notiertes (zurückgestellte Findings, Aufträge, fremde Probleme)?
+grep '^- ' .agent/state/BACKLOG.md
 ```
 
 Das ergibt Material für die Auftragsklärung, noch keine Entscheidung:
@@ -119,11 +122,11 @@ Das ergibt Material für die Auftragsklärung, noch keine Entscheidung:
   fortgesetzt werden soll oder etwas Neues Vorrang hat.
 - Material in der Inbox (auch zusätzlich zu offenen Tasks) → melden, wie
   viele Dateien dort liegen, fragen ob das jetzt triagiert werden soll.
-- Zurückgestellte Findings vorhanden und das Anliegen führt zu einer
-  Umsetzung (`FEATURE`/`FIX`) → in der Auftragsklärung nennen und fragen,
-  ob sie mitkommen. **Nicht** von dir aus anhängen; kommen sie mit,
-  stehen sie im Umfang von `AUFTRAG.md`, und du streichst sie aus der
-  Liste in `MEMORY.md`.
+- Einträge im Backlog vorhanden → in der Auftragsklärung nennen: alle,
+  wenn der Nutzer kein Anliegen mitbringt; sonst die, die zum Anliegen
+  passen, und fragen, ob sie mitkommen. **Nicht** von dir aus anhängen;
+  kommen sie mit, stehen sie im Umfang von `AUFTRAG.md`, und du
+  streichst sie aus `BACKLOG.md`.
 - `AUFTRAG.md` ist gefüllt und die zugehörige Arbeit nicht abgeschlossen →
   unterbrochener Lauf; dort weitermachen statt neu zu klären.
 
@@ -188,8 +191,9 @@ selbst an. Sonst ist es ein `FIX` oder `FEATURE`, und der Planner
 übernimmt.
 
 Ein Auftrag ergibt **einen** Auftragstyp. Fällt während der Arbeit etwas
-an, das einen anderen bräuchte: notieren, nicht anhängen – das wird ein
-eigener Auftrag mit eigener Auftragsklärung.
+an, das einen anderen bräuchte: als `auftrag` in `BACKLOG.md` notieren,
+nicht anhängen – das wird ein eigener Auftrag mit eigener
+Auftragsklärung.
 
 **Einzige Ausnahme: ein Einschub-Task.** Du darfst einen kleinen Task in
 den laufenden Auftrag einschieben, wenn **alle drei** Bedingungen gelten:
@@ -202,8 +206,8 @@ den laufenden Auftrag einschieben, wenn **alle drei** Bedingungen gelten:
 Dann bekommt er eine Teil-Task-ID an der passenden Stelle der Reihenfolge,
 und du schreibst je eine Zeile `Einschub: <Task-ID>, <Grund>` in
 `.agent/state/AUFTRAG.md` (Abschnitt "Einschübe") und in
-`.agent/state/PROGRESS.md`. Trifft eine Bedingung nicht zu: notieren,
-eigener Auftrag.
+`.agent/state/PROGRESS.md`. Trifft eine Bedingung nicht zu: in
+`BACKLOG.md` notieren, eigener Auftrag.
 
 ### 3a. Auftragstyp `REQUIREMENTS` – die Klärungsschleife
 
@@ -512,12 +516,37 @@ Entscheidungsgrundlage.
 | `CHANGES_NEEDED` | Zurück an die vorgelagerte Rolle, mit der Begründung als zusätzlichem Kontext |
 | `BLOCKED` | Stopp, Rückfrage an den Nutzer – kein Weitermachen auf Verdacht |
 
+Jedes Verdict hältst du als eine Zeile in `.agent/state/PROGRESS.md`
+fest, auch ausserhalb der Task-Schleife:
+
+```
+VERDICT REVIEW Runde 1: CHANGES_NEEDED – reports/2026-11-03-review.md
+VERDICT VERIFIKATION TASK-0007 Versuch 2: PASS
+```
+
+Daraus entsteht beim Abschluss die Zusammenfassung (Schritt 9).
+
 **Nennt der Planner Kandidaten für `architecture/abweichungen.md`**
 (Findings, die eine Architekturentscheidung berühren und nicht jetzt
 behoben werden): den Nutzer fragen. Akzeptiert er die Abweichung bewusst,
 trägst du sie mit Beleg in `.agent/spec/architecture/abweichungen.md`
-ein; ist sie nur aufgeschoben, kommt sie in die Liste zurückgestellter
-Findings (`MEMORY.md`, Schritt 9).
+ein; ist sie nur aufgeschoben, kommt sie als `finding` in
+`.agent/state/BACKLOG.md`.
+
+**Notizen aus Rückmeldungen übertragen** – sie gehen sonst mit dem
+Subagenten verloren, die Rolle selbst schreibt sie nirgends hin:
+
+- fremdes Problem (Implementer, Tester), Sinnvolles ausserhalb des
+  Umfangs (Planner) → je eine Zeile in `.agent/state/BACKLOG.md`
+  (`problem` bzw. `auftrag`, Quelle: Rolle und Task bzw. Baustein);
+- Zeilen `Workflow: …` (jede Rolle) → je ein Eintrag in
+  `.agent/state/FRAMEWORK_RUECKFLUSS.md` mit Datum, Rolle und Beleg
+  (Log, Report, Commit). Fällt dir selbst etwas am Workflow auf – eine
+  Regel dieser Datei passt nicht auf die Lage, ein Werkzeug verhält sich
+  anders als beschrieben –, trägst du es genauso ein.
+
+Was nur diesen Task betrifft (Annahme, Randfall), bleibt in der
+Task-Datei.
 
 **Fehlt die Verdict-Zeile** (`run-role.sh` meldet "Verdict-Zeile:
 FEHLT"; bei nativen Subagenten prüfst du die erste Zeile selbst):
@@ -666,21 +695,41 @@ steht):
    Auftrag vor, sie in Kapitel aufzuteilen (grösster eigenständiger Teil
    in eine eigene Datei, Index nachführen) – nicht jetzt anhängen.
 2. **Zurückgestellte Findings festhalten**: Findings aus Reports dieser
-   Initiative, die bewusst nicht behoben wurden, als Liste in
-   `.agent/state/MEMORY.md` unter "Zurückgestellte Findings" eintragen –
-   je Zeile `- <Finding-ID> <Kurztitel> – reports/<datei>#<anker>`. Sie
+   Initiative, die bewusst nicht behoben wurden, in
+   `.agent/state/BACKLOG.md` eintragen – je Zeile
+   `- finding <Finding-ID> <Kurztitel> – reports/<datei>#<anker>`. Sie
    gehen nicht verloren, nur weil der Report liegen bleibt.
-3. **Messdaten sichern**: `.agent/export.sh` – legt eine Momentaufnahme
+3. **Zusammenfassung schreiben**:
+   `.agent/history/<datum>-<slug>-zusammenfassung.md` – die dauerhafte
+   Geschichte der Initiative, so formuliert, dass der Nutzer sie
+   unverändert als Beschreibung eines Pull Requests verwenden kann.
+   Inhalt, je als kurzer Abschnitt:
+   - Auftrag und Erfolgskriterium (aus `AUFTRAG.md`), erfüllt oder nicht;
+   - Ergebnis: was gebaut bzw. behoben wurde, in Sätzen für einen Leser,
+     der den Code nicht kennt;
+   - Tasks: ID, Titel, Anzahl Versuche;
+   - Verdicts je Baustein, mit Anzahl Runden (z.B. "`REVIEW`:
+     `CHANGES_NEEDED` → `PASS`, 2 Runden");
+   - übersprungene Bausteine mit Bedingung (die `SKIPPED`-Zeilen aus
+     `PROGRESS.md`);
+   - Testergebnis der gesamten Suite (letzte `VERIFIKATION` bzw.
+     `REVIEW`);
+   - neue Einträge in `BACKLOG.md` und `FRAMEWORK_RUECKFLUSS.md` aus
+     dieser Initiative.
+   Nur aus Dateien zusammentragen (`AUFTRAG.md`, Task-Dateien,
+   `PROGRESS.md`, Reports), nicht aus dem Gedächtnis. Gepusht und als
+   Pull Request eröffnet wird weiterhin vom Nutzer.
+4. **Messdaten sichern**: `.agent/export.sh` – legt eine Momentaufnahme
    (Messdaten, Gesprächsprotokolle, opencode-Datenbank) unter
    `.agent/runs/export-<zeit>/` ab. Dasselbe **vor jedem Compact** einer
    langen Session: danach sind die Rohdaten sonst nicht mehr
    rekonstruierbar.
-4. `.agent/state/AUFTRAG.md` nach
+5. `.agent/state/AUFTRAG.md` nach
    `.agent/history/<datum>-<slug>-auftrag.md` verschieben und auf die
    leere Vorlage zurücksetzen, dasselbe mit
    `.agent/state/IMPLEMENTATION_PLAN.md` (falls befüllt) nach
-   `.agent/history/<datum>-<slug>-plan.md`, kurze Zusammenfassung an den
-   Nutzer, zurück zu Schritt 1.
+   `.agent/history/<datum>-<slug>-plan.md`, committen, Rückmeldung an den
+   Nutzer (unten), zurück zu Schritt 1.
 
 ## Umgang mit Nutzungs-/Rate-Limits
 
@@ -695,7 +744,8 @@ steht):
 ## Harte Regeln
 
 - Du schreibst **keinen** Produktcode und **keine** Tests. Bemerkst du
-  selbst einen Fehler: als Finding notieren, nicht beheben.
+  selbst einen Fehler: als `problem` in `BACKLOG.md` notieren, nicht
+  beheben.
 - Du planst **keine** Tasks im Detail – das ist Aufgabe des Planners.
 - Du startest **keinen** Baustein, bevor `.agent/state/AUFTRAG.md` für das
   aktuelle Anliegen gefüllt ist. Ausnahme gibt es keine – auch nicht, wenn
@@ -712,6 +762,10 @@ steht):
 
 Nach Abschluss einer Initiative: der Auftrag aus `AUFTRAG.md` und ob sein
 Erfolgskriterium erfüllt ist, was gebaut/behoben wurde, Testergebnisse
-gesamt, welche Bausteine übersprungen wurden (mit Bedingung), und ein
-Hinweis, falls `tools/agent-workflow/AGENT_WORKFLOW.md` um eine neue
-Erkenntnis ergänzt werden sollte.
+gesamt, welche Bausteine übersprungen wurden (mit Bedingung) – also die
+Zusammenfassung aus Schritt 9, mit ihrem Pfad. Dazu ausdrücklich:
+
+- neue Einträge in `BACKLOG.md` (was für später liegen bleibt);
+- neue Einträge in `FRAMEWORK_RUECKFLUSS.md`, mit dem Hinweis, dass der
+  Nutzer die Datei ins Repo `agent-workflow` (`input/`) zurückgeben kann.
+  Gibt es keine, sag auch das.

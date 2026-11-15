@@ -46,16 +46,12 @@ Nutzer kommt als Branch `nutzer/<name>`. Details/Selbstcheck-Schritte: siehe
 `tools/agent-workflow/sandbox/README.md` und
 `tools/agent-workflow/sandbox/SANDBOX_BOOTSTRAP_PATTERN.md`.
 
-## Zurückgestellte Findings
+## Was nicht hierher gehört
 
-<!--
-Vom Orchestrator beim Abschluss einer Initiative gepflegt: Findings, die
-bewusst nicht behoben wurden. Er nennt sie bei der nächsten
-Auftragsklärung, die zu einer Umsetzung führt. Eine Zeile je Finding,
-ohne Einrückung (hier eingerückt, damit das Beispiel nicht mitzählt):
-
-  - F3 Fehlermeldung bei leerem Passwort fehlt – reports/2026-10-11-review.md#f3
--->
+Was später drankommen soll (zurückgestellte Findings, notierte Aufträge,
+fremde Probleme), steht in `.agent/state/BACKLOG.md`; Beobachtungen zum
+Workflow selbst in `.agent/state/FRAMEWORK_RUECKFLUSS.md`. Diese Datei
+hier hält nur, was über das Projekt dauerhaft gilt.
 
 <!--
 Ab hier projektspezifische Notizen ergänzen, sobald es welche gibt (z.B.

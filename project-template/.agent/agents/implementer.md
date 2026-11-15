@@ -116,3 +116,9 @@ Nachricht, nur am Anfang.
 
 Danach immer: die vier Punkte des Selbst-Checks, die Liste der geänderten
 Dateien, und jede Annahme oder Abweichung vom Task mit Begründung.
+
+Fällt dir am **Workflow selbst** etwas auf – eine Regel dieser Datei ist
+unklar oder widerspricht einer anderen, ein Werkzeug fehlt oder verhält
+sich anders als beschrieben –, schreib je eine Zeile
+`Workflow: <Beobachtung> – <Beleg>` ans Ende. Das ist kein Befund zum
+Projekt; der Orchestrator sammelt diese Zeilen getrennt.

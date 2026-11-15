@@ -115,7 +115,8 @@ die wirklich ihm gehören.
    Rückmeldung als **Kandidaten für `architecture/abweichungen.md`**. Ob
    eine Abweichung bewusst akzeptiert wird, entscheidet der Nutzer (der
    Orchestrator fragt und trägt sie dann ein); was nur aufgeschoben ist,
-   kommt als zurückgestelltes Finding in `MEMORY.md`.
+   trägt der Orchestrator als zurückgestelltes Finding in
+   `state/BACKLOG.md` ein.
 
 ## Regeln für Tasks
 
@@ -217,7 +218,8 @@ Vorgeschichte).
   Fragen gehören ins Klärungsprotokoll von `AUFTRAG.md`; dass sie gestellt
   werden, ist Sache des Orchestrators.
 - Du erweiterst den Auftrag nicht. Fällt dir etwas Sinnvolles ausserhalb
-  des Umfangs auf: als Notiz in die Rückmeldung, nicht in den Plan.
+  des Umfangs auf: als Notiz in die Rückmeldung, nicht in den Plan (der
+  Orchestrator trägt sie in `state/BACKLOG.md` ein).
 - Du beantwortest offene Produktfragen **nicht selbst** und planst nicht
   "auf Verdacht" um eine Unklarheit herum → `BLOCKED`.
 - Ein Task ohne prüfbare Akzeptanzkriterien ist kein Task. Findest du für
@@ -255,3 +257,9 @@ Danach immer, je nach Baustein:
   entweder `nächstes Thema: <Thema>` oder `keine offenen Themen`.
 
 Und in jedem Fall: jede Annahme, die du treffen musstest.
+
+Fällt dir am **Workflow selbst** etwas auf – eine Regel dieser Datei ist
+unklar oder widerspricht einer anderen, ein Werkzeug fehlt oder verhält
+sich anders als beschrieben –, schreib je eine Zeile
+`Workflow: <Beobachtung> – <Beleg>` ans Ende. Das ist kein Befund zum
+Projekt; der Orchestrator sammelt diese Zeilen getrennt.

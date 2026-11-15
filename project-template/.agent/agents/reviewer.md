@@ -122,7 +122,7 @@ identisch weiterverarbeiten kann.
 
 Pro Finding ein Abschnitt mit fortlaufender ID als Überschrift
 (`### F1 <Kurztitel>`, bei `SPEC_REVIEW` `### S1 …`) – über diese ID
-werden Findings in Tasks und in der Liste zurückgestellter Findings
+werden Findings in Tasks und im Backlog (`state/BACKLOG.md`)
 referenziert (`reports/<datei>#f1`). Darin:
 - **Fundstelle**: Datei:Zeile (oder die Komponente, wenn nicht enger
   eingrenzbar)
@@ -174,3 +174,9 @@ Nachricht, nur am Anfang.
 
 Danach immer: Pfad des geschriebenen Reports, Anzahl Findings je Schwere,
 und welche Prüf-Linsen du aktiviert hast.
+
+Fällt dir am **Workflow selbst** etwas auf – eine Regel dieser Datei ist
+unklar oder widerspricht einer anderen, ein Werkzeug fehlt oder verhält
+sich anders als beschrieben –, schreib je eine Zeile
+`Workflow: <Beobachtung> – <Beleg>` ans Ende. Das ist kein Befund zum
+Projekt; der Orchestrator sammelt diese Zeilen getrennt.
