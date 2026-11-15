@@ -50,15 +50,17 @@ optional mit lokalen Modellen für einzelne Rollen.
 .agent/
   spec/       requirements/, architecture/        – dauerhaftes Produktwissen
               (je Index README.md + Kapitel; Architektur als Ziel und Ist)
-  state/      AUFTRAG.md, IMPLEMENTATION_PLAN.md, PROGRESS.md, MEMORY.md
-                                                 – Workflow-Zustand
+  state/      AUFTRAG.md, IMPLEMENTATION_PLAN.md, PROGRESS.md, MEMORY.md,
+              BACKLOG.md, FRAMEWORK_RUECKFLUSS.md – Workflow-Zustand
   agents/     <rolle>.md + <rolle>.meta.yml, _tiers.yml – eine Rolle je Paar
   sync-agents.py                                 – erzeugt die Harness-Adapter
   tasks/      TASK-####-<slug>.md                 – die planbare Warteschlange
   reports/    <datum>-review.md                   – Reviewer-Ausgaben
   inbox/      Rohmaterial aus manuellem Testen    – wird per TRIAGE ausgewertet
   runs/       Logs fremder Harness-Läufe          – Inhalt nicht versioniert
-  history/    <datum>-<slug>-auftrag.md, -plan.md – abgeschlossen, archiviert
+  history/    <datum>-<slug>-auftrag.md, -plan.md, -zusammenfassung.md
+                                                 – abgeschlossen, archiviert
+  pruefungen.sh                                  – Projekt-Prüfbefehle (optional)
 ```
 
 Requirements/Plan/Progress/Memory/Reports/Tasks/Agenten sind
@@ -195,11 +197,13 @@ die normale Task-Schleife. Details: `USERMANUAL.md`, Teil 3 und Teil 5.
 
 - **Pfad-Beschränkung in Claude Code mechanisch erzwingen.** Der Test-
   Freeze (Implementer darf Testdateien nicht ändern) ist dort aktuell nur
-  eine Regel im System-Prompt plus die Diff-Prüfung des Orchestrators; ein
-  `PreToolUse`-Hook könnte ihn wie in OpenCode hart durchsetzen.
-- **Prüf-Linsen ausbauen.** Sicherheits-, Abhängigkeits- und
-  UI-Perspektiven laufen als Linsen innerhalb des Reviewer-Bausteins
-  `REVIEW`.
+  eine Regel im System-Prompt plus die Diff-Prüfung des Orchestrators. Ein
+  `PreToolUse`-Hook im Frontmatter eines Subagenten greift nicht (geprüft
+  2026-11-15); ein Hook in `.claude/settings.json`, der die Rolle am Feld
+  `agent_type` erkennt, schon – Entscheid offen (`TODO.md`, Nr. 11).
+- **Prüf-Linsen ausbauen.** Sicherheits-, Abhängigkeits-, UI- und
+  Performance-Perspektiven laufen als Linsen innerhalb des
+  Reviewer-Bausteins `REVIEW`.
   Falls eine davon regelmässig eigenständiges Gewicht bekommt, nach
   demselben Muster eine eigene Rolle ergänzen: Body + `meta.yml`, der
   Generator erzeugt die Adapter automatisch mit.

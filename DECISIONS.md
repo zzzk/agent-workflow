@@ -204,7 +204,8 @@ beides.
     blieben (F1–F7, H1–H12), wären ohne Nachfrage des Nutzers vergessen
     worden. Daraus: Abschnitt "Vorgeschichte", Status `superseded`,
     Teil-IDs `.N`, ein festes Neuschnitt-Muster und die Liste
-    zurückgestellter Findings in `MEMORY.md`.
+    zurückgestellter Findings in `MEMORY.md` (seit 2026-11 in
+    `state/BACKLOG.md`, siehe "Abgleich mit Journey Hero").
 15. **Ein Timeout ist keine Diagnose.** Die Regel "lokaler Timeout →
     Neuschnitt" traf im Projekt viermal die falsche Reaktion:
     TASK-0014.1 kostete einen 90-Minuten-Lauf und einen Neuschnitt, weil
@@ -296,6 +297,102 @@ beides.
     Branch-Schutz auf GitHub hätte das Remote zusätzlich gesichert, wird
     aber bei privaten Repos im Free-Plan nicht durchgesetzt; deshalb
     pusht auch weiterhin nur der Nutzer.
+
+---
+
+## Abgleich mit Journey Hero (2026-11)
+
+Journey Hero ist eine Android-App, deren Features ein eigener
+Agenten-Workflow baut: Brainstorm, Spec-Writer (OpenSpec), Architektur-
+und UX-Review parallel, Slices mit Test-Writer und Implementer, ein
+paralleles Review-Gate (Design, Sicherheit, Abhängigkeiten, Business,
+Reviewer), E2E-Tests mit Screenshots, Doku, PR. Verglichen wurden die
+Rollen-Datei des Architekten und die Feature-Anleitung mit diesem
+Workflow; der Grundsatz war, die
+Struktur zu behalten und nur einzelne Punkte zu übernehmen. Entscheide
+des Nutzers vom 2026-11-15.
+
+**Übernommen** – jeweils in bestehende Rollen und Bausteine, ohne neue
+Rolle:
+
+- **Performance vor dem Code** (J1): Prüfpunkt "Performance-Form" im
+  `ARCHITEKTUR_GATE`, vierte Prüf-Linse *Performance* im `REVIEW`.
+  Journey Hero prüft das mit einem eigenen Agenten; bei uns reicht die
+  Linse, weil sie mechanisch über den Diff aktiviert wird.
+- **Offene Punkte als harte Sperre** (J2): Ungeklärtes steht als
+  `> OFFEN: <Frage> – Vorschlag: <Default>` in den Requirements; vor
+  `PLAN` prüft der Orchestrator per `grep`. Vorher lag Ungeklärtes unter
+  "Offene Punkte" in `AUFTRAG.md`, und niemand prüfte mechanisch, ob es
+  vor dem Planen aufgelöst war.
+- **Alle Zustände je Aktion** (J3): Journey Hero hat dafür einen
+  UX-Agenten. Bei uns ist es ein Teil der Vollständigkeitsprüfung im
+  `SPEC_REVIEW` (nur bei UI/CLI): Warten, Erfolg, jeder Fehler, mit
+  Darstellung und Text.
+- **Umfangsprüfung im Review** (J4): Der `REVIEW` liest `AUFTRAG.md` und
+  prüft, dass nichts gebaut wurde, was "draussen" ist. Journey Hero hat
+  dafür einen Business-Agenten.
+- **Nutzerdoku im selben Task** (J5): Statt einer Doku-Phase gehört die
+  betroffene Doku ins `files:` des Tasks, der das Verhalten ändert – wie
+  bei `ist.md`. Eine Abweichung fällt so in der `VERIFIKATION` auf, nicht
+  erst im Review.
+- **Stabile Anforderungs-IDs** (J6): `R-<bereich>-<n>` in Requirements,
+  Tasks (`anforderungen:`) und Tests; der `REVIEW` belegt per `grep`,
+  dass jede Anforderung einen Task und einen Test hat. Die leichte Form
+  der Requirement-Namen aus OpenSpec, ohne dessen Delta-Mechanik.
+- **Projekt-Prüfbefehle** (J8): `.agent/pruefungen.sh` (Lint, Build,
+  Paritätschecks), vom Menschen in `ZIELARCHITEKTUR` entschieden, für
+  Implementer und Tester eingefroren wie die Tests.
+- **Backlog statt Abschnitt in `MEMORY.md`** (J17): eigene Datei
+  `state/BACKLOG.md` für alles "später" (zurückgestellte Findings,
+  notierte Aufträge, fremde Probleme). `MEMORY.md` wird von Claude Code
+  automatisch geladen und hält nur noch dauerhafte Projektnotizen; der
+  Name erinnerte zudem an das projektübergreifende Memory.
+- **Zusammenfassung als PR-Beschreibung** (J18): Bei Journey Hero ist
+  die PR-Beschreibung die dauerhafte Geschichte. Bei uns schreibt der
+  Orchestrator `history/<datum>-<slug>-zusammenfassung.md` aus den
+  Dateien (Verdict-Zeilen in `PROGRESS.md`); Push und PR bleiben beim
+  Menschen.
+- **Workflow-Rückfluss getrennt vom Projekt** (J19, Ergänzung des
+  Nutzers): Beobachtungen zum Workflow selbst sammelt
+  `state/FRAMEWORK_RUECKFLUSS.md` aus den `Workflow:`-Zeilen der
+  Rückmeldungen; der Mensch gibt die Datei an dieses Repo (`input/`)
+  zurück.
+
+**Geprüft, nicht gebaut** (J7): Pfad-Sperren per `PreToolUse`-Hook im
+Frontmatter eines Claude-Code-Subagenten greifen nicht (getestet
+2026-11-15, `HARNESS.md`). Ein Hook in `.claude/settings.json`, der die
+Rolle am Feld `agent_type` erkennt, funktioniert; ob er gebaut wird, ist
+offen (`TODO.md`, Nr. 11).
+
+**Zurückgestellt** (J9): E2E-Tests mit Screenshots je geändertem
+Bildschirm – nur für UI-Projekte sinnvoll, Entscheid am ersten solchen
+Projekt (`TODO.md`, Nr. 10).
+
+**Bewusst nicht übernommen:**
+
+- **Parallele Reviews und Gates** (J10): Bei uns ist genau ein Baustein
+  aktiv (Lehre 7); parallele Bahnen sind erprobt, aber nicht Teil der
+  Methodik.
+- **Spezialisierte Reviewer** (J11): ein Reviewer mit Linsen hält die
+  Zahl der Rollen-Dateien klein und die Aktivierung mechanisch; neue
+  Perspektiven kommen als Linse (wie Performance), nicht als Rolle.
+- **Orchestrator plant selbst** (J12): Bei uns schneidet der Planner, und
+  die Gate-Vorgaben stehen in der Task-Datei, die damit in sich
+  geschlossen bleibt.
+- **Implementer committet** (J13): Bei uns committet der Orchestrator
+  nach der `VERIFIKATION`; die Freeze-Prüfung läuft gegen den
+  Arbeitsbaum, und ein verworfener Versuch braucht kein Revert.
+- **Agent pusht und eröffnet PRs** (J14): Sicherheitsentscheid (Lehre
+  20); Agent-Push unter Bedingungen steht als `TODO.md`, Nr. 9.
+- **OpenSpec mit Change-Ordnern und Deltas** (J15): Der Planner schreibt
+  direkt nach `spec/requirements/`, Git ist die Historie. Die
+  Delta-Mechanik (ADDED/MODIFIED/REMOVED, beim Archivieren in die
+  Wahrheitsschicht übernommen) ist für kleine Modelle zu schwer, und ohne
+  parallele Änderungen am selben Bereich bringt sie wenig.
+- **Keine festen Regeln nach Fehlschlägen** (J16): Journey Hero sagt
+  "nie denselben Auftrag erneut starten" und entscheidet sonst nach
+  Ermessen. Vorgeschichte, Grün-Probe, Versuchsgrenze und `HALTED` sind
+  aus Läufen mit lokalen Modellen entstanden (Lehren 15, 18) und bleiben.
 
 ---
 

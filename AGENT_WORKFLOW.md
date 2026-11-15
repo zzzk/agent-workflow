@@ -70,16 +70,18 @@ flowchart LR
 | Schritt | Wer | Was entsteht |
 |---|---|---|
 | (1) Anliegen | Mensch, mit dem Orchestrator | der geklärte Auftrag in `state/AUFTRAG.md` |
-| (2) Klärung | Planner | Fragen an den Menschen, daraus die Anforderungen unter `spec/requirements/` |
+| (2) Klärung | Planner | Fragen an den Menschen, daraus die Anforderungen unter `spec/requirements/`, je mit einer ID |
 | (3) Spec-Review | Reviewer | Befunde zu den Anforderungen; bei Befunden eine weitere Fragerunde |
 | (4) Zielarchitektur | Architekt schlägt vor, Mensch entscheidet | `spec/architecture/ziel.md` – nur, wenn es noch keine Zielarchitektur gibt |
 | (5) Tasks | Planner | kleine Task-Dateien mit Akzeptanzkriterien |
 | (6) Vorgaben | Architekt | bindende Vorgaben in den Task-Dateien, wenn neue Komponenten dazukommen |
 | (7) Task-Schleife | Tester, Implementer, Tester | je Task: rote Tests, Code bis grün, unabhängige Prüfung, Commit |
-| (8) Befunde | Reviewer | ein Report: Stimmt der Gesamtstand mit Anforderungen und Architektur überein? |
+| (8) Befunde | Reviewer | ein Report: Stimmt der Gesamtstand mit Anforderungen, Architektur und Umfang des Auftrags überein? |
 
 Der Orchestrator steht hinter jedem Pfeil: Er ruft jeden Schritt auf,
-prüft das Ergebnis und spricht als Einziger mit dem Menschen.
+prüft das Ergebnis und spricht als Einziger mit dem Menschen. Am Ende
+schreibt er eine Zusammenfassung nach `history/`, die als Beschreibung
+eines Pull Requests taugt.
 
 ## Begriffe
 
@@ -98,7 +100,7 @@ prüft das Ergebnis und spricht als Einziger mit dem Menschen.
 
 Der Orchestrator bestimmt aus dem geklärten Auftrag den Auftragstyp, und
 der Typ legt den Ablauf fest. Fällt während der Arbeit etwas an, das
-einen anderen Typ bräuchte, wird es notiert und später ein eigener
+einen anderen Typ bräuchte, wird es im Backlog notiert und später ein eigener
 Auftrag – einzige Ausnahme sind kleine **Einschub-Tasks** zum selben Ziel
 (Bedingungen: Referenz, "Abläufe im Detail").
 
@@ -188,16 +190,21 @@ flowchart LR
 | Nr. | Pfeil | Was geschieht |
 |---|---|---|
 | (1) | Anliegen, Fragen | Der Mensch nennt, was er will. Der Orchestrator fragt nur, wenn Auftragstyp, Erfolgskriterium oder Umfang offen sind oder das Anliegen Bestehendem widerspricht – höchstens fünf Fragen, jede mit einem Vorschlag – und schreibt das Ergebnis nach `state/AUFTRAG.md`. |
-| (2) | `KLAERUNG`, Fragen an den Menschen | Der Planner wählt **ein** offenes Thema und schreibt höchstens sieben Fragen mit Begründung und Vorschlag ins Klärungsprotokoll. Der Orchestrator stellt sie dem Menschen wörtlich und trägt die Antworten ein. Ein frischer Planner formuliert sie unter `spec/requirements/` aus und meldet, ob ein weiteres Thema offen ist. Das wiederholt sich, höchstens fünf Runden. |
-| (3) | `SPEC_REVIEW`, Befunde | Der Reviewer prüft die Anforderungen auf Prüfbarkeit, Vollständigkeit und Widerspruchsfreiheit und liefert **Befunde, keine Fragen**. Bei Befunden folgt genau eine weitere Klärungsrunde (2), in der der Planner sie zu Fragen macht; ein zweiter Spec-Review folgt nicht. Entfällt, wenn die Anforderungen unverändert aus einem `REQUIREMENTS`-Auftrag mit Spec-Review stammen. |
+| (2) | `KLAERUNG`, Fragen an den Menschen | Der Planner wählt **ein** offenes Thema und schreibt höchstens sieben Fragen mit Begründung und Vorschlag ins Klärungsprotokoll. Der Orchestrator stellt sie dem Menschen wörtlich und trägt die Antworten ein. Ein frischer Planner formuliert sie unter `spec/requirements/` aus – jede Anforderung mit einer festen ID `R-<bereich>-<n>`, Ungeklärtes als Zeile `> OFFEN: <Frage> – Vorschlag: <Default>` – und meldet, ob ein weiteres Thema offen ist. Das wiederholt sich, höchstens fünf Runden. |
+| (3) | `SPEC_REVIEW`, Befunde | Der Reviewer prüft die Anforderungen auf Prüfbarkeit, Vollständigkeit (bei einer Oberfläche: jeder Zustand je Aktion mit Darstellung und Text) und Widerspruchsfreiheit; jede `> OFFEN:`-Zeile ist ein Befund. Er liefert **Befunde, keine Fragen**. Bei Befunden folgt genau eine weitere Klärungsrunde (2), in der der Planner sie zu Fragen macht; ein zweiter Spec-Review folgt nicht. Entfällt, wenn die Anforderungen unverändert aus einem `REQUIREMENTS`-Auftrag mit Spec-Review stammen. |
 | (4) | `ZIELARCHITEKTUR`, Vorschlag | Nur wenn `ziel.md` noch leer ist: Der Architekt schlägt die Zielarchitektur als Runde im Klärungsprotokoll vor, der Mensch entscheidet, ein zweiter Aufruf übernimmt die Entscheidung nach `ziel.md`. |
-| (5) | `PLAN`, Tasks | Der Planner zerlegt die Initiative in Task-Dateien mit Akzeptanzkriterien, Dateiliste und Abhängigkeiten. |
-| (6) | `ARCHITEKTUR_GATE`, Vorgaben | Kommen neue Komponenten oder Abhängigkeiten dazu, prüft der Architekt den Plan gegen Ziel- und Ist-Architektur und schreibt bindende Vorgaben in die Task-Dateien – Schnittstellen und Verantwortungen, nie Code. Sonst wird der Baustein übersprungen und das protokolliert. |
+| (5) | `PLAN`, Tasks | Vorher prüft der Orchestrator per `grep`, dass keine `> OFFEN:`-Zeile mehr steht; sonst folgt eine Klärungsrunde genau dazu. Der Planner zerlegt die Initiative in Task-Dateien mit Akzeptanzkriterien, Dateiliste, Abhängigkeiten und den IDs der Anforderungen, die der Task umsetzt. Ändert ein Task sichtbares Verhalten, gehört die Nutzerdoku in seine Dateiliste. |
+| (6) | `ARCHITEKTUR_GATE`, Vorgaben | Kommen neue Komponenten oder Abhängigkeiten dazu, prüft der Architekt den Plan gegen Ziel- und Ist-Architektur – auch auf Performance-Probleme, die schon in der Form liegen – und schreibt bindende Vorgaben in die Task-Dateien: Schnittstellen und Verantwortungen, nie Code. Sonst wird der Baustein übersprungen und das protokolliert. |
 | (7) | Start Task-Schleife, Ende | Der Orchestrator arbeitet die Tasks einzeln ab, in der Reihenfolge ihrer Abhängigkeiten (Bild 2b). Die Schleife endet, wenn alle Tasks `done` sind. |
-| (8) | `REVIEW`, Befunde | Der Reviewer prüft den Gesamtstand gegen Anforderungen, Zielarchitektur und Ist-Architektur. Befunde werden ein eigener Auftrag vom Typ `FIX`. |
+| (8) | `REVIEW`, Befunde | Der Reviewer prüft den Gesamtstand gegen Anforderungen (jede ID mit Task und Test), Zielarchitektur, Ist-Architektur und den Umfang des Auftrags (nichts gebaut, was "draussen" ist). Befunde werden ein eigener Auftrag vom Typ `FIX`; was nicht gleich behoben wird, kommt ins Backlog. |
 
 Nach jedem Baustein, der Dateien geändert hat, committet der
-Orchestrator auf dem Branch des Auftrags (Bild 6).
+Orchestrator auf dem Branch des Auftrags (Bild 6). Zum Abschluss schreibt
+er `history/<datum>-<slug>-zusammenfassung.md` – Auftrag, Ergebnis,
+Verdicts je Baustein mit Runden, übersprungene Bausteine, Testergebnis –
+und nennt neue Einträge in `state/BACKLOG.md` (für später, das Projekt)
+und `state/FRAMEWORK_RUECKFLUSS.md` (zum Workflow selbst, geht an dieses
+Repo zurück).
 
 ## Bild 2b – Die Task-Schleife
 
@@ -243,8 +250,8 @@ flowchart LR
 |---|---|---|
 | (7.1) | `TEST_FIRST`, Freeze-Commit | Der Tester kennt nur die Akzeptanzkriterien und schreibt Tests, die aus fachlichem Grund rot sind. Er committet sie; dieser Commit ist die **Freeze-Grenze**. Ab jetzt ändert niemand diese Tests, ausser der Mensch entscheidet es. |
 | (7.2) | `UMSETZUNG`, Code | Der Implementer liest nur seine Task-Datei, schreibt Code, bis die Tests grün sind, und committet nicht. |
-| (7.3) | Freeze-Prüfung | Der Orchestrator glaubt der Rückmeldung nicht, sondern prüft mechanisch: `git diff <freeze-commit> -- tests/` und `git status --porcelain -- tests/` müssen leer sein. Sonst werden die Änderungen verworfen und der Implementer bekommt den Verstoss zurück. |
-| (7.4) | `VERIFIKATION` | Ein frischer Tester führt die **ganze** Suite aus, prüft jedes Kriterium einzeln gegen das tatsächliche Verhalten und schreibt das Ergebnis in die Test-Notizen. |
+| (7.3) | Freeze-Prüfung | Der Orchestrator glaubt der Rückmeldung nicht, sondern prüft mechanisch: `git diff <freeze-commit> -- tests/ .agent/pruefungen.sh` und `git status --porcelain -- tests/` müssen leer sein. Sonst werden die Änderungen verworfen und der Implementer bekommt den Verstoss zurück. |
+| (7.4) | `VERIFIKATION` | Ein frischer Tester führt die **ganze** Suite aus, dazu die Projekt-Prüfbefehle in `.agent/pruefungen.sh`, falls es sie gibt (Lint, Build o.ä.), prüft jedes Kriterium einzeln gegen das tatsächliche Verhalten und schreibt das Ergebnis in die Test-Notizen. |
 | (7.5a) | `PASS` | Der Task ist `done`: Eintrag in `PROGRESS.md`, Commit `<TASK-ID>: <Titel>`. Der Orchestrator nimmt den nächsten Task; nach dem letzten endet die Schleife. |
 | (7.5b) | `CHANGES_NEEDED` | Zurück zu (7.2): neuer Versuch des Implementers mit der Begründung des Testers. Höchstens drei Versuche je Rolle und Task (Bild 5). |
 | gestrichelt | Timeout, still gescheitert | Der Lauf liefert kein brauchbares Ergebnis. Wie es weitergeht, zeigt Bild 5. |
@@ -323,13 +330,18 @@ flowchart LR
 | **Tests** `tests/` | Tester (`TEST_FIRST`) | Implementer, Tester, Reviewer | nach dem Freeze unveränderlich |
 | **Code** | Implementer | Tester, Reviewer, Architekt | – |
 | **Reports** `reports/*.md` | Reviewer (`SPEC_REVIEW`, `REVIEW`, `TRIAGE`) | Planner (macht daraus Fragen bzw. Tasks), Orchestrator | bleiben, werden nie überschrieben |
+| **Prüfbefehle** `.agent/pruefungen.sh` | Architekt (`ZIELARCHITEKTUR`), nur was der Mensch entschieden hat | Implementer, Tester, Reviewer führen sie aus | dauerhaft; für Implementer und Tester eingefroren wie die Tests |
 
 Dazu kommen Dateien für den Betrieb, die keine Rolle als Arbeitsauftrag
-liest: `state/PROGRESS.md` (Verlauf, auch übersprungene Bausteine),
-`state/MEMORY.md` (Notizen über Sessions hinweg, zurückgestellte
-Findings), `state/HALTED` (Sperre, Bild 5), `state/IMPLEMENTATION_PLAN.md`
-(Planner, laufende Initiative), die Lauf-Logs unter `runs/` und die
-Rollen-Definitionen unter `agents/`.
+liest, alle vom Orchestrator gepflegt: `state/PROGRESS.md` (Verlauf, je
+Verdict und übersprungenem Baustein eine Zeile), `state/BACKLOG.md` (was
+für das Projekt später drankommt: zurückgestellte Findings, notierte
+Aufträge, fremde Probleme), `state/FRAMEWORK_RUECKFLUSS.md`
+(Beobachtungen zum Workflow selbst, aus den `Workflow:`-Zeilen der
+Rückmeldungen), `state/MEMORY.md` (dauerhafte Projektnotizen),
+`state/HALTED` (Sperre, Bild 5), `state/IMPLEMENTATION_PLAN.md`
+(Planner, laufende Initiative), die Zusammenfassungen unter `history/`,
+die Lauf-Logs unter `runs/` und die Rollen-Definitionen unter `agents/`.
 
 **Rolle, Stufe, Modell.** Jede Rolle nennt in `<rolle>.meta.yml` nur eine
 Stufe (`strong`, `standard`, `cheap`) und eine Laufzeit (`subagent` =
@@ -480,7 +492,7 @@ Selbstcheck: `sandbox/README.md`, "Commit-Flow".
 | **Planner** (Anforderungen und Planung) | `KLAERUNG`, `PLAN` | implementieren, mit dem Menschen direkt sprechen, offene Produktfragen selbst beantworten | `strong`, Subagent |
 | **Architekt** | `ZIELARCHITEKTUR`, `ARCHITEKTUR_GATE` | Produktcode, Tests, `ist.md`; im Gate etwas ausser den Vorgaben in den Task-Dateien; Tasks oder Reihenfolge ändern | `strong`, Subagent |
 | **Tester** | `TEST_FIRST`, `VERIFIKATION`, `GRUEN_PROBE` | Produktcode ändern, Tests abschwächen, die Rückmeldung des Implementers lesen | `standard`, Subagent |
-| **Implementer** | `UMSETZUNG` | Tests ändern, committen, andere Task-Dateien lesen, fremde Probleme "gleich mit" beheben | `standard`, lokal über OpenCode |
+| **Implementer** | `UMSETZUNG` | Tests oder `.agent/pruefungen.sh` ändern, committen, andere Task-Dateien lesen, fremde Probleme "gleich mit" beheben | `standard`, lokal über OpenCode |
 | **Reviewer** | `MAP`, `SPEC_REVIEW`, `REVIEW`, `TRIAGE` | Code, Tests, Tasks, `ziel.md`; `ist.md` nur im Baustein `MAP` | `strong`, Subagent |
 
 Stufe und Laufzeit sind die Voreinstellung aus den `meta.yml`-Dateien;
@@ -495,7 +507,9 @@ zwischen "hält" und "hält meistens".
 
 | Schranke | Warum | Erzwungen durch |
 |---|---|---|
-| **Test-Freeze** | Der Implementer kann Tests nicht passend machen. | Freeze-Commit des Testers; Prüfung `git diff <freeze> -- tests/` und `git status --porcelain -- tests/`; OpenCode `edit: tests/** deny` |
+| **Test-Freeze** | Der Implementer kann Tests nicht passend machen – und auch nicht die Projekt-Prüfbefehle, die mitentscheiden, was grün ist. | Freeze-Commit des Testers; Prüfung `git diff <freeze> -- tests/ .agent/pruefungen.sh` und `git status --porcelain -- tests/`; OpenCode `edit: tests/** deny`, `.agent/pruefungen.sh deny` |
+| **Kein Planen über offene Punkte** | Wer um eine Unklarheit herum plant, baut auf Verdacht. | `grep -rn '^> OFFEN:' .agent/spec/requirements/` vor `PLAN` und am Ende von `REQUIREMENTS` |
+| **Jede Anforderung mit Task und Test** | Eine Anforderung, die nirgends umgesetzt oder geprüft wird, fällt sonst niemandem auf. | feste IDs `R-<bereich>-<n>` in Anforderungen, Tasks (`anforderungen:`) und Tests; `grep` im `REVIEW` |
 | **Unabhängige Verifikation** | Die Selbstauskunft zählt nicht. Ein zweiter Agent führt die ganze Suite aus und prüft die Kriterien einzeln. | eigener Baustein, frischer Aufruf; Orchestrator prüft Diff und Task-Datei |
 | **Testergebnis aus den Einzelzeilen** | Eine grüne Summenzeile kann Fehler verstecken, die das Werkzeug nicht mitzählt. | Regel in `tester.md`: keine einzige Fehlerzeile |
 | **Ein Task, eine Sache** | Ein "gleich mitbehobener" Fehler hatte Funktionalität unbemerkt gelöscht. | `files:` im Task, Diff-Prüfung des Orchestrators |
@@ -506,7 +520,7 @@ zwischen "hält" und "hält meistens".
 | **Wörtliche Verdict-Zeile** | Lokale Modelle lieferten das Verdict fast nie in der verlangten Form. | `run-role.sh` sucht sie nur am Anfang der letzten Antwort |
 | **Abbruch statt Raten** | Timeout, falsche Rolle, falsches Modell oder still abgelehnte Berechtigung: melden statt weiterarbeiten. | Exit-Codes und `ABBRUCH`-Zeile von `run-role.sh`; `vorflug.sh` |
 | **Kein Endlos-Lauf** | Ein hängender Lauf blockiert alles Folgende. | `timeout` um den Unterprozess, `max_steps`/`maxTurns` |
-| **Schreibrechte je Rolle** | Reviewer und Architekt schreiben nur ihre eigenen Dateien. | OpenCode `permission.edit`; in Claude Code Regel im Prompt plus Diff-Prüfung |
+| **Schreibrechte je Rolle** | Reviewer und Architekt schreiben nur ihre eigenen Dateien. | OpenCode `permission.edit`; in Claude Code Regel im Prompt plus Diff-Prüfung (ein Hook im Subagenten greift dort nicht, `HARNESS.md`) |
 | **Push nur durch den Menschen** | Der Agent kann das Remote nicht beschädigen. | keine Zugangsdaten in der Sandbox; Klon nur im Volume |
 | **Entscheide gehören dem Menschen** | Keine Kriterien abschwächen, kein stärkeres Modell ohne Auftrag, eingefrorene Tests nur nach Entscheid öffnen. | `BLOCKED`, `HALTED`, Regeln in den Rollen-Dateien |
 
@@ -517,14 +531,15 @@ einem Anti-Beispiel aus einem echten Vorfall (`DECISIONS.md`).
 
 | Ordner | Inhalt |
 |---|---|
-| `.agent/state/` | `AUFTRAG.md` (geklärter Auftrag mit Klärungsprotokoll), `IMPLEMENTATION_PLAN.md`, `PROGRESS.md` (Verlauf), `MEMORY.md` (Notizen über Sessions hinweg), ggf. `HALTED` |
+| `.agent/state/` | `AUFTRAG.md` (geklärter Auftrag mit Klärungsprotokoll), `IMPLEMENTATION_PLAN.md`, `PROGRESS.md` (Verlauf), `BACKLOG.md` (für später), `FRAMEWORK_RUECKFLUSS.md` (Beobachtungen zum Workflow), `MEMORY.md` (Projektnotizen), ggf. `HALTED` |
 | `.agent/spec/` | dauerhaftes Produktwissen: `requirements/` und `architecture/` (`ziel.md`, `ist.md`, `abweichungen.md`), je mit Index |
 | `.agent/tasks/` | die Task-Dateien: Warteschlange und Übergabeprotokoll |
 | `.agent/agents/` | Rollen-Dateien, `meta.yml` je Rolle, `_tiers.yml` |
+| `.agent/pruefungen.sh` | Projekt-Prüfbefehle (Lint, Build o.ä.), optional |
 | `.agent/reports/` | Spec-Reviews, Reviews, Triagen – datiert, nie überschrieben |
 | `.agent/inbox/` | Rohmaterial aus manuellem Testen |
 | `.agent/runs/` | Logs und `metrics.jsonl` der Läufe (nicht committet) |
-| `.agent/history/` | abgeschlossene Aufträge und Pläne |
+| `.agent/history/` | abgeschlossene Aufträge und Pläne, je Initiative eine Zusammenfassung |
 
 Der vollständige Dateibaum mit Namenskonvention steht in der Referenz,
 "Dateistruktur".

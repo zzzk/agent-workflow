@@ -138,11 +138,11 @@ werden muss).
 
 ## 3. Kleinere Beobachtung: Ort für "später wiederaufzugreifen"-Notizen
 
-> **Erledigt (Rückfluss 2026-10):** Bewusst vertagte Findings stehen jetzt
-> unter "Zurückgestellte Findings" in `state/MEMORY.md` (der Orchestrator
-> fragt bei der nächsten Umsetzung nach); bewusst akzeptierte
-> Abweichungen in `spec/architecture/abweichungen.md`. Text unten nur
-> noch als Herkunft.
+> **Erledigt (Rückfluss 2026-10, umgezogen 2026-11):** Bewusst vertagte
+> Findings, notierte Aufträge und fremde Probleme stehen in
+> `state/BACKLOG.md` (der Orchestrator nennt sie bei der nächsten
+> Auftragsklärung); bewusst akzeptierte Abweichungen in
+> `spec/architecture/abweichungen.md`. Text unten nur noch als Herkunft.
 
 **Beobachtung**: Für "Entfernung von `pwdHash.html` in einer späteren
 Iteration" gab es keinen offensichtlichen dauerhaften Ablageort ausser
@@ -294,3 +294,59 @@ anhält.
 
 **Aufgefallen**: Git-Übergabe aus dem Projekt wiki-assistent,
 Entwurf B' (2026-11-02).
+
+---
+
+## 10. E2E-Tests und Screenshots für UI-Projekte – zurückgestellt
+
+**Wo**: neuer Baustein oder Teil von `VERIFIKATION`/`REVIEW`; Tester bzw.
+Reviewer.
+
+**Warum offen**: Journey Hero hat dafür eine eigene Phase: ein Agent
+schreibt Tests über ganze Abläufe und nimmt je geändertem Bildschirm
+einen Screenshot auf, die Doku verweist darauf. Bei uns prüfen Tests
+das Verhalten je Task; ob die Oberfläche als Ganzes stimmt, sieht erst
+der Mensch beim manuellen Test (`TRIAGE`).
+
+**Mögliche Lösung**: am ersten UI-Projekt entscheiden – etwa ein
+optionaler Baustein nach der Task-Schleife, aktiviert, wenn der Diff
+Bildschirme ändert, mit Screenshots unter `.agent/reports/`. Nicht
+vorab bauen: Werkzeug (Emulator, Browser) und Nutzen hängen stark vom
+Projekt ab.
+
+**Aufgefallen**: Abgleich mit Journey Hero, J9 (2026-11-15).
+
+---
+
+## 11. Pfad-Sperren in Claude Code per Hook – Entscheid offen
+
+**Wo**: `project-template/.agent/sync-agents.py` (Claude-Adapter),
+`project-template/.claude/settings.json`, `HARNESS.md`.
+
+**Warum offen**: In Claude Code sind Schreibrechte je Rolle (Implementer:
+keine Tests; Reviewer, Architekt: nur eigene Dateien) nur eine Regel im
+Prompt plus die Diff-Prüfung des Orchestrators – die grösste Lücke der
+Härtung gegenüber OpenCode. Geprüft am 2026-11-15 (Claude Code 2.1.281,
+Wegwerf-Projekt, Subagent schreibt in einen gesperrten Ordner):
+
+- `hooks:` im **Frontmatter des Subagenten** (`PreToolUse`, Matcher
+  `Write|Edit|…`): greift **nicht** – der Hook lief nie, auch nicht mit
+  absolutem Pfad zum Skript; die Datei wurde geschrieben.
+- Derselbe Hook in **`.claude/settings.json`**: greift, auch für
+  Subagenten. Die Eingabe des Hooks enthält `tool_input.file_path` und
+  bei Subagenten `agent_type` (= `name:` der Rolle); in der Hauptsitzung
+  (Orchestrator) fehlt `agent_type`. Exit 2 blockiert den Aufruf, die
+  Meldung auf stderr geht an den Subagenten zurück – auch mit
+  `--dangerously-skip-permissions`.
+
+**Mögliche Lösung**: `sync-agents.py` erzeugt aus `path_allows`/
+`path_denies` aller Rollen ein Skript `.agent/pfad-sperre.py`, das
+`agent_type` und Pfad liest und gegen die Muster der Rolle prüft;
+`.claude/settings.json` ruft es als `PreToolUse`-Hook für
+`Write|Edit|MultiEdit|NotebookEdit` auf. Ohne `agent_type` (Orchestrator)
+lässt es alles durch. Offene Fragen vor dem Bau: Schreiben über `Bash`
+(`echo > tests/x`) fängt ein solcher Hook nicht – nur mit einem
+zusätzlichen, unscharfen `Bash`-Matcher; und die Diff-Prüfung des
+Orchestrators bleibt ohnehin nötig. Entscheid beim Nutzer.
+
+**Aufgefallen**: Abgleich mit Journey Hero, J7 (2026-11-15).

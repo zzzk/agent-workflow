@@ -46,7 +46,8 @@ Anti-Beispiel aus einem realen Vorfall statt abstrakter Regel.>
 
 ## Rückmeldung
 <Exaktes Ausgabeformat: die Schlussnachricht beginnt wörtlich mit
-"Verdict: <WERT>", ohne Formatierung; danach die Pflichtangaben.>
+"Verdict: <WERT>", ohne Formatierung; danach die Pflichtangaben; am
+Ende je Beobachtung zum Workflow selbst eine Zeile "Workflow: …".>
 ```
 
 Der Body enthält **kein** Frontmatter – er ist harness-neutral (siehe
@@ -101,16 +102,16 @@ nichts zu tun hätten, werden gar nicht erst gestartet.
 |---|---|---|---|---|
 | `AUFTRAGSKLAERUNG` | Orchestrator | **immer**, als erster Baustein jeder Initiative | Anliegen, Lage im Repo | `state/AUFTRAG.md` + der daraus abgeleitete Auftragstyp |
 | `MAP` | Reviewer | Ist-Architektur leer, aber Code existiert | vorhandener Code | `spec/architecture/ist.md` |
-| `KLAERUNG` | Planner | Anforderung unklar oder Requirements lückenhaft, oder Befunde aus `SPEC_REVIEW` | `state/AUFTRAG.md`, `spec/`, ggf. Spec-Review-Report | (a) Fragerunde im Klärungsprotokoll **oder** (b) ausformuliertes Thema unter `spec/requirements/` |
+| `KLAERUNG` | Planner | Anforderung unklar oder Requirements lückenhaft, oder Befunde aus `SPEC_REVIEW` | `state/AUFTRAG.md`, `spec/`, ggf. Spec-Review-Report | (a) Fragerunde im Klärungsprotokoll **oder** (b) ausformuliertes Thema unter `spec/requirements/`, je Anforderung eine ID, Ungeklärtes als `> OFFEN:`-Zeile |
 | `SPEC_REVIEW` | Reviewer | einmal pro Initiative, nach der letzten `KLAERUNG` (Abläufe `REQUIREMENTS` und `FEATURE`; Ausnahme in Abschnitt 3) | `spec/requirements/`, `spec/architecture/ziel.md` | `reports/<datum>-spec-review.md` mit Befunden – keine Fragen |
 | `ZIELARCHITEKTUR` | Architekt | nach `MAP`; im Ablauf `FEATURE` vor `PLAN`, wenn `ziel.md` leer ist | Requirements, Ist-Architektur, Code | (a) Vorschlagsrunde im Klärungsprotokoll, (b) nach Entscheid des Menschen `spec/architecture/ziel.md` |
-| `PLAN` | Planner | immer, ausser bei `EINZELAUFTRAG` | Anforderung oder Report | `tasks/TASK-*.md` (+ bei einer neuen Anforderung `state/IMPLEMENTATION_PLAN.md`) |
+| `PLAN` | Planner | immer, ausser bei `EINZELAUFTRAG`; im Ablauf `FEATURE` erst, wenn keine `> OFFEN:`-Zeile mehr steht | Anforderung oder Report | `tasks/TASK-*.md` mit `anforderungen:` (+ bei einer neuen Anforderung `state/IMPLEMENTATION_PLAN.md`) |
 | `ARCHITEKTUR_GATE` | Architekt | Plan führt neue Komponente, Schnittstelle oder Abhängigkeit ein | Task-Set, `spec/architecture/` (Ziel und Ist) | Verdict + Vorgaben in den Task-Dateien – nur Schnittstellen und Verantwortungen, nie Code oder Zeilen |
 | `TEST_FIRST` | Tester | pro Task, ausser `test_first: false` | nur die Akzeptanzkriterien des Tasks | fehlschlagende Tests + Commit (Freeze-Grenze) |
 | `UMSETZUNG` | Implementer | pro Task | die vollständige Task-Datei | Code-Änderung, uncommittet |
-| `VERIFIKATION` | Tester | pro Task, nach `UMSETZUNG` | Akzeptanzkriterien + Testlauf | Verdict + Test-Notizen in der Task-Datei |
+| `VERIFIKATION` | Tester | pro Task, nach `UMSETZUNG` | Akzeptanzkriterien + Testlauf + `.agent/pruefungen.sh` | Verdict + Test-Notizen in der Task-Datei |
 | `GRUEN_PROBE` | Tester | nur nach einem gescheiterten Lauf (Task hat eine Vorgeschichte) | Task-Datei mit Vorgeschichte, Teilstand, Tests | Diagnose + genau eine `Befund:`-Zeile |
-| `REVIEW` | Reviewer | nach Abschluss einer Initiative, oder auf Wunsch | `spec/`, Code, Testlauf | `reports/<datum>-review.md` |
+| `REVIEW` | Reviewer | nach Abschluss einer Initiative, oder auf Wunsch | `spec/`, `state/AUFTRAG.md` (Umfang), Code, Testlauf, `.agent/pruefungen.sh` | `reports/<datum>-review.md` |
 | `TRIAGE` | Reviewer | `.agent/inbox/` enthält Material | Inbox-Rohmaterial + Code | `reports/<datum>-triage.md`; Material nach `inbox/processed/<datum>/` |
 
 ### Auftragsklärung und `KLAERUNG`: zwei verschiedene Klärungen
@@ -151,15 +152,53 @@ Selbstauskunft. Deshalb prüft der Reviewer sie einmal pro Initiative auf:
 - **Prüfbarkeit**: jede Anforderung hat ein Kriterium, gegen das ein Test
   grün oder rot werden kann,
 - **Vollständigkeit**: alle sichtbaren Texte sind festgelegt, das
-  Fehlerverhalten ist für jede Aktion festgelegt,
+  Fehlerverhalten ist für jede Aktion festgelegt; bei einer Oberfläche
+  (UI oder CLI) für jede Aktion mit sichtbarem Ergebnis **alle
+  Zustände** – Warten, Erfolg, jeder unterscheidbare Fehler – mit
+  Darstellung und Text; jede Anforderung hat eine ID,
 - **Widerspruchsfreiheit**: untereinander und gegenüber der
-  Zielarchitektur (`spec/architecture/ziel.md`).
+  Zielarchitektur (`spec/architecture/ziel.md`),
+- **offene Marker**: jede Zeile `> OFFEN: …` ist ein Befund.
 
 Er liefert **Befunde, keine Fragen**. Daraus formuliert der Planner in
 einer zusätzlichen `KLAERUNG`-Runde die Fragen an den Menschen, je mit
 Vorschlag – der Reviewer kennt den Menschen nicht, der Planner kennt das
 Klärungsprotokoll. Nach dieser Runde folgt kein zweiter `SPEC_REVIEW`;
 die Schleife ist begrenzt.
+
+### Anforderungs-IDs und offene Punkte
+
+Zwei Markierungen in `spec/requirements/` machen mechanisch prüfbar, was
+sonst Ermessen wäre:
+
+- **IDs** `R-<bereich>-<n>` (Bereich = Kapiteldatei, `n` fortlaufend je
+  Kapitel, nie wiederverwendet; eine entfernte Anforderung bleibt als
+  "entfällt" stehen). Der Planner vergibt sie in `KLAERUNG` (b) und trägt
+  sie in `PLAN` je Task unter `anforderungen:` ein; der Tester zitiert sie
+  am Test; der Reviewer belegt im `REVIEW` per `grep`, dass jede
+  Anforderung im Prüfumfang einen Task und einen Test hat.
+- **`> OFFEN: <Frage> – Vorschlag: <Default>`** an der Stelle, die die
+  Antworten nicht entschieden haben. Der Planner rät nicht, er markiert.
+  Vor `PLAN` und am Ende von `REQUIREMENTS` prüft der Orchestrator
+  `grep -rn '^> OFFEN:' .agent/spec/requirements/`; Treffer führen zu
+  einer Klärungsrunde genau dazu, bleiben danach welche, entscheidet der
+  Mensch.
+
+Übernommen aus dem Abgleich mit Journey Hero (`DECISIONS.md`); bewusst
+ohne die Delta-Mechanik von OpenSpec.
+
+### Projekt-Prüfbefehle (`.agent/pruefungen.sh`)
+
+Was jeder Task ausser der Testsuite bestehen muss – Lint, Format,
+Typprüfung, Build, Paritätschecks –, steht als Befehlsliste in
+`.agent/pruefungen.sh`. Der Architekt schlägt die Liste in
+`ZIELARCHITEKTUR` (a) vor, der Mensch entscheidet, (b) trägt sie ein und
+nennt sie als Regel in `ziel.md`. Der Implementer führt sie vor der
+Abgabe aus, der Tester in `VERIFIKATION` und `GRUEN_PROBE`, der Reviewer
+im `REVIEW`; Exit ≠ 0 heisst nicht grün. Weil die Datei mitbestimmt, was
+grün ist, gehört sie zum Test-Freeze (Abschnitt 4), und
+`review-branch.sh` warnt bei jeder Änderung. Enthält sie nur Kommentare,
+gibt es keine zusätzlichen Prüfungen.
 
 ### Zielarchitektur und Ist-Architektur
 
@@ -195,7 +234,7 @@ git diff --name-only
 ```
 
 Die vollständigen Lage-Checks (leere Ist- bzw. Zielarchitektur, offene
-Tasks, laufender Auftrag, zurückgestellte Findings) stehen in
+Tasks, laufender Auftrag, Einträge im Backlog) stehen in
 `orchestrator.md`, Schritt 1.
 
 **Kein Baustein wird gestartet, dessen Ergebnis absehbar "nichts zu tun"
@@ -214,9 +253,20 @@ Statt eigener Agenten für Sicherheit, Abhängigkeiten, UI usw. bekommt der
 eine Reviewer **Linsen**, die der Orchestrator anhand des Diffs aktiviert:
 *Sicherheit* bei Krypto-, Auth-, Eingabevalidierungs-, Dateisystem- oder
 Netzwerk-Code, *Abhängigkeiten* bei geänderten Manifesten,
-*Nutzeroberfläche* bei UI- und CLI-Änderungen (Prüffragen in
-`reviewer.md`). Das hält die Zahl der Rollen-Dateien klein und die
-Aktivierungsentscheidung mechanisch.
+*Nutzeroberfläche* bei UI- und CLI-Änderungen, *Performance* bei Code,
+der Daten lädt oder über sie iteriert (Datenbank, Netz, Dateien), oder
+wenn das Gate dazu eine Vorgabe gemacht hat (Prüffragen in
+`reviewer.md`, Tabelle in `orchestrator.md`, Schritt 4). Das hält die
+Zahl der Rollen-Dateien klein und die Aktivierungsentscheidung
+mechanisch.
+
+Unabhängig von den Linsen prüft jeder `REVIEW` nach einer Initiative den
+**Umfang**: gehört jede Änderung auf dem Auftrags-Branch zu einem Task,
+und ist nichts gebaut, was laut `AUFTRAG.md` "draussen" ist? Das
+Gegenstück vor dem Code ist der Gate-Prüfpunkt **Performance-Form**: ein
+Aufruf je Element statt einer für alle, unbegrenzte Datenmengen,
+langsame Arbeit auf dem Pfad, auf den der Nutzer wartet – was die Form
+des Plans schon festlegt, ist im Gate billiger zu ändern als im Review.
 
 ---
 
@@ -239,11 +289,13 @@ REQUIREMENTS (Anforderungen erarbeiten – Deliverable ist spec/requirements/)
           → KLAERUNG(b: Ausformulierung)
   bis der Planner "keine offenen Themen" meldet
   → SPEC_REVIEW → bei Befunden: eine KLAERUNG-Runde (a + b) dazu
+  → Check auf "> OFFEN:"-Zeilen
   (kein PLAN, keine Tasks, kein Code – die Umsetzung ist ein neuer Auftrag)
 
 FEATURE (neue Anforderung umsetzen)
   KLAERUNG → SPEC_REVIEW → bei Befunden: eine KLAERUNG-Runde dazu
            → ZIELARCHITEKTUR (a, b) – nur wenn ziel.md noch leer ist
+           → Check auf "> OFFEN:"-Zeilen (Treffer: KLAERUNG-Runde dazu)
            → PLAN → ARCHITEKTUR_GATE
            → [ TEST_FIRST → UMSETZUNG → VERIFIKATION ] pro Task
            → REVIEW
@@ -283,7 +335,8 @@ höchstens so gross wie ein `EINZELAUFTRAG`, und er braucht keine neue
 fachliche Klärung. Er bekommt eine Teil-Task-ID an der passenden Stelle
 der Reihenfolge und je eine Zeile `Einschub: <Task-ID>, <Grund>` in
 `state/AUFTRAG.md` (Abschnitt "Einschübe") und `state/PROGRESS.md`.
-Alles andere wird weiterhin notiert und ein eigener Auftrag.
+Alles andere wird weiterhin in `state/BACKLOG.md` notiert und ein
+eigener Auftrag.
 
 ### Die Klärungsschleife (`REQUIREMENTS`, auch `ZIELARCHITEKTUR`)
 
@@ -305,7 +358,9 @@ Kontext eines Agenten:
 3. `KLAERUNG` (b): ein **frischer** Planner liest das Protokoll,
    formuliert das Thema unter `spec/requirements/` aus (als Anforderung,
    nicht als Frage-Antwort-Protokoll) und meldet als letzte Zeile
-   `nächstes Thema: <…>` oder `keine offenen Themen`.
+   `nächstes Thema: <…>` oder `keine offenen Themen`. Jede Anforderung
+   bekommt dabei ihre ID; was die Antworten nicht entscheiden, markiert
+   er als `> OFFEN:`-Zeile, statt es zu raten.
 4. Der Orchestrator verzweigt daran: weitere Runde oder fertig. Nach fünf
    Runden ohne Abschluss stoppt er und fragt den Menschen – eine Klärung,
    die nicht konvergiert, ist ein zu gross geschnittener Auftrag.
@@ -313,6 +368,9 @@ Kontext eines Agenten:
    Befunde, folgt genau eine weitere Runde (a) + (b), in der der Planner
    die Befunde zu Fragen macht (höchstens sieben, die gewichtigsten; der
    Rest kommt unter "Offene Punkte"); danach ist die Schleife fertig.
+6. Zum Schluss prüft der Orchestrator per `grep`, dass keine
+   `> OFFEN:`-Zeile mehr steht (Abschnitt 2, "Anforderungs-IDs und
+   offene Punkte").
 
 `ZIELARCHITEKTUR` läuft nach demselben Muster: (a) der Architekt schreibt
 je Punkt Vorschlag, Begründung und verworfene Alternative als Runde ins
@@ -351,14 +409,15 @@ sie als optionaler Betriebsmodus dazu (dann je Bahn ein eigener Klon bzw.
 1. **Lage ermitteln** – mechanisch, nicht aus dem Gedächtnis: leere
    Ist-Architektur bei vorhandenem Code, leere Zielarchitektur, Tasks mit
    `status: open`/`in_progress`, Material in `.agent/inbox/`, ein
-   unterbrochener Auftrag in `state/AUFTRAG.md`, zurückgestellte Findings
-   in `state/MEMORY.md`; in der Sandbox zusätzlich neue Lieferungen
+   unterbrochener Auftrag in `state/AUFTRAG.md`, Einträge in
+   `state/BACKLOG.md`; in der Sandbox zusätzlich neue Lieferungen
    (`git branch --list 'nutzer/*'`, neuer Basisstand).
    - Offene Tasks → dem Menschen melden (Anzahl, Titel), fragen, ob
      fortgesetzt werden soll oder etwas Neues Vorrang hat.
    - Material in der Inbox → melden, fragen, ob jetzt triagiert wird.
-   - Zurückgestellte Findings und das Anliegen führt zu einer Umsetzung →
-     nennen und fragen, ob sie mitkommen; nicht von sich aus anhängen.
+   - Einträge im Backlog → nennen (ohne eigenes Anliegen des Menschen
+     alle, sonst die passenden) und fragen, ob sie mitkommen; nicht von
+     sich aus anhängen. Was mitkommt, wird im Backlog gestrichen.
    - Gefülltes `AUFTRAG.md` mit unerledigter Arbeit → dort weitermachen
      statt neu zu klären.
 2. **`AUFTRAGSKLAERUNG`** – immer, auch wenn der Mensch schon gesagt hat,
@@ -386,6 +445,14 @@ sie als optionaler Betriebsmodus dazu (dann je Bahn ein eigener Klon bzw.
    an `state/PROGRESS.md`, Commit `<TASK-ID>: <Titel>` auf dem Branch des
    Auftrags.
 
+Jedes Verdict – auch ausserhalb der Task-Schleife – hält der
+Orchestrator als Zeile `VERDICT <Baustein> [<Task-ID>] Runde|Versuch
+<n>: <Verdict>` in `PROGRESS.md` fest; daraus entsteht beim Abschluss
+die Zusammenfassung. Notizen aus Rückmeldungen überträgt er ebenfalls:
+fremde Probleme und Sinnvolles ausserhalb des Umfangs nach
+`state/BACKLOG.md`, Zeilen `Workflow: …` nach
+`state/FRAMEWORK_RUECKFLUSS.md` (mit Datum, Rolle, Beleg).
+
 Die Versuchsgrenze, `HALTED` und der Umgang mit gescheiterten Läufen
 stehen in Abschnitt 6.
 
@@ -404,15 +471,25 @@ Deliverable steht):
    (`find .agent/spec -name '*.md' -size +30k`); ist eine zu gross,
    Aufteilen als eigenen Auftrag vorschlagen (Abschnitt 7).
 2. **Zurückgestellte Findings** – bewusst nicht behobene Findings aus den
-   Reports dieser Initiative – in `state/MEMORY.md` eintragen. Bewusst
-   **akzeptierte** Abweichungen von der Zielarchitektur kommen dagegen
-   nach Entscheid des Menschen in `architecture/abweichungen.md`.
-3. **Messdaten sichern** mit `.agent/export.sh` (dasselbe vor jedem
+   Reports dieser Initiative – als `- finding …` in `state/BACKLOG.md`
+   eintragen. Bewusst **akzeptierte** Abweichungen von der
+   Zielarchitektur kommen dagegen nach Entscheid des Menschen in
+   `architecture/abweichungen.md`.
+3. **Zusammenfassung** nach `history/<datum>-<slug>-zusammenfassung.md`
+   schreiben, so formuliert, dass sie unverändert als Beschreibung eines
+   Pull Requests taugt: Auftrag und Erfolgskriterium (erfüllt?),
+   Ergebnis, Tasks mit Versuchen, Verdicts je Baustein mit Runden,
+   übersprungene Bausteine mit Bedingung, Testergebnis, neue Einträge in
+   Backlog und Rückfluss. Zusammengetragen aus Dateien, nicht aus dem
+   Gedächtnis; Push und Pull Request bleiben beim Menschen.
+4. **Messdaten sichern** mit `.agent/export.sh` (dasselbe vor jedem
    Compact einer langen Session).
-4. `state/AUFTRAG.md` und, falls befüllt, `state/IMPLEMENTATION_PLAN.md`
+5. `state/AUFTRAG.md` und, falls befüllt, `state/IMPLEMENTATION_PLAN.md`
    nach `history/<datum>-<slug>-auftrag.md` bzw. `-plan.md` archivieren
-   und auf die leere Vorlage zurücksetzen; Zusammenfassung an den
-   Menschen.
+   und auf die leere Vorlage zurücksetzen; Rückmeldung an den Menschen
+   mit dem Pfad der Zusammenfassung und den neuen Einträgen in
+   `BACKLOG.md` und `FRAMEWORK_RUECKFLUSS.md`. Den Rückfluss legt der
+   Mensch im Repo `agent-workflow` unter `input/` ab.
 
 **Nutzungslimit:** sauber stoppen, keinen Task halb hinterlassen (ein
 laufender Task bleibt `in_progress`), Reset-Zeitpunkt in `PROGRESS.md`
@@ -439,13 +516,17 @@ danach eingefroren:
    ```bash
    git diff <freeze-commit> --name-only -- tests/
    git status --porcelain -- tests/        # neu angelegte Testdateien
+   git diff <freeze-commit> --name-only -- .agent/pruefungen.sh
    ```
    Gibt das etwas aus, werden diese Änderungen verworfen
-   (`git checkout <freeze-commit> -- tests/`, neue Dateien entfernen),
-   und der Implementer bekommt den Verstoss als Kontext zurück.
+   (`git checkout <freeze-commit> -- tests/ .agent/pruefungen.sh`, neue
+   Dateien entfernen), und der Implementer bekommt den Verstoss als
+   Kontext zurück.
 4. `VERIFIKATION`: Der Tester führt die **gesamte** Suite aus – ein Task
    ist erst grün, wenn nichts anderes kaputtgegangen ist. Grün heisst:
-   keine einzige Fehlerzeile, nicht nur eine grüne Summenzeile.
+   keine einzige Fehlerzeile, nicht nur eine grüne Summenzeile, und – wo
+   es sie gibt – die Projekt-Prüfbefehle (`.agent/pruefungen.sh`) mit
+   Exit 0.
 
 **Teil-Task aus einem Neuschnitt:** Sind seine Tests wörtlich vom
 Eltern-Task übernommen, schreibt der Tester keine neuen, sondern belegt
@@ -606,10 +687,16 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
     AUFTRAG.md                   # NUR das aktuell geklärte Anliegen samt
                                  # Klärungsprotokoll; leer, wenn nichts läuft
     IMPLEMENTATION_PLAN.md       # NUR die aktiv laufende Initiative
-    PROGRESS.md                  # append-only chronologisches Log
-    MEMORY.md                    # projektspezifische Notizen über Sessions hinweg,
-                                 # zurückgestellte Findings
+    PROGRESS.md                  # append-only chronologisches Log, auch je
+                                 # Verdict und SKIPPED eine Zeile
+    BACKLOG.md                   # für später: zurückgestellte Findings,
+                                 # notierte Aufträge, fremde Probleme
+    FRAMEWORK_RUECKFLUSS.md      # Beobachtungen zum Workflow selbst – geht
+                                 # an das Repo agent-workflow (input/) zurück
+    MEMORY.md                    # dauerhafte Projektnotizen über Sessions hinweg
     HALTED                       # nur nach überschrittener Versuchsgrenze
+
+  pruefungen.sh                  # Projekt-Prüfbefehle (Lint, Build …), optional
 
   sync-agents.py                 # Generator: neutrale Quelle → Adapter
   run-role.sh                    # einziger Weg, eine Rolle in OpenCode zu starten
@@ -643,6 +730,7 @@ CLAUDE.md                        # Projekt-Root, @-importiert AGENTS.md
   history/                       # Archiv abgeschlossener Aufträge/Pläne
     2026-08-15-initial-build-auftrag.md
     2026-08-15-initial-build-plan.md
+    2026-08-15-initial-build-zusammenfassung.md   # taugt als PR-Beschreibung
 
 .claude/agents/                  # generierte Adapter – nicht von Hand editieren
 .opencode/agent/                 # generierte Adapter – nicht von Hand editieren
@@ -681,6 +769,7 @@ status: open            # open | in_progress | done | failed | blocked | superse
 superseded_by: []       # nur bei superseded: die ersetzenden Task-IDs
 source: plan-step       # plan-step | review-finding | triage-finding | auftrag
 source_ref: state/IMPLEMENTATION_PLAN.md#schritt-6
+anforderungen: [R-bedienung-3]   # IDs aus spec/requirements/, die der Task umsetzt
 depends_on: []          # andere Task-IDs, die vorher done sein müssen
 files: [pfad/zur/datei.py]   # so eng wie möglich, der Diff wird dagegen geprüft
 runtime:                # leer = Rolle entscheidet; Überschreibung für Sonderfälle
@@ -731,7 +820,11 @@ Freeze-Commit-Hash>
   den heutigen Code falsch, wird das vor den Code-Tasks korrigiert.
 - Ändert ein Task einen Vertrag, steht `ist.md` in seinem `files:`; der
   Implementer zieht den Eintrag im selben Task nach – separate
-  Doku-Nachzug-Tasks gibt es dafür nicht.
+  Doku-Nachzug-Tasks gibt es dafür nicht. Dasselbe gilt für die
+  Nutzerdoku (README, Hilfe-Text, Handbuch), wenn ein Task sichtbares
+  Verhalten ändert.
+- Jeder Task nennt unter `anforderungen:` die IDs der Anforderungen, die
+  er umsetzt; jede Anforderung im Umfang steht in mindestens einem Task.
 - "Überall X ersetzen"-Tasks haben nie grep als einziges
   Akzeptanzkriterium; der eigentliche Test ist die Durchsicht Wort für
   Wort, im ganzen Projekt.
@@ -767,5 +860,5 @@ Freeze-Commit-Hash>
   `git diff <freeze-commit>` als unverändert belegt (Abschnitt 4).
 - **Zurückgestellte Findings**: Was aus einem Report bewusst nicht
   behoben wurde, landet beim Abschluss der Initiative in
-  `state/MEMORY.md`; der Orchestrator fragt bei der nächsten Umsetzung,
-  ob es mitkommt.
+  `state/BACKLOG.md`; der Orchestrator nennt es bei der nächsten
+  Auftragsklärung und fragt, ob es mitkommt.

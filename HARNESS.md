@@ -33,7 +33,7 @@ Diese Fakten altern; vor grösseren Umbauten neu prüfen.
 | Lokales Modell pro Rolle | **nicht möglich** – Umleitung (`ANTHROPIC_BASE_URL`, Bedrock, Vertex) ist immer session-global | **ja** – Provider einmal in `opencode.json` (`@ai-sdk/openai-compatible` + `baseURL`), dann z.B. `model: ollama/<modell>` |
 | Mischbetrieb (Rolle A Cloud, Rolle B lokal) | nein | ja, explizit vorgesehen |
 | Werkzeug-Beschränkung | `tools:` / `disallowedTools:` (Listen) – **mechanisch erzwungen** | `permission:` (Map, `allow`/`ask`/`deny`) – **mechanisch erzwungen** |
-| Pfad-Granularität | **nicht ausdrückbar** – nur über einen `PreToolUse`-Hook nachbaubar | **direkt**: `edit: { "*": allow, "tests/**": deny }`; letzte passende Regel gewinnt |
+| Pfad-Granularität | **nicht ausdrückbar** – nur über einen `PreToolUse`-Hook in `.claude/settings.json` nachbaubar (Rolle über `agent_type` erkennbar); `hooks:` im Subagenten-Frontmatter greift nicht (geprüft 2026-11-15, `TODO.md` Nr. 11) | **direkt**: `edit: { "*": allow, "tests/**": deny }`; letzte passende Regel gewinnt |
 | Frischer Kontext je Aufruf | garantiert | garantiert (eigene Child-Session) |
 | Schritt-Obergrenze | `maxTurns:` | `steps:` |
 | Liest `AGENTS.md` | ja (via `CLAUDE.md`-Import) | ja, bevorzugt; `CLAUDE.md` nur als Fallback |
@@ -41,6 +41,8 @@ Diese Fakten altern; vor grösseren Umbauten neu prüfen.
 
 Weitere Claude-Code-Frontmatter-Felder: `permissionMode`, `memory`,
 `background`, `skills`, `mcpServers`, `hooks`, `isolation: worktree`.
+(`hooks` greift nicht, wenn die Rolle als Subagent über das
+Agent-Werkzeug läuft – getestet mit Claude Code 2.1.281.)
 Weitere OpenCode-Felder: `mode: primary|subagent|all`, `variant`,
 `temperature`, `top_p`, `disable`, `hidden`, `color`, `options`
 (`tools:` ist dort zugunsten von `permission:` veraltet).
