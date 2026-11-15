@@ -13,7 +13,7 @@ write_access: full
 # Test-Freeze: der Implementer darf Testdateien nicht anfassen.
 # Diese Muster sind projektspezifisch – an die Testablage des Projekts
 # anpassen (z.B. app/src/test/**, spec/**, **/*.test.ts).
-path_denies: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts"]
+path_denies: ["tests/**", "test/**", "**/test_*.py", "**/*_test.go", "**/*.spec.ts", ".agent/pruefungen.sh"]
 
 # Lesesperre fuer fremde Task-Dateien (TASK-0066 V1 las fuenf andere Tasks,
 # das kostete Kontext). Bewusst AUSKOMMENTIERT: mit der Sperre kann der

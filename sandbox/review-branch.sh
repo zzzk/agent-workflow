@@ -82,6 +82,8 @@ done < <(D -M --numstat --diff-filter=M)
 # --- Dateien, die etwas ausfuehren oder den Agenten steuern ----------------
 head_ "Dateien, die beim Build/CI/Installieren laufen oder den Agenten steuern"
 EXEC='^\.github/|^\.gitlab-ci|^\.circleci/|Jenkinsfile|azure-pipelines|(^|/)\.(husky|githooks)/|\.pre-commit-config|(^|/)\.git(attributes|modules)$|(^|/)(Makefile|Dockerfile|docker-compose[^/]*|justfile|Taskfile[^/]*)$|\.(sh|bash|zsh|ps1|bat|cmd)$|(^|/)(package\.json|pyproject\.toml|setup\.py|setup\.cfg|requirements[^/]*\.txt|go\.mod|Cargo\.toml|Gemfile|pom\.xml|build\.gradle[^/]*)$|(^|/)\.(envrc|env)$|(^|/)\.vscode/|(^|/)\.idea/'
+# .agent/<datei>.sh|py trifft auch .agent/pruefungen.sh: sie legt fest, was als
+# gruen gilt - eine Aenderung daran schwaecht womoeglich die Pruefung.
 STEER='^(AGENTS|CLAUDE)\.md$|(^|/)\.claude/|(^|/)\.opencode/|^opencode\.json$|^\.agent/agents/|^\.agent/[^/]+\.(sh|py)$'
 N=0
 while read -r p; do

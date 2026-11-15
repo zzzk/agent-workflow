@@ -8,7 +8,7 @@ maxTurns: 80
 ---
 
 > **Schreibverbot:** Du aenderst unter keinen Umstaenden Dateien
-> unter `tests/**`, `test/**`, `**/test_*.py`, `**/*_test.go`, `**/*.spec.ts`.
+> unter `tests/**`, `test/**`, `**/test_*.py`, `**/*_test.go`, `**/*.spec.ts`, `.agent/pruefungen.sh`.
 > (In diesem Harness nicht mechanisch erzwungen - der Orchestrator
 > prueft es nach deinem Lauf per `git diff`.)
 
@@ -54,10 +54,14 @@ unvollständig: melde das zurück, statt zu raten.
    Steht Nutzerdoku (README, Hilfe-Text, Handbuch) in `files:`, bringst
    du sie genauso im selben Task auf den neuen Stand – nur die Stellen,
    die das geänderte Verhalten beschreiben.
-4. Nutze ausschliesslich die projektlokale virtuelle Umgebung bzw. das
+4. Vor der Abgabe: die Tests dieses Tasks ausführen und – falls
+   vorhanden – `.agent/pruefungen.sh` (Lint, Build o.ä. des Projekts).
+   Scheitert eine Prüfung, behebst du den Code; die Datei selbst
+   änderst du nie, sie ist eingefroren wie die Tests.
+5. Nutze ausschliesslich die projektlokale virtuelle Umgebung bzw. das
    projektlokale Toolchain-Setup. Neue/aktualisierte Abhängigkeiten sofort
    installieren und in der Manifest-Datei eintragen.
-5. Markiere den Task **nicht** selbst als getestet oder fertig – das ist
+6. Markiere den Task **nicht** selbst als getestet oder fertig – das ist
    Aufgabe des Testers und des Orchestrators.
 
 ## Harte Regeln

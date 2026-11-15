@@ -13,6 +13,7 @@ permission:
     ".agent/spec/architecture/ziel.md": allow
     ".agent/spec/architecture/abweichungen.md": allow
     ".agent/spec/architecture/README.md": allow
+    ".agent/pruefungen.sh": allow
   bash: allow
 ---
 
@@ -75,6 +76,11 @@ Klärungsprotokoll in `AUFTRAG.md`.
 4. Bei bestehendem Code: Wo das Ist vom Vorschlag abweicht, nenne die
    Abweichung ausdrücklich – der Nutzer entscheidet, ob das Ziel oder die
    Abweichung gilt (letzteres landet in `abweichungen.md`).
+5. **Projekt-Prüfbefehle**: Schlage vor, was jeder Task ausser der
+   Testsuite bestehen muss (Lint, Format, Typprüfung, Build,
+   Paritätschecks) – nur Befehle, die das Projekt schon hat oder die
+   die vorgeschlagenen Regeln mechanisch prüfen. Keine Prüfung ist ein
+   gültiger Vorschlag.
 
 ### (b) Ausformulierung
 
@@ -85,7 +91,10 @@ Klärungsprotokoll in `AUFTRAG.md`.
    es schon eine Zielarchitektur gibt.
 2. Vom Nutzer akzeptierte Abweichungen des Ist vom Ziel trägst du in
    `abweichungen.md` ein.
-3. Führe den Index `architecture/README.md` nach, falls sich Kapitel
+3. Entschiedene Projekt-Prüfbefehle trägst du in `.agent/pruefungen.sh`
+   ein (je Zeile ein Befehl, die Kommentare der Vorlage bleiben) und
+   nennst sie in einer Regel in `ziel.md`, Abschnitt 3.
+4. Führe den Index `architecture/README.md` nach, falls sich Kapitel
    geändert haben.
 
 ## Baustein `ARCHITEKTUR_GATE`
@@ -143,7 +152,8 @@ Klärungsprotokoll in `AUFTRAG.md`.
      Umsetzung – die gehört dem Implementer, und wer sie vorgibt, nimmt
      ihm genau die Arbeit ab, die geprüft werden soll.
 4. Ergibt sich aus dem Plan ein wirklich neues, wiederverwendbares Muster
-   oder braucht er eine Änderung der Zielarchitektur: formuliere den
+   oder braucht er eine Änderung der Zielarchitektur bzw. eine neue
+   Projekt-Prüfung in `.agent/pruefungen.sh`: formuliere den
    exakten Ergänzungsvorschlag für `.agent/spec/architecture/ziel.md` in
    deiner Rückmeldung und **markiere ihn als Vorschlag**. Du schreibst ihn
    im Gate nicht selbst hinein – das entscheidet der Nutzer; übernommen
@@ -165,8 +175,9 @@ erneut.
 - Im `ARCHITEKTUR_GATE` editierst du **nichts** ausser dem Abschnitt
   "Vorgaben aus dem Architektur-Gate" in den Task-Dateien. In
   `ZIELARCHITEKTUR` schreibst du nur das Klärungsprotokoll (a) bzw.
-  `ziel.md`, `abweichungen.md` und den Index (b) – und dort nur, was der
-  Nutzer entschieden hat. Nie Produktcode, nie Tests, nie `ist.md`.
+  `ziel.md`, `abweichungen.md`, `.agent/pruefungen.sh` und den Index
+  (b) – und dort nur, was der Nutzer entschieden hat. Nie Produktcode,
+  nie Tests, nie `ist.md`.
 - **Jede Beanstandung braucht einen konkreten Bezug**: welche
   Datei/Schnittstelle betroffen ist und welche Form du stattdessen
   empfiehlst. "Fühlt sich falsch an" ist keine Beanstandung.

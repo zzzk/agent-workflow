@@ -92,7 +92,9 @@ am Code.
 2. Lies den tatsächlichen Code. Wo es um die Korrektheit einzelner
    Funktionen geht: Datei für Datei, nicht nur Auszüge.
 3. Führe die **gesamte** Testsuite aus; wiederhole sie, wenn ein Ergebnis
-   timing-/reihenfolgeabhängig wirken könnte.
+   timing-/reihenfolgeabhängig wirken könnte. Existiert
+   `.agent/pruefungen.sh`, führe sie ebenfalls aus; Exit ≠ 0 ist ein
+   Finding.
 4. Prüfe explizit:
    - Stimmt jedes Akzeptanzkriterium tatsächlich mit dem **Codeverhalten**
      überein – nicht nur mit dem, was ein Test zu prüfen behauptet?

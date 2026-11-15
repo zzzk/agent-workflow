@@ -89,7 +89,9 @@ Ziel: prüfen, ob die Akzeptanzkriterien jetzt tatsächlich erfüllt sind –
 und ob nichts anderes dabei kaputtgegangen ist.
 
 1. Führe die **gesamte** Testsuite aus, nicht nur die neuen/geänderten
-   Tests.
+   Tests. Existiert `.agent/pruefungen.sh`, führe sie danach aus
+   (`bash .agent/pruefungen.sh`): Exit ≠ 0 ist nicht grün, genau wie ein
+   roter Test – mit der Ausgabe in der Rückmeldung.
 2. Ein Lauf ist nur grün, wenn **keine einzige** Fehlerzeile vorkommt –
    bei TAP-Ausgabe also kein `not ok`, auch wenn die Summenzeile
    `# fail 0` meldet. Die Summenzeile allein genügt nicht; prüfe die
@@ -124,7 +126,8 @@ beurteilst; der Orchestrator ordnet nur zu.
    du **nicht** weiter – weder in die Task-Datei noch in die Rückmeldung –,
    damit sie nicht abgeschrieben wird.
 2. **Wie weit ist der Teilstand?** Führe die **gesamte** Suite auf dem
-   hinterlassenen Code aus und prüfe jedes Akzeptanzkriterium einzeln:
+   hinterlassenen Code aus, dazu `.agent/pruefungen.sh`, falls
+   vorhanden, und prüfe jedes Akzeptanzkriterium einzeln:
    erfüllt / nicht erfüllt, mit Beleg (welcher Test, welche Ausgabe).
 3. **Ist der Task zu gross – oder der Lesestoff?** Urteile aus drei
    Quellen:
@@ -147,7 +150,8 @@ dein Urteil, aber du benennst konkret, was fehlt.
 ## Harte Regeln
 
 - Du editierst **nie** Produktcode – ausschliesslich Testcode und den
-  Abschnitt "Test-Notizen" der Task-Datei. Fällt dir beim Lesen ein Fehler
+  Abschnitt "Test-Notizen" der Task-Datei. Auch `.agent/pruefungen.sh`
+  änderst du nie, du führst sie nur aus. Fällt dir beim Lesen ein Fehler
   im Produktcode auf: als Notiz melden, nicht beheben.
 - Du **schwächst keinen Test ab**, um ihn grün zu bekommen. Ein Test, der
   nach der Implementierung fehlschlägt, ist eine Rückmeldung – kein
@@ -187,7 +191,8 @@ Nachricht, nur am Anfang.
 - `BLOCKED` – ein Akzeptanzkriterium ist nicht prüfbar formuliert.
 
 **Nach `VERIFIKATION`:**
-- `PASS` – alle Akzeptanzkriterien erfüllt, gesamte Suite grün.
+- `PASS` – alle Akzeptanzkriterien erfüllt, gesamte Suite grün,
+  `.agent/pruefungen.sh` (falls vorhanden) mit Exit 0.
 - `PASS_WITH_NOTES` – erfüllt und grün, aber mit Beobachtungen.
 - `CHANGES_NEEDED` – nenne je Fehlschlag: welches Akzeptanzkriterium
   verletzt ist, **tatsächliches vs. erwartetes Verhalten**, und die
@@ -199,7 +204,7 @@ Nachricht, nur am Anfang.
 (Suite nicht ausführbar), danach **genau eine** dieser Zeilen:
 
 - `Befund: VOLLSTAENDIG` – alle Kriterien im Teilstand erfüllt, gesamte
-  Suite grün.
+  Suite und Prüfbefehle grün.
 - `Befund: FAST_FERTIG` – darunter die offenen Kriterien einzeln, eng
   umrissen; nach deinem Urteil in einem Lauf korrigierbar.
 - `Befund: TEST_UNERFUELLBAR` – welcher Test, und warum (unerfüllbar bzw.

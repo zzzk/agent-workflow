@@ -36,6 +36,13 @@ Pflicht in jedem Projekt (Vorlage, an das Projekt anpassen):
 
 Weitere Beispiele: "Domänenlogik importiert nichts aus ui/", "Jede
 Fehlermeldung an den Nutzer kommt aus messages.<ext>".
+
+Muss jeder Task ausser der Testsuite weitere Prüfungen bestehen (Lint,
+Format, Build, Paritätschecks), nennt eine Regel sie; die Befehle selbst
+stehen in `.agent/pruefungen.sh`:
+
+- **R2 Projekt-Prüfbefehle:** Jeder Task besteht `.agent/pruefungen.sh`
+  (heute: <z.B. ruff check, Build>).
 -->
 
 ## 4. Entscheidungen

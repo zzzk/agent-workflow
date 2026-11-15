@@ -7,5 +7,5 @@ description: Schlaegt die Zielarchitektur vor (ZIELARCHITEKTUR) und prueft einen
 runtime: subagent
 model_tier: strong
 write_access: limited
-path_allows: [".agent/tasks/**", ".agent/state/AUFTRAG.md", ".agent/spec/architecture/ziel.md", ".agent/spec/architecture/abweichungen.md", ".agent/spec/architecture/README.md"]
+path_allows: [".agent/tasks/**", ".agent/state/AUFTRAG.md", ".agent/spec/architecture/ziel.md", ".agent/spec/architecture/abweichungen.md", ".agent/spec/architecture/README.md", ".agent/pruefungen.sh"]
 max_steps: 40

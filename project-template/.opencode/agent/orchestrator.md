@@ -627,10 +627,12 @@ Commits seither** zu prüfen.
    ```bash
    git diff <freeze-commit> --name-only -- tests/
    git status --porcelain -- tests/        # neu angelegte Testdateien
+   git diff <freeze-commit> --name-only -- .agent/pruefungen.sh   # legt fest, was grün ist
    ```
    Gibt das etwas aus: diese Änderungen verwerfen
-   (`git checkout <freeze-commit> -- tests/`, neue Dateien entfernen) und
-   den Implementer mit dem Verstoss als Kontext zurückschicken.
+   (`git checkout <freeze-commit> -- tests/ .agent/pruefungen.sh`, neue
+   Dateien entfernen) und den Implementer mit dem Verstoss als Kontext
+   zurückschicken.
 6. `VERIFIKATION` starten.
 7. Bei `CHANGES_NEEDED`: erneut `UMSETZUNG` für denselben Task, mit den
    fehlgeschlagenen Tests als zusätzlichem Kontext, zurück zu 5 – **mit
@@ -702,7 +704,8 @@ schneidet unnötig neu oder wiederholt stur denselben Lauf. Deshalb:
    Lesen oder ins Schreiben, wurden Dateien mehrfach gelesen?
 2. **`GRUEN_PROBE` starten** (Tester). Er urteilt, du ordnest zu.
 3. **Plausibilität mechanisch prüfen**, nicht inhaltlich: Bei
-   `VOLLSTAENDIG` müssen die Test-Notizen eine grüne Suite zeigen; bei
+   `VOLLSTAENDIG` müssen die Test-Notizen eine grüne Suite zeigen (und,
+   falls es `.agent/pruefungen.sh` gibt, deren Exit 0); bei
    `FAST_FERTIG` muss die Liste offener Kriterien da und nicht leer sein.
    Passt das nicht zusammen: zurück an den Tester.
 4. **Reaktion nach der Befund-Zeile** – die Regel entscheidet, nicht dein
