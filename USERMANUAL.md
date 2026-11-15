@@ -651,7 +651,11 @@ Zwei Dateien sammeln, was nicht in den laufenden Auftrag gehört:
 Dateien aus `project-template/.agent/state/` kopieren und die Zeilen aus
 dem Abschnitt "Zurückgestellte Findings" in `.agent/state/MEMORY.md` als
 `- finding …` nach `BACKLOG.md` verschieben, den Abschnitt danach
-entfernen.
+entfernen. Anforderungs-IDs (`R-<bereich>-<n>`) bekommen dort nur neue
+oder geänderte Anforderungen; ältere ohne ID sind kein Befund. Wer alle
+nachtragen will, macht daraus einen eigenen `REQUIREMENTS`-Auftrag.
+`.agent/pruefungen.sh` aus der Vorlage kopieren (nur Kommentare = keine
+zusätzlichen Prüfungen).
 
 ### Unbeaufsichtigte Läufe (z.B. über Nacht)
 
@@ -740,6 +744,7 @@ mein-projekt/
     vorflug.sh                       # Modell-Server bereit? (Kontext, GPU)
     monitor.sh                       # laufenden Baustein beobachten
     export.sh                        # Messdaten sichern
+    pruefungen.sh                    # Projekt-Pruefbefehle (Lint, Build) ← DU entscheidest
     metrics-report.py                # Messbericht
     agents/
       _tiers.yml                     # Stufe → Modell                    ← DU

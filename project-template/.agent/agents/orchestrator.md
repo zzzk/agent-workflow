@@ -255,7 +255,8 @@ Im Ablauf `FEATURE` entfällt `SPEC_REVIEW`, wenn die Requirements
 unverändert aus einem `REQUIREMENTS`-Auftrag stammen, der mit
 `SPEC_REVIEW` abgeschlossen wurde. Dafür hältst du **am Ende** eines
 `REQUIREMENTS`-Auftrags mit `SPEC_REVIEW` – also nach der letzten
-`KLAERUNG`-Runde, die dessen Befunde ausformuliert hat – in
+`KLAERUNG`-Runde und dem Check auf offene Marker (unten) mit leerer
+Ausgabe – in
 `.agent/state/PROGRESS.md` den Commit fest
 (`REQUIREMENTS abgeschlossen mit SPEC_REVIEW – Requirements-Stand <commit>`)
 und prüfst im `FEATURE`-Ablauf mechanisch:

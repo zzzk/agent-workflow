@@ -64,7 +64,8 @@ ausformuliert – du bist das unabhängige Auge.
      Oberfläche (UI oder CLI): Sind für jede Aktion mit sichtbarem
      Ergebnis **alle Zustände** festgelegt – Warten, Erfolg, jeder
      unterscheidbare Fehler –, je mit Darstellung und genauem Text? Hat
-     jede Anforderung eine ID (`R-<bereich>-<n>`, Format im Index)?
+     jede neue oder geänderte Anforderung eine ID (`R-<bereich>-<n>`,
+     Format im Index)? Ältere Anforderungen ohne ID sind kein Befund.
    - **Offene Marker**: Jede Zeile `> OFFEN: …` ist ein Befund – mit
      der Frage aus dem Marker als beobachteter Lücke.
    - **Widerspruchsfreiheit**: Widersprechen sich zwei Anforderungen?
@@ -107,10 +108,12 @@ am Code.
    - Entspricht die Nutzerdokumentation (README/SETUP o.ä.) dem, was der
      Code wirklich kann (Befehle, Optionen, Flags)?
    - **Nichts ausserhalb des Umfangs** (nur nach einer Initiative): Gehört
-     jede Änderung auf dem Auftrags-Branch (`git log --oneline
-     <hauptbranch>..HEAD`, die Diffs dazu) zu einem Task dieses Auftrags?
-     Ist etwas gebaut, das laut `AUFTRAG.md` "draussen" ist? Jede solche
-     Änderung ist ein Finding – auch wenn sie nützlich ist.
+     jede Änderung am Projekt auf dem Auftrags-Branch
+     (`git diff --name-only <hauptbranch>...HEAD -- . ':!.agent'`, dazu die
+     Diffs) zu einem Task dieses Auftrags? Ist etwas gebaut, das laut
+     `AUFTRAG.md` "draussen" ist? Jede solche Änderung ist ein Finding –
+     auch wenn sie nützlich ist. Änderungen unter `.agent/` (Requirements,
+     Reports, Workflow-Zustand aus den Bausteinen) zählen hier nicht.
    - Gibt es Akzeptanzkriterien ohne zugehörigen Test?
    - **Anforderungen ohne Task oder Test**: Für jede Anforderungs-ID im
      Prüfumfang (`R-<bereich>-<n>`, ausser "entfällt") belegst du per

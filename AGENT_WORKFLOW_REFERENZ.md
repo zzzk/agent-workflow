@@ -155,7 +155,7 @@ Selbstauskunft. Deshalb prüft der Reviewer sie einmal pro Initiative auf:
   Fehlerverhalten ist für jede Aktion festgelegt; bei einer Oberfläche
   (UI oder CLI) für jede Aktion mit sichtbarem Ergebnis **alle
   Zustände** – Warten, Erfolg, jeder unterscheidbare Fehler – mit
-  Darstellung und Text; jede Anforderung hat eine ID,
+  Darstellung und Text; jede neue oder geänderte Anforderung hat eine ID,
 - **Widerspruchsfreiheit**: untereinander und gegenüber der
   Zielarchitektur (`spec/architecture/ziel.md`),
 - **offene Marker**: jede Zeile `> OFFEN: …` ist ein Befund.
@@ -370,7 +370,10 @@ Kontext eines Agenten:
    Rest kommt unter "Offene Punkte"); danach ist die Schleife fertig.
 6. Zum Schluss prüft der Orchestrator per `grep`, dass keine
    `> OFFEN:`-Zeile mehr steht (Abschnitt 2, "Anforderungs-IDs und
-   offene Punkte").
+   offene Punkte"). Treffer: eine Klärungsrunde (a) + (b) genau zu diesen
+   Markern; bleiben danach welche, stoppt er und fragt den Menschen. Erst
+   mit leerer Ausgabe hält er den Requirements-Stand für das Überspringen
+   von `SPEC_REVIEW` fest.
 
 `ZIELARCHITEKTUR` läuft nach demselben Muster: (a) der Architekt schreibt
 je Punkt Vorschlag, Begründung und verworfene Alternative als Runde ins

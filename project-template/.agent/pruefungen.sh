@@ -3,9 +3,9 @@
 # (Lint, Format, Typpruefung, Build, Paritaetschecks wie "jede Meldung in
 # allen Sprachen vorhanden").
 #
-# Der Tester fuehrt die Datei in VERIFIKATION und GRUEN_PROBE nach der
-# Testsuite aus, der Reviewer im REVIEW. Exit != 0 heisst: nicht gruen -
-# genau wie ein roter Test.
+# Der Implementer fuehrt die Datei vor der Abgabe aus, der Tester in
+# VERIFIKATION und GRUEN_PROBE nach der Testsuite, der Reviewer im REVIEW.
+# Exit != 0 heisst: nicht gruen - genau wie ein roter Test.
 #
 # Was hier steht, entscheidet der Nutzer: der Architekt schlaegt es in
 # ZIELARCHITEKTUR vor und traegt es nach dem Entscheid ein (Regel in

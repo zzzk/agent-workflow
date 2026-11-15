@@ -2,7 +2,8 @@
 
 > Workflow-Zustand.
 > Append-only, chronologisches Log, vom Orchestrator nach jedem
-> abgeschlossenen Task ergänzt. Der massgebliche Status eines einzelnen
+> abgeschlossenen Task, jedem Verdict und jedem übersprungenen Baustein
+> ergänzt. Der massgebliche Status eines einzelnen
 > Tasks steht in dessen Frontmatter unter `../tasks/TASK-####-<slug>.md`
 > (Feld `status`) – dieses Log ist nur die lesbare Zusammenfassung über
 > alle Tasks hinweg, keine Quelle der Wahrheit für "was ist als Nächstes

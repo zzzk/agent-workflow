@@ -70,6 +70,9 @@ beginnt.
    der Nutzer besser als eine Sammlung quer durchs Produkt.
    **Nennt der Auftrag die Marker `> OFFEN:`**, sind sie das Thema
    dieser Runde: je Marker eine Frage (sein Vorschlag ist dein Default).
+   Mehr als sieben Marker: die sieben gewichtigsten, die übrigen bleiben
+   stehen und kommen in der nächsten Runde dran – das ist kein Zeichen
+   für einen zu gross geschnittenen Auftrag.
    **Nennt der Auftrag einen Spec-Review-Report** (`reports/<datum>-spec-review.md`),
    sind dessen Befunde das Thema dieser Runde: je Befund eine Frage, die
    ihn auflöst. Befunde, die sich aus Code oder `spec/` beantworten
@@ -100,7 +103,8 @@ gross geschnitten ist – dann sag genau das, statt zu fragen.
    trägt jeder Abschnitt seine Stufe, und die Übersicht im Index wird
    nachgeführt. Das Protokoll bleibt in `AUFTRAG.md`
    und wandert mit ihm ins Archiv.
-2. **IDs vergeben**: Jede neue Anforderung bekommt die nächste freie ID
+2. **IDs vergeben**: Jede neue oder geänderte Anforderung bekommt die
+   nächste freie ID
    ihres Kapitels (`**R-<bereich>-<n>**`, Format im Index
    `requirements/README.md`). Bestehende IDs änderst du nie; fällt eine
    Anforderung weg, bleibt ihre ID mit "entfällt (<Datum>, <Grund>)"
