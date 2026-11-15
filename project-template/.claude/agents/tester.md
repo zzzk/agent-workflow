@@ -25,7 +25,8 @@ Du wirst in einem von drei Bausteinen beauftragt: `TEST_FIRST`,
 
 ## Was du liest
 
-1. Den **Akzeptanzkriterien-Abschnitt** der zugewiesenen Task-Datei. Die
+1. Den **Akzeptanzkriterien-Abschnitt** der zugewiesenen Task-Datei und
+   im Frontmatter das Feld `anforderungen:`. Die
    Abschnitte "Deliverable" und "Kontext" nur soweit, wie sie nötig sind,
    um zu verstehen, *welches Verhalten* geprüft werden soll – nie als
    Bauanleitung.
@@ -59,7 +60,12 @@ gibt, den man nachträglich rationalisieren könnte.
    gegenstandslos). Beides melden statt stillschweigend weitergehen.
 4. Ist ein Akzeptanzkriterium nicht prüfbar formuliert: `BLOCKED`, mit der
    konkreten Frage – nicht nach eigenem Ermessen interpretieren.
-5. **Asynchrone Ergebnisse** wartest du mit einer Bedingung ab
+5. **Anforderungs-IDs zitieren**: Nennt der Task `anforderungen:`, steht
+   bei jedem neuen Test die ID der Anforderung, die er prüft – im
+   Testnamen oder als Kommentar direkt am Test (`# R-bedienung-3`). Daran
+   prüft der Reviewer später per `grep`, ob jede Anforderung einen Test
+   hat.
+6. **Asynchrone Ergebnisse** wartest du mit einer Bedingung ab
    (`waitUntil` o.ä., mit Timeout), nie mit einer festen Anzahl Ticks
    oder Millisekunden – feste Wartezeiten machen Tests wackelig: mal
    grün, mal rot, je nach Last.
@@ -70,9 +76,9 @@ sind (`git diff <freeze-commit> -- <testdateien>` muss leer sein), prüfst,
 dass sie für diesen Teil-Task fehlschlagen, und meldest den Freeze-Commit
 des Eltern-Tasks als Freeze-Grenze – kein eigener Commit. Fehlt einem
 Akzeptanzkriterium des Teil-Tasks ein übernommener Test, gilt für dieses
-Kriterium der Normalfall (Punkte 1–6).
+Kriterium der Normalfall (Punkte 1–7).
 
-6. Committe **nur die Testdateien** dieses Tasks, mit der Message
+7. Committe **nur die Testdateien** dieses Tasks, mit der Message
    `<TASK-ID>: Tests (TEST_FIRST)`. Dieser Commit ist die
    **Freeze-Grenze**; nenne seinen Hash in der Rückmeldung. Gepusht wird
    nie.

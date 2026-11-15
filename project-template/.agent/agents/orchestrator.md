@@ -179,7 +179,7 @@ wurde) und weiter bei Schritt 3.
 |---|---|---|
 | Bestand eines fremden Codebestands aufnehmen (Ist-Architektur leer, Code existiert) | `BOOTSTRAP` | `MAP` → `ZIELARCHITEKTUR` (3c) → danach neue Auftragsklärung |
 | Anforderungen erarbeiten/schärfen – Ergebnis sind die Requirements unter `spec/requirements/`, kein Code | `REQUIREMENTS` | Klärungsschleife mit `SPEC_REVIEW` am Ende (Schritt 3a) |
-| Neue Anforderung/Feature umsetzen | `FEATURE` | `KLAERUNG` → `SPEC_REVIEW` (3b) → `ZIELARCHITEKTUR` (3c, nur wenn `ziel.md` leer) → `PLAN` → `ARCHITEKTUR_GATE` → Task-Schleife → `REVIEW` |
+| Neue Anforderung/Feature umsetzen | `FEATURE` | `KLAERUNG` → `SPEC_REVIEW` (3b) → `ZIELARCHITEKTUR` (3c, nur wenn `ziel.md` leer) → Check offene Marker (3b) → `PLAN` → `ARCHITEKTUR_GATE` → Task-Schleife → `REVIEW` |
 | Findings eines Reports beheben | `FIX` | `PLAN` → Task-Schleife → `REVIEW` |
 | Zustand prüfen, nichts ändern | `AUDIT` | `REVIEW` |
 | Material in `.agent/inbox/` auswerten | `MANUELLER-TEST` | `TRIAGE` → danach `FIX` |
@@ -239,7 +239,8 @@ Nach **fünf** Runden ohne Abschluss: stoppen und den Nutzer fragen, ob
 weitergeklärt oder mit dem Erreichten geplant werden soll. Eine Klärung,
 die nicht konvergiert, ist ein zu gross geschnittener Auftrag.
 
-Zum Abschluss dem Nutzer nennen, welche Requirements-Abschnitte entstanden
+Vor dem Abschluss: Check auf offene Marker (Schritt 3b, unten). Zum
+Abschluss dem Nutzer nennen, welche Requirements-Abschnitte entstanden
 sind, und fragen, ob daraus jetzt eine Umsetzung wird. Das ist ein
 **neuer** Auftrag: zurück zu Schritt 2, neue `AUFTRAG.md`.
 
@@ -265,6 +266,22 @@ git diff --quiet <commit> -- .agent/spec/requirements/ && echo "unverändert"
 
 Kein solcher Eintrag oder Diff nicht leer → `SPEC_REVIEW` läuft. Das
 Überspringen wird wie jedes andere protokolliert (Schritt 4).
+
+**Offene Marker sperren das Planen.** Ungeklärtes steht in den
+Requirements als Zeile `> OFFEN: <Frage> – Vorschlag: <Default>`. Vor
+`PLAN` (Ablauf `FEATURE`) und bevor du einen `REQUIREMENTS`-Auftrag
+abschliesst, prüfst du mechanisch:
+
+```bash
+grep -rn '^> OFFEN:' .agent/spec/requirements/
+```
+
+Treffer → eine `KLAERUNG`-Runde genau zu diesen Punkten (Auftrag:
+*"Ausprägung (a) Fragerunde zu den Markern `> OFFEN:` in
+`spec/requirements/`"*, danach (b) wie in 3a), dann erneut prüfen. Bleiben
+danach Marker stehen: stoppen und den Nutzer fragen – geplant wird erst,
+wenn die Ausgabe leer ist. Die Vorschläge in den Markern übernimmst du
+nie selbst als Entscheidung.
 
 ### 3c. `ZIELARCHITEKTUR` – Soll festlegen, bevor geplant wird
 

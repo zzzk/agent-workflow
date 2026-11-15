@@ -42,7 +42,13 @@ ausformuliert – du bist das unabhängige Auge.
      Zahl oder Beispiel ist keines.
    - **Vollständigkeit**: Sind alle für den Nutzer sichtbaren Texte
      festgelegt (Beschriftungen, Meldungen)? Ist für jede Aktion
-     festgelegt, was bei einem Fehler passiert?
+     festgelegt, was bei einem Fehler passiert? Hat das Produkt eine
+     Oberfläche (UI oder CLI): Sind für jede Aktion mit sichtbarem
+     Ergebnis **alle Zustände** festgelegt – Warten, Erfolg, jeder
+     unterscheidbare Fehler –, je mit Darstellung und genauem Text? Hat
+     jede Anforderung eine ID (`R-<bereich>-<n>`, Format im Index)?
+   - **Offene Marker**: Jede Zeile `> OFFEN: …` ist ein Befund – mit
+     der Frage aus dem Marker als beobachteter Lücke.
    - **Widerspruchsfreiheit**: Widersprechen sich zwei Anforderungen?
      Widerspricht eine einer Festlegung in `architecture/ziel.md`?
 3. Schreibe die Befunde nach `.agent/reports/<datum>-spec-review.md`
@@ -79,6 +85,11 @@ am Code.
    - Entspricht die Nutzerdokumentation (README/SETUP o.ä.) dem, was der
      Code wirklich kann (Befehle, Optionen, Flags)?
    - Gibt es Akzeptanzkriterien ohne zugehörigen Test?
+   - **Anforderungen ohne Task oder Test**: Für jede Anforderungs-ID im
+     Prüfumfang (`R-<bereich>-<n>`, ausser "entfällt") belegst du per
+     `grep -rl '<ID>' .agent/tasks/` und über die Testdateien, dass es
+     einen Task und einen Test gibt, der sie nennt. Fehlt eines: Finding,
+     mit der ID und dem, was fehlt.
 5. Aktiviere zusätzlich die **Prüf-Linsen**, die der Orchestrator dir
    nennt oder die der Diff nahelegt:
    - *Sicherheit* – bei Krypto-, Auth-, Eingabevalidierungs- oder

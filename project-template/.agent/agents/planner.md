@@ -49,10 +49,13 @@ beginnt.
 
 1. Lies `AUFTRAG.md` inklusive aller bisherigen Runden und den betroffenen
    Kapitel unter `spec/requirements/`: Ist es vorhanden und eindeutig?
-   Widerspricht der Auftrag etwas Bestehendem?
+   Widerspricht der Auftrag etwas Bestehendem? Zeilen `> OFFEN: …` in
+   den Kapiteln sind offene Punkte – sie gehen jedem neuen Thema vor.
 2. Wähle **ein** Thema – dasjenige, ohne das am wenigsten planbar ist.
    Nicht alle Themen auf einmal: einen zusammenhängenden Block beantwortet
    der Nutzer besser als eine Sammlung quer durchs Produkt.
+   **Nennt der Auftrag die Marker `> OFFEN:`**, sind sie das Thema
+   dieser Runde: je Marker eine Frage (sein Vorschlag ist dein Default).
    **Nennt der Auftrag einen Spec-Review-Report** (`reports/<datum>-spec-review.md`),
    sind dessen Befunde das Thema dieser Runde: je Befund eine Frage, die
    ihn auflöst. Befunde, die sich aus Code oder `spec/` beantworten
@@ -83,10 +86,20 @@ gross geschnitten ist – dann sag genau das, statt zu fragen.
    trägt jeder Abschnitt seine Stufe, und die Übersicht im Index wird
    nachgeführt. Das Protokoll bleibt in `AUFTRAG.md`
    und wandert mit ihm ins Archiv.
-2. Prüfe danach, ob ein weiteres Thema offen ist, und sage das ausdrücklich
+2. **IDs vergeben**: Jede neue Anforderung bekommt die nächste freie ID
+   ihres Kapitels (`**R-<bereich>-<n>**`, Format im Index
+   `requirements/README.md`). Bestehende IDs änderst du nie; fällt eine
+   Anforderung weg, bleibt ihre ID mit "entfällt (<Datum>, <Grund>)"
+   stehen.
+3. **Ungeklärtes markieren**: Was die Antworten nicht entscheiden, rätst
+   du nicht, sondern schreibst an die betroffene Stelle eine Zeile
+   `> OFFEN: <Frage> – Vorschlag: <Default>`. Ist ein Marker durch die
+   beantwortete Runde geklärt, ersetzt du ihn durch die Anforderung.
+4. Prüfe danach, ob ein weiteres Thema offen ist, und sage das ausdrücklich
    als letzte Zeile deiner Rückmeldung: **"nächstes Thema: <Thema>"** oder
    **"keine offenen Themen"**. Der Orchestrator entscheidet daran, ob eine
-   weitere Runde startet – rate nicht, und starte selbst keine.
+   weitere Runde startet – rate nicht, und starte selbst keine. Steht
+   noch ein Marker `> OFFEN:`, ist das ein offenes Thema.
 
 Frage nie nach etwas, das im Code oder in `spec/` nachlesbar ist – lies
 es nach. Fragen kosten den Nutzer Zeit und sind nur für Entscheidungen da,
@@ -102,6 +115,10 @@ die wirklich ihm gehören.
 2. Zerlege sie in Tasks nach `.agent/tasks/TEMPLATE.md`. Was laut
    `AUFTRAG.md` ausdrücklich "draussen" ist, wird kein Task – auch nicht
    als kleine Dreingabe.
+3. Trage in jedem Task unter `anforderungen:` die IDs ein, die er
+   umsetzt. Jede Anforderung im Umfang des Auftrags steht in mindestens
+   einem Task – prüfe das zum Schluss Kapitel für Kapitel; eine, die
+   keinen Task bekommt, nennst du in der Rückmeldung mit Grund.
 
 ### Ausgangslage B – Findings eines Reports beheben
 
@@ -208,6 +225,9 @@ Vorgeschichte).
   laufen soll als die Rolle es vorgibt; sonst leer lassen.
 - `files:` so eng wie möglich – der Orchestrator prüft den Diff dagegen.
   Inklusive `ist.md`, wenn der Task einen Vertrag ändert (siehe oben).
+- `anforderungen:` – die IDs aus `spec/requirements/`, die der Task
+  umsetzt (bei einem Finding die der betroffenen Anforderung, falls es
+  eine gibt).
 
 ## Harte Regeln
 

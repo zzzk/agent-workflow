@@ -7,6 +7,8 @@ superseded_by: []         # nur bei status: superseded – die Task-IDs, die die
 source: plan-step         # plan-step | review-finding | triage-finding | auftrag
 source_ref: <state/IMPLEMENTATION_PLAN.md#initiative-<slug>, reports/<datum>-review.md#<finding>
                           # oder state/AUFTRAG.md bei einem EINZELAUFTRAG>
+anforderungen: []         # IDs aus spec/requirements/ (R-<bereich>-<n>), die
+                          # dieser Task umsetzt; leer, wenn er keine berührt
 depends_on: []            # andere Task-IDs, die vorher done sein müssen; ein
                           # superseded-Task gilt als done, sobald alle seine
                           # superseded_by done sind

@@ -23,6 +23,20 @@ Wird eine Kapiteldatei grösser als etwa 30 KB, wird ihr grösster
 eigenständiger Teil in eine eigene Kapiteldatei ausgelagert und hier
 eingetragen (der Orchestrator prüft das beim Abschluss jeder Initiative).
 
+**Jede Anforderung hat eine ID** `R-<bereich>-<n>`, fett am Anfang ihres
+Absatzes bzw. Listenpunkts: `**R-bedienung-3** Speichern ohne Titel
+zeigt …`. `<bereich>` ist der Name der Kapiteldatei, `<n>` zählt je
+Kapitel fortlaufend. Eine ID wird nie wiederverwendet; eine entfernte
+Anforderung bleibt als `**R-bedienung-3** entfällt (<Datum>, <Grund>)`
+stehen. Tasks nennen die IDs, die sie umsetzen (`anforderungen:`), Tests
+zitieren sie im Namen oder in einem Kommentar – so ist per `grep`
+prüfbar, ob jede Anforderung einen Task und einen Test hat.
+
+**Ungeklärtes ist markiert**, nie still offen gelassen: an der
+betroffenen Stelle eine Zeile `> OFFEN: <Frage> – Vorschlag: <Default>`.
+Solange eine solche Zeile irgendwo unter `requirements/` steht, wird
+nicht geplant – der Orchestrator prüft das mechanisch.
+
 ## 1. Kontext & Ziel
 
 <Was soll das Tool/Projekt lösen, für wen, warum? Zwei bis fünf Sätze.>
